@@ -1,17 +1,17 @@
 package storage
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"github.com/egorgasay/grpc-storage/config"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"log"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"sync"
 )
 
 type Storage struct {
-	DBStore    *sql.DB
+	DBStore    *mongo.Database
+	Mu         sync.RWMutex
 	RAMStorage map[string]string
 }
 
@@ -20,28 +20,14 @@ func New(cfg *config.DBConfig) (*Storage, error) {
 		return nil, errors.New("empty configuration")
 	}
 
-	db, err := sql.Open(cfg.DriverName, cfg.DataSourceCred)
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DataSourceCred))
 	if err != nil {
-		log.Fatal(err)
-		return nil, nil
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations/postgres",
-		"postgres", driver)
-	if err != nil {
-		log.Fatal(err)
-		return nil, nil
-	}
-
-	err = m.Up()
-	if err.Error() != "no change" {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &Storage{
-		DBStore:    db,
+		DBStore:    client.Database("grpc-server"),
 		RAMStorage: make(map[string]string, 10),
 	}, nil
 }

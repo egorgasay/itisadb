@@ -1,20 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/egorgasay/grpc-storage/config"
 	"github.com/egorgasay/grpc-storage/internal/handler"
 	"github.com/egorgasay/grpc-storage/internal/storage"
 	"github.com/egorgasay/grpc-storage/internal/usecase"
-	"github.com/egorgasay/grpc-storage/pkg/logger"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	pb "github.com/egorgasay/grpc-storage/pkg/api"
+	"google.golang.org/grpc"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/go-chi/httplog"
 )
 
 func main() {
@@ -26,26 +24,27 @@ func main() {
 	}
 
 	logic := usecase.New(store)
-	handler := handler.New(logic, logger.New(log))
-	router := chi.NewRouter()
-
-	log := httplog.NewLogger("grpc-storage", httplog.Options{
-		Concise: true,
-	})
-	router.Use(httplog.RequestLogger(log))
-	router.Use(middleware.Recoverer)
+	h := handler.New(logic)
+	grpcServer := grpc.NewServer()
 
 	go func() {
-		log.Info().Msg("Stating loyalty: " + cfg.Host)
-		err := http.ListenAndServe(cfg.Host, router)
+		log.Println("Starting Server ...")
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:80"))
 		if err != nil {
-			log.Error().Msg(err.Error())
+			log.Fatalf("failed to listen: %v", err)
 		}
+
+		pb.RegisterStorageServer(grpcServer, h)
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			log.Fatalf("grpcServer Serve: %v", err)
+		}
+
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
-	log.Info().Msg("Shutdown Server ...")
+	log.Println("Shutdown Server ...")
 }

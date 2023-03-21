@@ -39,7 +39,7 @@ func New() *Config {
 		f.host = &addr
 	}
 
-	if dsn, ok := os.LookupEnv("DATABASE_DSN"); ok {
+	if dsn, ok := os.LookupEnv("DATABASE_URI"); ok {
 		f.dsn = &dsn
 	}
 

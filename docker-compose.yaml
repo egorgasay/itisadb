@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  grpc_storage:
+    image: golang:1.19-alpine
+    volumes:
+      - .:/go/src/go-with-compose
+    working_dir: /go/src/go-with-compose
+    command: go run cmd/grpc-storage/main.go
+    depends_on:
+      - grpc_storage_db
+    environment:
+      DATABASE_URI: "mongodb://grpc_storage_db:27017"
+#      KEY: "CHANGE ME"
+    ports:
+      - "80:80"
+
+
+  grpc_storage_db:
+    image: mongo:4.2.8
+    volumes:
+      - .data:/data/db
+      - .data/conf:/data/configdb
