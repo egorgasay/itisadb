@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api;
+
+service Storage {
+  rpc Set(SetRequest) returns (SetResponse) {}
+}
+
+message SetRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SetResponse {
+  string status = 1;
+}
