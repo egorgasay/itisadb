@@ -11,10 +11,16 @@ type Handler struct {
 	logic *usecase.UseCase
 }
 
+func New(logic *usecase.UseCase) *Handler {
+	return &Handler{logic: logic}
+}
+
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	h.logic.Set(r.Key, r.Value)
+	memUsage := h.logic.Set(r.Key, r.Value)
 	return &api.SetResponse{
-		Status: "ok",
+		Status:    "ok",
+		Total:     memUsage.Total,
+		Available: memUsage.Available,
 	}, nil
 }
 
@@ -29,8 +35,4 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 	return &api.GetResponse{
 		Value: value,
 	}, nil
-}
-
-func New(logic *usecase.UseCase) *Handler {
-	return &Handler{logic: logic}
 }

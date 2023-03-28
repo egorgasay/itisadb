@@ -11,7 +11,6 @@ services:
       - grpc_storage_db
     environment:
       DATABASE_URI: "mongodb://grpc_storage_db:27017"
-#      KEY: "CHANGE ME"
     ports:
       - "80:80"
 
@@ -21,3 +20,5 @@ services:
     volumes:
       - .data:/data/db
       - .data/conf:/data/configdb
+    ports:
+      - "27017:27017"

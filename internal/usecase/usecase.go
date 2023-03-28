@@ -1,41 +1,42 @@
 package usecase
 
 import (
-	"errors"
 	"github.com/egorgasay/grpc-storage/internal/storage"
+	"github.com/pbnjay/memory"
+	"log"
 )
 
 type UseCase struct {
-	storage storage.Storage
+	storage *storage.Storage
 }
-
-var NotFoundErr = errors.New("the value does not exist")
 
 func New(storage *storage.Storage) *UseCase {
-	return &UseCase{storage: *storage}
+	return &UseCase{storage: storage}
 }
 
-func (uc *UseCase) Set(key string, val string) {
-	uc.storage.Mu.Lock()
-	defer uc.storage.Mu.Unlock()
-	uc.storage.RAMStorage[key] = val
+func (uc *UseCase) Set(key string, val string) RAM {
+	uc.storage.Set(key, val)
+	return RAMUsage()
+}
+
+type RAM struct {
+	Total     uint64
+	Available uint64
+}
+
+// RAMUsage outputs the current, total and OS memory being used.
+func RAMUsage() RAM {
+	return RAM{
+		Total:     memory.TotalMemory() / 1024 / 1024,
+		Available: memory.FreeMemory() / 1024 / 1024,
+	}
 }
 
 func (uc *UseCase) Get(key string) (string, error) {
-	uc.storage.Mu.RLock()
-	defer uc.storage.Mu.RUnlock()
-	val, ok := uc.storage.RAMStorage[key]
-	if !ok {
-		return "", NotFoundErr
-	}
-
-	return val, nil
+	return uc.storage.Get(key)
 }
 
-func (uc *UseCase) Save() error {
-	return nil
-}
-
-func (uc *UseCase) Load() error {
-	return nil
+func (uc *UseCase) Save() {
+	log.Println("Saving values ...")
+	uc.storage.Save()
 }
