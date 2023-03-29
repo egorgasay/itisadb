@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  padding: 100px;
+  background-color: #000;
+  color: #fff;
+  font-size: 14px;
+  font-family: "Breakfast Pastry, Serif";
+}
+.container {
+  max-width: 80%;
+  max-height: 100vh;
+  height: 100vh;
+  margin: auto;
+}
+
+.textfield {
+  background: #000;
+  border: none;
+  color: #fff;
+  padding-left: 5px;
+}
+
+.textfield:focus {
+  border: none;
+  outline: none;
+}

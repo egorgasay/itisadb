@@ -1,0 +1,10 @@
+package handler
+
+import (
+	"github.com/labstack/echo"
+)
+
+func (h *Handler) PublicRoutes(e *echo.Echo) {
+	e.GET("/", h.MainPage)
+	e.GET("/act", h.Action)
+}

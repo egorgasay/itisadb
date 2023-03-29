@@ -20,7 +20,7 @@ func New() *UseCase {
 }
 
 func (uc *UseCase) Set(key string, val string) (uint64, error) {
-	serverNumber := len(key)%len(uc.clients) + 1
+	serverNumber := len(key) % (len(uc.clients))
 	cl, ok := uc.clients[serverNumber]
 	if !ok {
 		return 0, ErrServerIsNotConnected
@@ -35,7 +35,7 @@ func (uc *UseCase) Set(key string, val string) (uint64, error) {
 }
 
 func (uc *UseCase) Get(key string) (string, error) {
-	cl, ok := uc.clients[len(key)%len(uc.clients)+1]
+	cl, ok := uc.clients[len(key)%(len(uc.clients))]
 	if !ok {
 		return "", ErrServerIsNotConnected
 	}
