@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: api/proto/storage.proto
 
-package __
+package storage
 
 import (
 	context "context"

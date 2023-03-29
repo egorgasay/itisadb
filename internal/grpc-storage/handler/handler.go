@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	"github.com/egorgasay/grpc-storage/internal/usecase"
-	api "github.com/egorgasay/grpc-storage/pkg/api"
+	"github.com/egorgasay/grpc-storage/internal/grpc-storage/usecase"
+	api "github.com/egorgasay/grpc-storage/pkg/api/storage"
 )
 
 type Handler struct {

@@ -20,6 +20,8 @@ message GetRequest {
 
 message GetResponse {
   string value = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
 }
 
 message SetResponse {

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+package api;
+
+service Balancer {
+  rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
+  rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
+  rpc Connect(ConnectRequest) returns (ConnectResponse) {}
+}
+
+message BalancerSetRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message BalancerGetRequest {
+  string key = 1;
+  string server = 2;
+}
+
+message ConnectRequest {
+  string Address = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
+}
+
+message BalancerGetResponse {
+  string value = 1;
+}
+
+message BalancerSetResponse {
+  string status = 1;
+  uint64 savedTo = 2;
+}
+
+message ConnectResponse {
+  string status = 1;
+}

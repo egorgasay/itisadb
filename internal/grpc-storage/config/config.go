@@ -14,6 +14,7 @@ type Config struct {
 	Host     string
 	Key      []byte
 	DBConfig *DBConfig
+	Balancer string
 }
 
 const (
@@ -21,8 +22,9 @@ const (
 )
 
 type Flag struct {
-	host *string
-	dsn  *string
+	host     *string
+	dsn      *string
+	balancer *string
 }
 
 var f Flag
@@ -30,6 +32,7 @@ var f Flag
 func init() {
 	f.host = flag.String("a", defaultHost, "-a=host")
 	f.dsn = flag.String("d", "", "-d=connection_string")
+	f.balancer = flag.String("connect", "", "-connect=ip:port")
 }
 
 func New() *Config {
@@ -50,5 +53,6 @@ func New() *Config {
 			DriverName:     "mongo",
 			DataSourceCred: *f.dsn,
 		},
+		Balancer: *f.balancer,
 	}
 }
