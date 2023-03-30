@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/egorgasay/grpc-storage/internal/cli/config"
 	"github.com/egorgasay/grpc-storage/internal/cli/handler"
+	"github.com/egorgasay/grpc-storage/internal/cli/storage"
 	"github.com/egorgasay/grpc-storage/internal/cli/usecase"
 	"github.com/egorgasay/grpc-storage/pkg/logger"
 	"github.com/go-chi/chi/middleware"
@@ -31,8 +32,8 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func main() {
 	cfg := config.New()
-
-	logic := usecase.New(cfg)
+	store := storage.New()
+	logic := usecase.New(cfg, store)
 
 	e := echo.New()
 	lg := httplog.NewLogger("cli", httplog.Options{

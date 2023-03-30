@@ -7,4 +7,5 @@ import (
 func (h *Handler) PublicRoutes(e *echo.Echo) {
 	e.GET("/", h.MainPage)
 	e.GET("/act", h.Action)
+	e.GET("/history", h.History)
 }

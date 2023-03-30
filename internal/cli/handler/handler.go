@@ -1,8 +1,10 @@
 package handler
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/egorgasay/grpc-storage/internal/cli/config"
+	"github.com/egorgasay/grpc-storage/internal/cli/cookies"
+	"github.com/egorgasay/grpc-storage/internal/cli/schema"
 	"github.com/egorgasay/grpc-storage/internal/cli/usecase"
 	"github.com/egorgasay/grpc-storage/pkg/logger"
 	"github.com/labstack/echo"
@@ -30,35 +32,73 @@ func New(cfg *config.Config, logic *usecase.UseCase, loggerInstance logger.ILogg
 	return &Handler{cfg: cfg, logic: logic, ILogger: loggerInstance}
 }
 
-func (h *Handler) MainPage(e echo.Context) error {
-	err := e.Render(http.StatusOK, "index.html", nil)
+func (h *Handler) MainPage(c echo.Context) error {
+	err := c.Render(http.StatusOK, "index.html", nil)
 	if err != nil {
 		h.Warn(err.Error())
 	}
 	return err
 }
 
-func (h *Handler) Action(e echo.Context) error {
-	e.Response().Header().Set("Content-Type", "application/json")
-	action := e.Request().URL.Query().Get("action")
-	res, err := h.logic.ProcessQuery(h.cfg, action)
-	if err != nil {
-		h.Info(err.Error())
-		e.Response().Write([]byte(fmt.Sprintf(`{"text": "%v"}`, err)))
-		e.Response().WriteHeader(http.StatusInternalServerError)
-		return err
+func (h *Handler) Action(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/json")
+	cookie, err := c.Cookie("session")
+	if err != nil || cookie == nil {
+		cookie = cookies.SetCookie()
+		c.SetCookie(cookie)
 	}
 
-	resp := fmt.Sprintf(`{"text": "%v"}`, res)
-	e.Response().Write([]byte(resp))
-	e.Response().WriteHeader(http.StatusOK)
+	action := c.Request().URL.Query().Get("action")
+	res, err := h.logic.ProcessQuery(cookie.Value, action)
+	if err != nil {
+		h.Warn(err.Error())
+		var t = schema.Response{Text: err.Error()}
+		bytes, err := json.Marshal(t)
+		if err != nil {
+			h.Warn(err.Error())
+			return err
+		}
+		c.Response().Write(bytes)
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	var t = schema.Response{Text: res}
+
+	bytes, err := json.Marshal(t)
+	if err != nil {
+		t = schema.Response{Text: err.Error()}
+		bytes, err = json.Marshal(t)
+		if err != nil {
+			h.Warn(err.Error())
+		}
+	}
+	c.Response().Write(bytes)
+	c.Response().WriteHeader(http.StatusOK)
 	return nil
 }
 
-//func (h *Handler) Set() {
-//
-//}
-//
-//func (h *Handler) Get() () {
-//
-//}
+func (h *Handler) History(c echo.Context) error {
+	c.Response().Header().Set("Content-Type", "application/json")
+	cookie, err := c.Cookie("session")
+	if err != nil || cookie == nil {
+		cookie = cookies.SetCookie()
+		c.SetCookie(cookie)
+	}
+
+	history, err := h.logic.History(cookie.Value)
+	var t = schema.Response{Text: history}
+	if err != nil {
+		t = schema.Response{Text: err.Error()}
+	}
+
+	bytes, err := json.Marshal(t)
+	if err != nil {
+		t = schema.Response{Text: err.Error()}
+		bytes, err = json.Marshal(t)
+		if err != nil {
+			h.Warn(err.Error())
+		}
+	}
+	c.Response().Write(bytes)
+	return nil
+}

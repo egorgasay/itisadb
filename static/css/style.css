@@ -9,7 +9,6 @@ body {
 .container {
   max-width: 80%;
   max-height: 100vh;
-  height: 100vh;
   margin: auto;
 }
 

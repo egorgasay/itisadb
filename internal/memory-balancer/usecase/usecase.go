@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/egorgasay/grpc-storage/pkg/api/storage"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/egorgasay/grpc-storage/pkg/api/storage"
 )
 
 type UseCase struct {
@@ -20,7 +22,10 @@ func New() *UseCase {
 }
 
 func (uc *UseCase) Set(key string, val string) (uint64, error) {
-	serverNumber := len(key) % (len(uc.clients))
+	if len(uc.clients) == 0 {
+		return 0, errors.New("no available storages")
+	}
+	serverNumber := len(key)%len(uc.clients) + 1
 	cl, ok := uc.clients[serverNumber]
 	if !ok {
 		return 0, ErrServerIsNotConnected
@@ -35,7 +40,10 @@ func (uc *UseCase) Set(key string, val string) (uint64, error) {
 }
 
 func (uc *UseCase) Get(key string) (string, error) {
-	cl, ok := uc.clients[len(key)%(len(uc.clients))]
+	if len(uc.clients) == 0 {
+		return "", errors.New("no available storages")
+	}
+	cl, ok := uc.clients[len(key)%(len(uc.clients))+1]
 	if !ok {
 		return "", ErrServerIsNotConnected
 	}
