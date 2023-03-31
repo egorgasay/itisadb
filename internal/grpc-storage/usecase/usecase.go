@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/storage"
 	"github.com/pbnjay/memory"
+	"grpc-storage/internal/grpc-storage/storage"
 	"log"
 )
 

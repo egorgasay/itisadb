@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Host string
+	URI  string
 	Key  []byte
 }
 
@@ -16,12 +17,14 @@ const (
 
 type Flag struct {
 	host *string
+	dsn  *string
 }
 
 var f Flag
 
 func init() {
 	f.host = flag.String("a", defaultHost, "-a=host")
+	f.dsn = flag.String("d", "", "-d=dsn")
 }
 
 func New() *Config {
@@ -33,6 +36,7 @@ func New() *Config {
 
 	return &Config{
 		Host: *f.host,
+		URI:  *f.dsn,
 		Key:  []byte("CHANGE ME"),
 	}
 }

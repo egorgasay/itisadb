@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/egorgasay/grpc-storage/pkg/api/balancer"
+	"grpc-storage/pkg/api/balancer"
 	"log"
 	"strings"
 )

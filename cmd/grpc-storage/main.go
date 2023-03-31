@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/config"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/handler"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/storage"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/usecase"
-	"github.com/egorgasay/grpc-storage/pkg/api/balancer"
-	pb "github.com/egorgasay/grpc-storage/pkg/api/storage"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"grpc-storage/internal/grpc-storage/config"
+	"grpc-storage/internal/grpc-storage/handler"
+	"grpc-storage/internal/grpc-storage/storage"
+	"grpc-storage/internal/grpc-storage/usecase"
+	"grpc-storage/pkg/api/balancer"
+	pb "grpc-storage/pkg/api/storage"
 	"log"
 	"net"
 	"os"
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	cl := balancer.NewBalancerClient(conn)
-	_, err = cl.Connect(context.Background(), cr)
+	resp, err := cl.Connect(context.Background(), cr)
 	if err != nil {
 		log.Fatalf("Unable to connect to the balancer: %v", err)
 	}
@@ -68,6 +68,11 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
+	_, err = cl.Disconnect(context.Background(), &balancer.DisconnectRequest{ServerNumber: resp.GetServerNumber()})
+	if err != nil {
+		log.Println(err)
+	}
+	grpcServer.GracefulStop()
 	logic.Save()
 	log.Println("Shutdown Server ...")
 }

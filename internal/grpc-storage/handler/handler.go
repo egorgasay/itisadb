@@ -2,8 +2,12 @@ package handler
 
 import (
 	"context"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/usecase"
-	api "github.com/egorgasay/grpc-storage/pkg/api/storage"
+	"errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"grpc-storage/internal/grpc-storage/storage"
+	"grpc-storage/internal/grpc-storage/usecase"
+	api "grpc-storage/pkg/api/storage"
 )
 
 type Handler struct {
@@ -27,6 +31,11 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
 	value, err := h.logic.Get(r.Key)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return &api.GetResponse{
+				Value: err.Error(),
+			}, status.Error(codes.NotFound, err.Error())
+		}
 		return &api.GetResponse{
 			Value: err.Error(),
 		}, err

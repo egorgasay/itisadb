@@ -2,8 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/egorgasay/grpc-storage/internal/memory-balancer/usecase"
-	api "github.com/egorgasay/grpc-storage/pkg/api/balancer"
+	"errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"grpc-storage/internal/memory-balancer/usecase"
+	api "grpc-storage/pkg/api/balancer"
 )
 
 type Handler struct {
@@ -17,6 +20,7 @@ func New(logic *usecase.UseCase) *Handler {
 
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
 	setTo, err := h.logic.Set(r.Key, r.Value)
+
 	if err != nil {
 		return nil, err
 	}
@@ -29,6 +33,12 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
 	value, err := h.logic.Get(r.Key)
+	if errors.Is(err, usecase.ErrNoData) {
+		return &api.BalancerGetResponse{
+			Value: err.Error(),
+		}, status.Error(codes.NotFound, err.Error())
+	}
+
 	if err != nil {
 		return &api.BalancerGetResponse{
 			Value: err.Error(),
@@ -41,12 +51,22 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	err := h.logic.Connect(request.GetAddress())
+	serverNum, err := h.logic.Connect(request.GetAddress())
 	if err != nil {
 		return nil, err
 	}
 
 	return &api.ConnectResponse{
-		Status: "connected successfully",
+		Status:       "connected successfully",
+		ServerNumber: serverNum,
 	}, nil
+}
+
+func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {
+	err := h.logic.Disconnect(request.GetServerNumber())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.DisconnectResponse{}, nil
 }

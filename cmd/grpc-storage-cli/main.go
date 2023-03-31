@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/egorgasay/grpc-storage/internal/cli/config"
-	"github.com/egorgasay/grpc-storage/internal/cli/handler"
-	"github.com/egorgasay/grpc-storage/internal/cli/storage"
-	"github.com/egorgasay/grpc-storage/internal/cli/usecase"
-	"github.com/egorgasay/grpc-storage/pkg/logger"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/httplog"
 	"github.com/labstack/echo"
+	"grpc-storage/internal/cli/config"
+	"grpc-storage/internal/cli/handler"
+	"grpc-storage/internal/cli/storage"
+	"grpc-storage/internal/cli/usecase"
+	"grpc-storage/pkg/logger"
 	"html/template"
 	"io"
 	"net/http"
@@ -39,6 +39,7 @@ func main() {
 	lg := httplog.NewLogger("cli", httplog.Options{
 		Concise: true,
 	})
+
 	e.Use(echo.WrapMiddleware(httplog.RequestLogger(lg)))
 	e.Use(echo.WrapMiddleware(middleware.Recoverer))
 	h := handler.New(cfg, logic, logger.New(lg))

@@ -4,13 +4,13 @@ import (
 	"log"
 	"strings"
 
-	"github.com/egorgasay/grpc-storage/internal/cli/commands"
-	"github.com/egorgasay/grpc-storage/internal/cli/config"
-	"github.com/egorgasay/grpc-storage/pkg/api/balancer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"grpc-storage/internal/cli/commands"
+	"grpc-storage/internal/cli/config"
+	"grpc-storage/pkg/api/balancer"
 
-	"github.com/egorgasay/grpc-storage/internal/cli/storage"
+	"grpc-storage/internal/cli/storage"
 )
 
 type UseCase struct {

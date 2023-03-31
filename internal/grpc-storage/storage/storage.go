@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/config"
-	"github.com/egorgasay/grpc-storage/internal/grpc-storage/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"grpc-storage/internal/grpc-storage/config"
+	"grpc-storage/internal/schema"
 	"log"
 	"sync"
 )
 
-var NotFoundErr = errors.New("the value does not exist")
+var ErrNotFound = errors.New("the value does not exist")
 
 type Storage struct {
 	DBStore *mongo.Database
@@ -51,9 +51,9 @@ func (s *Storage) Get(key string) (string, error) {
 	if !ok {
 		res, err := s.get(key)
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return "", NotFoundErr
+			return "", ErrNotFound
 		} else if err != nil {
-			return "", nil
+			return "", err
 		}
 		s.RAMStorage[key] = res
 

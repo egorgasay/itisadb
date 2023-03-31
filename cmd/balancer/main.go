@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/egorgasay/grpc-storage/internal/memory-balancer/config"
-	"github.com/egorgasay/grpc-storage/internal/memory-balancer/handler"
-	"github.com/egorgasay/grpc-storage/internal/memory-balancer/usecase"
-	balancer "github.com/egorgasay/grpc-storage/pkg/api/balancer"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"grpc-storage/internal/memory-balancer/config"
+	"grpc-storage/internal/memory-balancer/handler"
+	"grpc-storage/internal/memory-balancer/storage"
+	"grpc-storage/internal/memory-balancer/usecase"
+	balancer "grpc-storage/pkg/api/balancer"
 	"log"
 	"net"
 	"os"
@@ -15,8 +17,14 @@ import (
 )
 
 func main() {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	cfg := config.New()
-	logic := usecase.New()
+	store, err := storage.New(cfg)
+	logic := usecase.New(store, logger)
 	h := handler.New(logic)
 	grpcServer := grpc.NewServer()
 
@@ -39,5 +47,6 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
+	grpcServer.GracefulStop()
 	log.Println("Shutdown Balancer ...")
 }

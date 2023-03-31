@@ -25,6 +25,7 @@ type BalancerClient interface {
 	Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
 	Get(ctx context.Context, in *BalancerGetRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
+	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
 }
 
 type balancerClient struct {
@@ -62,6 +63,15 @@ func (c *balancerClient) Connect(ctx context.Context, in *ConnectRequest, opts .
 	return out, nil
 }
 
+func (c *balancerClient) Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error) {
+	out := new(DisconnectResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/Disconnect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BalancerServer is the server API for Balancer service.
 // All implementations must embed UnimplementedBalancerServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type BalancerServer interface {
 	Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error)
 	Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error)
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
+	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
 	mustEmbedUnimplementedBalancerServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedBalancerServer) Get(context.Context, *BalancerGetRequest) (*B
 }
 func (UnimplementedBalancerServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
+}
+func (UnimplementedBalancerServer) Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
 }
 func (UnimplementedBalancerServer) mustEmbedUnimplementedBalancerServer() {}
 
@@ -152,6 +166,24 @@ func _Balancer_Connect_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisconnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Disconnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/Disconnect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Disconnect(ctx, req.(*DisconnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Balancer_ServiceDesc is the grpc.ServiceDesc for Balancer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Connect",
 			Handler:    _Balancer_Connect_Handler,
+		},
+		{
+			MethodName: "Disconnect",
+			Handler:    _Balancer_Disconnect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

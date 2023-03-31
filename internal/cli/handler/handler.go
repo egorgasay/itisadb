@@ -2,13 +2,16 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/egorgasay/grpc-storage/internal/cli/config"
-	"github.com/egorgasay/grpc-storage/internal/cli/cookies"
-	"github.com/egorgasay/grpc-storage/internal/cli/schema"
-	"github.com/egorgasay/grpc-storage/internal/cli/usecase"
-	"github.com/egorgasay/grpc-storage/pkg/logger"
+	"errors"
 	"github.com/labstack/echo"
 	"github.com/thedevsaddam/renderer"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"grpc-storage/internal/cli/config"
+	"grpc-storage/internal/cli/cookies"
+	"grpc-storage/internal/cli/schema"
+	"grpc-storage/internal/cli/usecase"
+	"grpc-storage/pkg/logger"
 	"net/http"
 )
 
@@ -51,6 +54,13 @@ func (h *Handler) Action(c echo.Context) error {
 	action := c.Request().URL.Query().Get("action")
 	res, err := h.logic.ProcessQuery(cookie.Value, action)
 	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && st.Code().String() == codes.NotFound.String() {
+			err = errors.New("the value is not found")
+		} else if ok && st.Code().String() == codes.Unavailable.String() {
+			err = errors.New("memory balancer is offline")
+		}
+
 		h.Warn(err.Error())
 		var t = schema.Response{Text: err.Error()}
 		bytes, err := json.Marshal(t)
