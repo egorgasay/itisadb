@@ -10,19 +10,19 @@ You can connect to the Web Application (Echo) via the Web interface to enter the
 
 # Quick start
 
-## Server with LoadBalancer
+## Server with Memory Balancer
 ```bash
 go run cmd/balancer/main.go -a=':PORT' -d='MONGODB_URI'
 ```
 
 ## Server with WebApplication
 ```bash
-go run cmd/grpc-storage-cli/main.go -a=':PORT' -b='BALANCER_IP'
+go run cmd/grpc-storage-cli/main.go -a=':PORT' -b='BALANCER_IP:BALANCER_PORT'
 ```
 
 ## Server (or servers) with Storage instance
 ```bash
-go run cmd/grpc-storage/main.go -a=':PORT' -d='MONGODB_URI -connect='BALANCER_IP'
+go run cmd/grpc-storage/main.go -a=':PORT' -d='MONGODB_URI' -connect='BALANCER_IP:BALANCER_PORT'
 ```
 
 # Preview of the WebApplication  
