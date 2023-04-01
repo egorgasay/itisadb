@@ -3,12 +3,16 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"grpc-storage/internal/grpc-storage/config"
+	transactionlogger "grpc-storage/internal/grpc-storage/transaction-logger"
+	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"grpc-storage/internal/schema"
+	"grpc-storage/pkg/logger"
 	"log"
 	"sync"
 )
@@ -19,9 +23,11 @@ type Storage struct {
 	DBStore *mongo.Database
 	sync.RWMutex
 	RAMStorage map[string]string
+	TLogger    transactionlogger.ITransactionLogger
+	logger     logger.ILogger
 }
 
-func New(cfg *config.DBConfig) (*Storage, error) {
+func New(cfg *config.DBConfig, logger logger.ILogger) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
 	}
@@ -32,10 +38,43 @@ func New(cfg *config.DBConfig) (*Storage, error) {
 		return nil, err
 	}
 
-	return &Storage{
+	st := &Storage{
 		DBStore:    client.Database("grpc-server"),
 		RAMStorage: make(map[string]string, 10),
-	}, nil
+		logger:     logger,
+	}
+
+	err = st.InitTLogger()
+	if err != nil {
+		return nil, err
+	}
+	return st, nil
+}
+
+func (s *Storage) InitTLogger() error {
+	var err error
+
+	s.TLogger, err = transactionlogger.NewTransactionLogger("transaction.log")
+	if err != nil {
+		return fmt.Errorf("failed to create event logger: %w", err)
+	}
+
+	events, errs := s.TLogger.ReadEvents()
+	e, ok := service.Event{}, true
+	s.TLogger.Run()
+	for ok && err == nil {
+		select {
+		case err, ok = <-errs:
+		case e, ok = <-events:
+			switch e.EventType {
+			case service.Delete:
+			case service.Set:
+				s.Set(e.Key, e.Value)
+			}
+		}
+	}
+
+	return err
 }
 
 func (s *Storage) Set(key string, val string) {
@@ -78,7 +117,7 @@ func (s *Storage) get(key string) (string, error) {
 	return kv.Value, nil
 }
 
-func (s *Storage) Save() {
+func (s *Storage) Save() error {
 	c := s.DBStore.Collection("map")
 	s.Lock()
 	defer s.Unlock()
@@ -90,7 +129,9 @@ func (s *Storage) Save() {
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)
 		if err != nil {
-			log.Println(err)
+			s.logger.Warn(err.Error())
 		}
 	}
+
+	return s.TLogger.Clear()
 }

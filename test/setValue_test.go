@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/httplog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"grpc-storage/internal/grpc-storage/config"
@@ -10,6 +11,7 @@ import (
 	"grpc-storage/internal/grpc-storage/storage"
 	"grpc-storage/internal/grpc-storage/usecase"
 	pb "grpc-storage/pkg/api/storage"
+	"grpc-storage/pkg/logger"
 	"log"
 	"net"
 	"os"
@@ -17,8 +19,16 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	lg := httplog.NewLogger("grpc-storage", httplog.Options{
+		Concise: true,
+	})
 	_ = config.New()
-	logic := usecase.New(&storage.Storage{RAMStorage: make(map[string]string)})
+	st := &storage.Storage{RAMStorage: make(map[string]string)}
+	err := st.InitTLogger()
+	if err != nil {
+		log.Fatal(err)
+	}
+	logic := usecase.New(st, logger.New(lg))
 	h := handler.New(logic)
 	grpcServer := grpc.NewServer()
 

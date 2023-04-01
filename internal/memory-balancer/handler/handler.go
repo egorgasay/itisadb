@@ -63,10 +63,7 @@ func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*ap
 }
 
 func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {
-	err := h.logic.Disconnect(request.GetServerNumber())
-	if err != nil {
-		return nil, err
-	}
+	h.logic.Disconnect(request.GetServerNumber())
 
 	return &api.DisconnectResponse{}, nil
 }

@@ -21,20 +21,27 @@ import (
 var ErrNoData = errors.New("the value is not found")
 
 type UseCase struct {
-	clients map[uint64]storage.StorageClient
+	clients map[uint64]*client
 	sync.RWMutex
 	logger  *zap.Logger
 	storage *repo.Storage
 	queue   *queue.Queue[uint64]
 }
 
+type client struct {
+	tries   uint
+	storage storage.StorageClient
+}
+
 func New(repository *repo.Storage, logger *zap.Logger) *UseCase {
-	clients := make(map[uint64]storage.StorageClient, 10)
+	Queue := &queue.Queue[uint64]{}
+
+	clients := make(map[uint64]*client, 10)
 	return &UseCase{
 		clients: clients,
 		storage: repository,
 		logger:  logger,
-		queue:   &queue.Queue[uint64]{},
+		queue:   Queue,
 	}
 }
 
@@ -44,6 +51,7 @@ func (uc *UseCase) Set(key string, val string) (uint64, error) {
 	if len(uc.clients) == 0 {
 		err := uc.storage.Set(key, val)
 		if err != nil {
+			uc.logger.Warn(err.Error())
 			return 0, fmt.Errorf("error while setting new pair to dbstorage with no active grpc-storages: %w", err)
 		}
 		return 0, nil
@@ -53,12 +61,13 @@ func (uc *UseCase) Set(key string, val string) (uint64, error) {
 	if !ok || cl == nil {
 		err := uc.storage.Set(key, val)
 		if err != nil {
+			uc.logger.Warn(err.Error())
 			return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
 		}
 		return 0, nil
 	}
 
-	_, err := cl.Set(context.Background(), &storage.SetRequest{Key: key, Value: val})
+	_, err := cl.storage.Set(context.Background(), &storage.SetRequest{Key: key, Value: val})
 	if err != nil {
 		return 0, nil
 	}
@@ -76,50 +85,61 @@ func (uc *UseCase) Get(key string) (string, error) {
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				return "", fmt.Errorf("error while getting new pair to dbstorage with no active grpc-storages: %w", ErrNoData)
 			}
+			uc.logger.Warn(err.Error())
 			return value, fmt.Errorf("error while getting new pair to dbstorage with no active grpc-storages: %w", err)
 		}
 		return value, nil
 	}
 
-	cl, ok := uc.clients[uint64(len(key)%(len(uc.clients))+1)]
+	serverNumber := uint64(len(key)%(len(uc.clients)) + 1)
+	cl, ok := uc.clients[serverNumber]
 	if !ok || cl == nil {
 		value, err := uc.storage.Get(key)
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				return "", fmt.Errorf("error while getting new pair to dbstorage with offline grpc-storages: %w", ErrNoData)
 			}
+			uc.logger.Warn(err.Error())
 			return value, fmt.Errorf("error while getting new pair to dbstorage with offline grpc-storage: %w", err)
 		}
 		return value, nil
 	}
 
-	res, err := cl.Get(context.Background(), &storage.GetRequest{Key: key})
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return "", err
-		}
-		if st.Code().String() == codes.NotFound.String() {
-			return "", ErrNoData
-		}
+	res, err := cl.storage.Get(context.Background(), &storage.GetRequest{Key: key})
+	if err == nil {
+		return res.Value, nil
+	}
 
-		if st.Code().String() == codes.Unavailable.String() { // connection error
-			get, err := uc.storage.Get(key)
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return "", ErrNoData
-			}
-			return get, err
-		}
+	uc.logger.Warn(err.Error())
+	st, ok := status.FromError(err)
+	if !ok {
+		return "", err
+	}
+	if st.Code().String() == codes.NotFound.String() {
+		return "", ErrNoData
+	}
 
+	if st.Code().String() != codes.Unavailable.String() { // connection error
 		return "", fmt.Errorf("can't get the value from server: %w", err)
 	}
 
-	return res.Value, nil
+	if cl.tries > 2 {
+		uc.Disconnect(serverNumber)
+		cl.tries = 0
+	}
+
+	get, err := uc.storage.Get(key)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return "", ErrNoData
+	}
+	return get, err
 }
 
 func (uc *UseCase) Connect(address string) (uint64, error) {
 	uc.Lock()
 	defer uc.Unlock()
+
+	uc.logger.Info("New request for connect from " + address)
 
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -128,21 +148,24 @@ func (uc *UseCase) Connect(address string) (uint64, error) {
 
 	cl := storage.NewStorageClient(conn)
 
+	var stClient = &client{
+		tries:   0,
+		storage: cl,
+	}
+
 	numForReuse, ok := uc.queue.Dequeue()
 	number := uint64(len(uc.clients) + 1)
 	if ok {
 		number = numForReuse
 	}
 
-	uc.clients[number] = cl
+	uc.clients[number] = stClient
 	return number, nil
 }
 
-func (uc *UseCase) Disconnect(number uint64) error {
+func (uc *UseCase) Disconnect(number uint64) {
 	uc.RLock()
 	defer uc.RUnlock()
 	uc.clients[number] = nil
 	uc.queue.Enqueue(number)
-
-	return nil
 }

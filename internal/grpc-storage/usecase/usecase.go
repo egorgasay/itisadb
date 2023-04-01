@@ -3,19 +3,21 @@ package usecase
 import (
 	"github.com/pbnjay/memory"
 	"grpc-storage/internal/grpc-storage/storage"
-	"log"
+	"grpc-storage/pkg/logger"
 )
 
 type UseCase struct {
 	storage *storage.Storage
+	logger  logger.ILogger
 }
 
-func New(storage *storage.Storage) *UseCase {
-	return &UseCase{storage: storage}
+func New(storage *storage.Storage, logger logger.ILogger) *UseCase {
+	return &UseCase{storage: storage, logger: logger}
 }
 
 func (uc *UseCase) Set(key string, val string) RAM {
 	uc.storage.Set(key, val)
+	uc.storage.TLogger.WriteSet(key, val)
 	return RAMUsage()
 }
 
@@ -37,6 +39,9 @@ func (uc *UseCase) Get(key string) (string, error) {
 }
 
 func (uc *UseCase) Save() {
-	log.Println("Saving values ...")
-	uc.storage.Save()
+	uc.logger.Info("Saving values ...")
+	err := uc.storage.Save()
+	if err != nil {
+		uc.logger.Warn(err.Error())
+	}
 }

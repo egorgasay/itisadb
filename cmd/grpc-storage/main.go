@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-chi/httplog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -11,6 +12,7 @@ import (
 	"grpc-storage/internal/grpc-storage/usecase"
 	"grpc-storage/pkg/api/balancer"
 	pb "grpc-storage/pkg/api/storage"
+	"grpc-storage/pkg/logger"
 	"log"
 	"net"
 	"os"
@@ -20,12 +22,15 @@ import (
 
 func main() {
 	cfg := config.New()
-	store, err := storage.New(cfg.DBConfig)
+
+	lg := httplog.NewLogger("grpc-storage", httplog.Options{
+		Concise: true,
+	})
+	store, err := storage.New(cfg.DBConfig, logger.New(lg))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
-
-	logic := usecase.New(store)
+	logic := usecase.New(store, logger.New(lg))
 	h := handler.New(logic)
 
 	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
