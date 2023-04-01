@@ -29,19 +29,25 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
-	value, err := h.logic.Get(r.Key)
+	ram, value, err := h.logic.Get(r.Key)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &api.GetResponse{
-				Value: err.Error(),
+				Available: ram.Available,
+				Total:     ram.Total,
+				Value:     err.Error(),
 			}, status.Error(codes.NotFound, err.Error())
 		}
 		return &api.GetResponse{
-			Value: err.Error(),
+			Available: ram.Available,
+			Total:     ram.Total,
+			Value:     err.Error(),
 		}, err
 	}
 
 	return &api.GetResponse{
-		Value: value,
+		Available: ram.Available,
+		Total:     ram.Total,
+		Value:     value,
 	}, nil
 }

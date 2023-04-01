@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"log"
 	"strings"
 
@@ -36,4 +37,10 @@ func (uc *UseCase) ProcessQuery(cookie string, line string) (string, error) {
 
 func (uc *UseCase) History(cookie string) (string, error) {
 	return uc.storage.GetHistory(cookie)
+}
+
+func (uc *UseCase) Servers() (string, error) {
+	b := balancer.NewBalancerClient(uc.conn)
+	servers, err := b.Servers(context.TODO(), &balancer.ServersRequest{})
+	return servers.ServersInfo, err
 }

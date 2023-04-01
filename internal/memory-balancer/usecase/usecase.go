@@ -29,8 +29,13 @@ type UseCase struct {
 }
 
 type client struct {
-	tries   uint
-	storage storage.StorageClient
+	tries     uint
+	storage   storage.StorageClient
+	available uint64
+	total     uint64
+}
+
+type RAM struct {
 }
 
 func New(repository *repo.Storage, logger *zap.Logger) *UseCase {
@@ -67,10 +72,13 @@ func (uc *UseCase) Set(key string, val string) (uint64, error) {
 		return 0, nil
 	}
 
-	_, err := cl.storage.Set(context.Background(), &storage.SetRequest{Key: key, Value: val})
+	resp, err := cl.storage.Set(context.Background(), &storage.SetRequest{Key: key, Value: val})
 	if err != nil {
 		return 0, nil
 	}
+
+	cl.total = resp.Total
+	cl.available = resp.Available
 
 	return serverNumber, nil
 }
@@ -107,6 +115,8 @@ func (uc *UseCase) Get(key string) (string, error) {
 
 	res, err := cl.storage.Get(context.Background(), &storage.GetRequest{Key: key})
 	if err == nil {
+		cl.total = res.Total
+		cl.available = res.Available
 		return res.Value, nil
 	}
 
@@ -168,4 +178,19 @@ func (uc *UseCase) Disconnect(number uint64) {
 	defer uc.RUnlock()
 	uc.clients[number] = nil
 	uc.queue.Enqueue(number)
+}
+
+func (uc *UseCase) Servers() []string {
+	uc.RLock()
+	defer uc.RUnlock()
+	var servers = make([]string, 0, 5)
+	for num, cl := range uc.clients {
+		if cl != nil {
+			servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", num, cl.available, cl.total))
+		} else {
+			servers = append(servers, fmt.Sprintf("s#%d empty server slot", num))
+		}
+	}
+
+	return servers
 }

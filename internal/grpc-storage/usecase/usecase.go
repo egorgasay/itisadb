@@ -34,8 +34,9 @@ func RAMUsage() RAM {
 	}
 }
 
-func (uc *UseCase) Get(key string) (string, error) {
-	return uc.storage.Get(key)
+func (uc *UseCase) Get(key string) (RAM, string, error) {
+	s, err := uc.storage.Get(key)
+	return RAMUsage(), s, err
 }
 
 func (uc *UseCase) Save() {

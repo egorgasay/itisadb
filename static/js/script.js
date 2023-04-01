@@ -7,10 +7,12 @@ window.onload = function () {
       var command = this.value;
       this.value = "";
       if (command == "help") {
-        output.innerHTML = "set key value <br>get key<br>history";
+        output.innerHTML = "set key value <br>get key<br>history - history of user actions<br>servers - list of active servers with stats";
       } else if (command == "history") {
         fetch("/history").then(response => response.json()).then(json => output.innerHTML = json.text);
-        } else {
+      } else if (command == "servers") {
+        fetch("/servers").then(response => response.json()).then(json => output.innerHTML = json.text);
+      }else {
         fetch("/act?action="+command).then(response => response.json()).then(json => output.innerHTML = json.text);
       }
     }

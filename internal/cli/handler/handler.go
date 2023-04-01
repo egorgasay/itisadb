@@ -112,3 +112,26 @@ func (h *Handler) History(c echo.Context) error {
 	c.Response().Write(bytes)
 	return nil
 }
+
+func (h *Handler) Servers(c echo.Context) error {
+	servers, err := h.logic.Servers()
+	if servers == "" {
+		servers = "no available servers"
+	}
+
+	var t = schema.Response{Text: servers}
+	if err != nil {
+		t = schema.Response{Text: err.Error()}
+	}
+
+	bytes, err := json.Marshal(t)
+	if err != nil {
+		t = schema.Response{Text: err.Error()}
+		bytes, err = json.Marshal(t)
+		if err != nil {
+			h.Warn(err.Error())
+		}
+	}
+	c.Response().Write(bytes)
+	return nil
+}

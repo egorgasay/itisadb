@@ -9,6 +9,7 @@ service Balancer {
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
+  rpc Servers(ServersRequest) returns (ServersResponse) {}
 }
 
 message BalancerSetRequest {
@@ -31,6 +32,8 @@ message DisconnectRequest{
   uint64 serverNumber = 1;
 }
 
+message ServersRequest{ }
+
 message BalancerGetResponse {
   string value = 1;
 }
@@ -46,3 +49,7 @@ message ConnectResponse {
 }
 
 message DisconnectResponse{ }
+
+message ServersResponse {
+  string serversInfo = 1;
+}

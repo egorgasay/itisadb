@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 	"grpc-storage/internal/memory-balancer/usecase"
 	api "grpc-storage/pkg/api/balancer"
+	"strings"
 )
 
 type Handler struct {
@@ -66,4 +67,12 @@ func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest
 	h.logic.Disconnect(request.GetServerNumber())
 
 	return &api.DisconnectResponse{}, nil
+}
+
+func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*api.ServersResponse, error) {
+	servers := h.logic.Servers()
+	s := strings.Join(servers, "<br>")
+	return &api.ServersResponse{
+		ServersInfo: s,
+	}, nil
 }
