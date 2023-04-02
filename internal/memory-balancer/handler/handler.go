@@ -20,7 +20,7 @@ func New(logic *usecase.UseCase) *Handler {
 }
 
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
-	setTo, err := h.logic.Set(r.Key, r.Value)
+	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server)
 
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal())
+	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal(), request.Server)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/go-chi/httplog"
 	"golang.org/x/net/context"
@@ -51,7 +52,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to connect to the balancer: %v", err)
 	}
-
 	grpcServer := grpc.NewServer()
 
 	go func() {
@@ -71,13 +71,30 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	sc := bufio.NewScanner(os.Stdin)
 
-	<-quit
-	_, err = cl.Disconnect(context.Background(), &balancer.DisconnectRequest{ServerNumber: resp.GetServerNumber()})
-	if err != nil {
-		log.Println(err)
+	fmt.Print("PRESS ENTER FOR RECONNECT")
+fl:
+	for sc.Scan() {
+		select {
+		case <-quit:
+			_, err = cl.Disconnect(context.Background(), &balancer.DisconnectRequest{ServerNumber: resp.GetServerNumber()})
+			if err != nil {
+				log.Println(err)
+			}
+			grpcServer.GracefulStop()
+			logic.Save()
+			log.Println("Shutdown Server ...")
+			break fl
+		default:
+			fmt.Print("RECONNECTING ...\n")
+			cr.Server = resp.ServerNumber
+			_, err = cl.Connect(context.Background(), cr)
+			if err != nil {
+				log.Fatalf("Unable to connect to the balancer: %v", err)
+			}
+			fmt.Print("PRESS ENTER FOR RECONNECT")
+		}
 	}
-	grpcServer.GracefulStop()
-	logic.Save()
-	log.Println("Shutdown Server ...")
+
 }

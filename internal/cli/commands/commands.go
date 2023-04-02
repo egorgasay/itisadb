@@ -25,10 +25,18 @@ type Action string
 var ErrWrongInput = errors.New("wrong input")
 var ErrUnknownCMD = errors.New("unknown cmd")
 var ErrEmpty = errors.New("the value does not exist")
+var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
 	get = "get"
 	set = "set"
+)
+
+const (
+	_ = iota * -1
+	dbOnly
+	setToAll
+	AllAndDB
 )
 
 func (c *Commands) Do(act Action, args ...string) (string, error) {
@@ -38,7 +46,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 			return "", ErrWrongInput
 		}
 
-		var server = -1
+		var server = 0
 		if len(args) != 1 {
 			num, err := strconv.Atoi(args[len(args)-1])
 			if err == nil {
@@ -51,7 +59,17 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		if len(args) < 2 {
 			return "", ErrWrongInput
 		}
-		return c.set(args[0], strings.Join(args[1:], " "))
+
+		var server int32 = 0
+		if len(args) > 2 {
+			num, err := strconv.Atoi(args[len(args)-1])
+			if err == nil {
+				server = int32(num)
+				return c.set(args[0], strings.Join(args[1:len(args)-1], " "), server)
+			}
+		}
+
+		return c.set(args[0], strings.Join(args[1:], " "), server)
 	}
 
 	return "", ErrUnknownCMD
@@ -69,12 +87,28 @@ func (c *Commands) get(key string, server int32) (string, error) {
 	return res.Value, nil
 }
 
-func (c *Commands) set(key, value string) (string, error) {
-	res, err := c.cl.Set(context.Background(), &balancer.BalancerSetRequest{Key: key, Value: value})
+func (c *Commands) set(key, value string, server int32) (string, error) {
+	res, err := c.cl.Set(context.Background(), &balancer.BalancerSetRequest{Key: key, Value: value, Server: server})
 	if err != nil {
 		return "", err
 	}
 
 	log.Println(res.String())
-	return fmt.Sprintf("status: %s, saved to server #%d", res.Status, res.SavedTo), nil
+
+	resp := ""
+
+	switch server {
+	case 0:
+		resp = fmt.Sprintf("status: %s, saved on server #%d", res.Status, res.SavedTo)
+	case dbOnly:
+		resp = fmt.Sprintf("status: %s, saved on the database", res.Status)
+	case setToAll:
+		resp = fmt.Sprintf("status: %s, saved on all servers", res.Status)
+	case AllAndDB:
+		resp = fmt.Sprintf("status: %s, saved on all servers and in the database", res.Status)
+	default:
+		resp = fmt.Sprintf("status: %s, saved on server #%d", res.Status, res.SavedTo)
+	}
+
+	return resp, nil
 }
