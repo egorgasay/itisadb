@@ -28,16 +28,22 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 
 	return &api.BalancerSetResponse{
 		Status:  "ok",
-		SavedTo: int32(setTo),
+		SavedTo: setTo,
 	}, nil
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
-	value, err := h.logic.Get(r.Key, r.Server)
+	value, err := h.logic.Get(ctx, r.Key, r.Server)
 	if errors.Is(err, usecase.ErrNoData) {
 		return &api.BalancerGetResponse{
 			Value: err.Error(),
 		}, status.Error(codes.NotFound, err.Error())
+	}
+
+	if errors.Is(err, usecase.ErrUnknownServer) {
+		return &api.BalancerGetResponse{
+			Value: err.Error(),
+		}, status.Error(codes.Unavailable, err.Error())
 	}
 
 	if err != nil {

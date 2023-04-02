@@ -42,10 +42,10 @@ func (s *Servers) GetClient() (*Server, bool) {
 	return cl, ok
 }
 
-func (s *Servers) Len() int {
+func (s *Servers) Len() int32 {
 	s.RLock()
 	defer s.RUnlock()
-	return len(s.servers)
+	return int32(len(s.servers))
 }
 
 func (s *Servers) AddClient(address string, available, total uint64) (int32, error) {
@@ -137,4 +137,9 @@ func (s *Servers) GetClientByID(number int32) (*Server, bool) {
 	defer s.RUnlock()
 	srv, ok := s.servers[number]
 	return srv, ok
+}
+
+func (s *Servers) Exists(number int32) bool {
+	_, ok := s.servers[number]
+	return ok
 }

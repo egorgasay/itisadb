@@ -14,6 +14,7 @@ import (
 )
 
 var ErrNoData = errors.New("the value is not found")
+var ErrUnknownServer = errors.New("unknown server")
 
 type UseCase struct {
 	servers *servers.Servers
@@ -28,6 +29,7 @@ func New(repository *repo.Storage, logger *zap.Logger) *UseCase {
 		storage: repository,
 		logger:  logger,
 		//queue:   &queue.Queue[int32]{},
+		// TODO: server must know his number
 	}
 }
 
@@ -74,10 +76,11 @@ func (uc *UseCase) FindInDB(key string) (string, error) {
 	return value, nil
 }
 
-func (uc *UseCase) Get(key string, serverNumber int32) (string, error) {
-	ctx := context.TODO()
+func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
 		return uc.FindInDB(key)
+	} else if uc.servers.Exists(serverNumber) {
+		return "", ErrUnknownServer
 	}
 
 	if serverNumber == -1 {
@@ -107,11 +110,7 @@ func (uc *UseCase) Get(key string, serverNumber int32) (string, error) {
 	if !ok {
 		return "", err
 	}
-	if st.Code().String() == codes.NotFound.String() {
-		return uc.FindInDB(key)
-	}
-
-	if st.Code().String() != codes.Unavailable.String() { // connection error
+	if st.Code().String() == codes.NotFound.String() || st.Code().String() != codes.Unavailable.String() {
 		return uc.FindInDB(key)
 	}
 

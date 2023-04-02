@@ -63,7 +63,7 @@ func (t *TransactionLogger) Err() <-chan error {
 func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 	outEvent := make(chan service.Event)
 	outError := make(chan error, 1)
-	f, err := os.OpenFile(t.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 777)
+	f, err := os.OpenFile(t.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	t.file = f
 	if err != nil {
 		outError <- err
