@@ -15,6 +15,7 @@ service Balancer {
 message BalancerSetRequest {
   string key = 1;
   string value = 2;
+  int32 server = 3;
 }
 
 message BalancerGetRequest {
@@ -26,6 +27,7 @@ message ConnectRequest {
   string Address = 1;
   uint64 Total = 2;
   uint64 Available = 3;
+  int32 server = 4;
 }
 
 message DisconnectRequest{

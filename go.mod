@@ -10,11 +10,10 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/rs/zerolog v1.27.0
-	github.com/thedevsaddam/renderer v1.2.0
-	github.com/tomakado/containers v0.0.0-20230201144544-f093171e88cf
 	go.mongodb.org/mongo-driver v1.7.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.8.0
+	golang.org/x/tools v0.6.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.28.1
 )
@@ -37,6 +36,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -50,7 +50,5 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

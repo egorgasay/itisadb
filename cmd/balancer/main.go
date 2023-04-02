@@ -24,7 +24,15 @@ func main() {
 
 	cfg := config.New()
 	store, err := storage.New(cfg)
-	logic := usecase.New(store, logger)
+	if err != nil {
+		log.Fatalf("failed to inizialise logic layer: %v", err)
+	}
+
+	logic, err := usecase.New(store, logger)
+	if err != nil {
+		log.Fatalf("failed to inizialise logic layer: %v", err)
+	}
+
 	h := handler.New(logic)
 	grpcServer := grpc.NewServer()
 

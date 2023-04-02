@@ -16,6 +16,13 @@ import (
 var ErrNoData = errors.New("the value is not found")
 var ErrUnknownServer = errors.New("unknown server")
 
+const (
+	_ = iota * -1
+	dbOnly
+	setToAll
+	AllAndDB
+)
+
 type UseCase struct {
 	servers *servers.Servers
 	logger  *zap.Logger
@@ -23,39 +30,71 @@ type UseCase struct {
 	//queue   *queue.Queue[int32]
 }
 
-func New(repository *repo.Storage, logger *zap.Logger) *UseCase {
+func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
+	s, err := servers.New()
+	if err != nil {
+		return nil, err
+	}
 	return &UseCase{
-		servers: servers.New(),
+		servers: s,
 		storage: repository,
 		logger:  logger,
-		//queue:   &queue.Queue[int32]{},
-		// TODO: server must know his number
-	}
+	}, nil
 }
 
-func (uc *UseCase) Set(key string, val string) (int32, error) {
+func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32) (int32, error) {
 	if uc.servers.Len() == 0 {
 		err := uc.storage.Set(key, val)
 		if err != nil {
 			uc.logger.Warn(err.Error())
 			return 0, fmt.Errorf("error while setting new pair to dbstorage with no active grpc-storages: %w", err)
 		}
-		return 0, nil
+		return -1, nil
 	}
 
-	cl, ok := uc.servers.GetClient()
-	if !ok || cl == nil {
-		err := uc.storage.Set(key, val)
-		if err != nil {
-			uc.logger.Warn(err.Error())
-			return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
+	switch serverNumber {
+	case dbOnly:
+		uc.logger.Info("setting k:val to db")
+		return dbOnly, uc.storage.Set(key, val)
+	case setToAll:
+		failedServers := uc.servers.SetToAll(ctx, key, val)
+		if len(failedServers) != 0 {
+			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
-		return 0, nil
+		return setToAll, nil
+	case AllAndDB:
+		uc.logger.Info("setting key:val to all instance")
+		failedServers := uc.servers.SetToAll(ctx, key, val)
+		if len(failedServers) != 0 {
+			return AllAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+		}
+		uc.logger.Info("setting key:val to db")
+		return AllAndDB, uc.storage.Set(key, val)
+	}
+
+	var cl *servers.Server
+	var ok bool
+
+	if serverNumber > 0 {
+		cl, ok = uc.servers.GetClientByID(serverNumber)
+		if !ok || cl == nil {
+			return 0, ErrUnknownServer
+		}
+	} else {
+		cl, ok = uc.servers.GetClient()
+		if !ok || cl == nil {
+			err := uc.storage.Set(key, val)
+			if err != nil {
+				uc.logger.Warn(err.Error())
+				return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
+			}
+			return -1, nil
+		}
 	}
 
 	resp, err := cl.Set(context.Background(), key, val)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	cl.Total = resp.Total
@@ -79,18 +118,18 @@ func (uc *UseCase) FindInDB(key string) (string, error) {
 func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
 		return uc.FindInDB(key)
-	} else if uc.servers.Exists(serverNumber) {
-		return "", ErrUnknownServer
 	}
 
-	if serverNumber == -1 {
+	if serverNumber == 0 {
 		value, err := uc.servers.DeepSearch(ctx, key)
 		if errors.Is(err, servers.ErrNotFound) {
 			return uc.FindInDB(key)
 		}
 		return value, err
-	} else if serverNumber == 0 {
+	} else if serverNumber == -1 {
 		return uc.FindInDB(key)
+	} else if !uc.servers.Exists(serverNumber) {
+		return "", ErrUnknownServer
 	}
 
 	cl, ok := uc.servers.GetClientByID(serverNumber)
@@ -116,16 +155,15 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 
 	if cl.Tries > 2 {
 		uc.Disconnect(cl.Number)
-		cl.Tries = 0
 	}
+	cl.Tries = 0
 
 	return uc.FindInDB(key)
 }
 
-func (uc *UseCase) Connect(address string, available, total uint64) (int32, error) {
+func (uc *UseCase) Connect(address string, available, total uint64, server int32) (int32, error) {
 	uc.logger.Info("New request for connect from " + address)
-	//numForReuse, _ := uc.queue.Dequeue()
-	number, err := uc.servers.AddClient(address, available, total)
+	number, err := uc.servers.AddClient(address, available, total, server)
 	if err != nil {
 		uc.logger.Warn(err.Error())
 		return 0, err
@@ -136,7 +174,6 @@ func (uc *UseCase) Connect(address string, available, total uint64) (int32, erro
 
 func (uc *UseCase) Disconnect(number int32) {
 	uc.servers.Disconnect(number)
-	//uc.queue.Enqueue(number)
 }
 
 func (uc *UseCase) Servers() []string {

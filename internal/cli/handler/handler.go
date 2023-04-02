@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/labstack/echo"
-	"github.com/thedevsaddam/renderer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"grpc-storage/internal/cli/config"
@@ -14,16 +13,6 @@ import (
 	"grpc-storage/pkg/logger"
 	"net/http"
 )
-
-var rnd *renderer.Render
-
-func init() {
-	opts := renderer.Options{
-		ParseGlobPattern: "templates/html/*.html",
-	}
-
-	rnd = renderer.New(opts)
-}
 
 type Handler struct {
 	cfg   *config.Config
@@ -57,6 +46,8 @@ func (h *Handler) Action(c echo.Context) error {
 		st, ok := status.FromError(err)
 		if ok && st.Code().String() == codes.NotFound.String() {
 			err = errors.New("the value is not found")
+		} else if st.Message() == "unknown server" {
+			err = errors.New("unknown server")
 		} else if ok && st.Code().String() == codes.Unavailable.String() {
 			err = errors.New("memory balancer is offline")
 		}

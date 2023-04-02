@@ -9,14 +9,34 @@
 <body>
 <div class="container">
   <div class="block">
-    gRPCis [Version 0.3.1] <br>
+    gRPCis [Version 0.4.1] <br>
   </div><br>
   <div class="block">
     <label for="name">C:\GRPC\Call></label>
     <input type="text" name="name" id="name" autocomplete="off" class="textfield" placeholder="Type your request">
   </div>
   <div class="message">
-    Type 'help' for more information. <br>
+    Hello, friend!<br>
+    This is a web view for a single set\get to\from the distributed database called gRPCis.<br>
+    <br>
+    How it works:
+    Your request will be processed by a web service that will determine the appropriate gRPC method of the memory balancer.<br>
+    After that, the memory balancer will process your operation by saving\getting the necessary values from\to the storage(-s) and <br>
+    return you the value (or the error was not found) if it was a get operation or the server number (or the option number that <br>
+    you specified) on which the value was saved if it was a set operation.<br>
+    <br>
+    Try it now! Type "help" for more information. <br>
+    <br>
+    Здравствуй, друг! <br>
+    Это веб-приложение для единичной вставки\получения значения распределенной базы данных под названием gRPCis.<br>
+    <br>
+    Как это работает:
+    Ваш запрос будет обработан веб-службой, которая определит соответствующий gRPC-метод балансировщика памяти.<br>
+    После этого балансировщик памяти обработает вашу операцию, сохранив\получив необходимые значения из\в хранилище(-ща) <br>
+    и вернет вам значение (или ошибка не найдено), если это была операция get, или номер сервера (или номер опции, который <br>
+    вы указали), на котором значение было сохранено, если это была set операция.<br>
+    <br>
+    Попробуйте сейчас! Введите "справка" для получения дополнительной информации.
   </div>
 </div>
   <script  src="/static/js/script.js"></script>
