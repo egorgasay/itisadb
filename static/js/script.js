@@ -7,7 +7,7 @@ window.onload = function () {
       var command = this.value;
       this.value = "";
       if (command == "help") {
-        output.innerHTML = "set key value <br>get key<br>history - history of user actions<br>servers - list of active servers with stats";
+        output.innerHTML = "set key value - Sets the value to the storage.<br>get key server(optional) - Gets the value from the storage.<br>server > 0 - Search on a specific server. (speed: fast)<br>server = 0 - DB search. (speed: medium)<br>server = -1 (default) - Deep search. (speed: slow)<br><br>history - history of user actions<br>servers - list of active servers with stats";
       } else if (command == "history") {
         fetch("/history").then(response => response.json()).then(json => output.innerHTML = json.text);
       } else if (command == "servers") {

@@ -19,7 +19,7 @@ message BalancerSetRequest {
 
 message BalancerGetRequest {
   string key = 1;
-  string server = 2;
+  int32 server = 2;
 }
 
 message ConnectRequest {
@@ -29,7 +29,7 @@ message ConnectRequest {
 }
 
 message DisconnectRequest{
-  uint64 serverNumber = 1;
+  int32 serverNumber = 1;
 }
 
 message ServersRequest{ }
@@ -40,12 +40,12 @@ message BalancerGetResponse {
 
 message BalancerSetResponse {
   string status = 1;
-  uint64 savedTo = 2;
+  int32 savedTo = 2;
 }
 
 message ConnectResponse {
   string status = 1;
-  uint64 serverNumber = 2;
+  int32 serverNumber = 2;
 }
 
 message DisconnectResponse{ }

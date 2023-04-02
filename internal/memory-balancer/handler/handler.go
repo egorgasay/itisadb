@@ -28,12 +28,12 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 
 	return &api.BalancerSetResponse{
 		Status:  "ok",
-		SavedTo: setTo,
+		SavedTo: int32(setTo),
 	}, nil
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
-	value, err := h.logic.Get(r.Key)
+	value, err := h.logic.Get(r.Key, r.Server)
 	if errors.Is(err, usecase.ErrNoData) {
 		return &api.BalancerGetResponse{
 			Value: err.Error(),
@@ -52,7 +52,7 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	serverNum, err := h.logic.Connect(request.GetAddress())
+	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal())
 	if err != nil {
 		return nil, err
 	}

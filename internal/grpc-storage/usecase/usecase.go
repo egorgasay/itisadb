@@ -17,7 +17,7 @@ func New(storage *storage.Storage, logger logger.ILogger) *UseCase {
 
 func (uc *UseCase) Set(key string, val string) RAM {
 	uc.storage.Set(key, val)
-	uc.storage.TLogger.WriteSet(key, val)
+	uc.storage.WriteSet(key, val)
 	return RAMUsage()
 }
 

@@ -11,9 +11,7 @@ import (
 	"grpc-storage/internal/grpc-storage/config"
 	transactionlogger "grpc-storage/internal/grpc-storage/transaction-logger"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
-	"grpc-storage/internal/schema"
 	"grpc-storage/pkg/logger"
-	"log"
 	"sync"
 )
 
@@ -23,7 +21,7 @@ type Storage struct {
 	DBStore *mongo.Database
 	sync.RWMutex
 	RAMStorage map[string]string
-	TLogger    transactionlogger.ITransactionLogger
+	tLogger    transactionlogger.ITransactionLogger
 	logger     logger.ILogger
 }
 
@@ -54,14 +52,14 @@ func New(cfg *config.DBConfig, logger logger.ILogger) (*Storage, error) {
 func (s *Storage) InitTLogger() error {
 	var err error
 
-	s.TLogger, err = transactionlogger.NewTransactionLogger("transaction.log")
+	s.tLogger, err = transactionlogger.NewTransactionLogger("transaction.log")
 	if err != nil {
 		return fmt.Errorf("failed to create event logger: %w", err)
 	}
 
-	events, errs := s.TLogger.ReadEvents()
+	events, errs := s.tLogger.ReadEvents()
 	e, ok := service.Event{}, true
-	s.TLogger.Run()
+	s.tLogger.Run()
 	for ok && err == nil {
 		select {
 		case err, ok = <-errs:
@@ -83,38 +81,19 @@ func (s *Storage) Set(key string, val string) {
 	s.RAMStorage[key] = val
 }
 
+func (s *Storage) WriteSet(key string, val string) {
+	s.tLogger.WriteSet(key, val)
+}
+
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
 	defer s.RUnlock()
 	val, ok := s.RAMStorage[key]
 	if !ok {
-		res, err := s.get(key)
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return "", ErrNotFound
-		} else if err != nil {
-			return "", err
-		}
-		s.RAMStorage[key] = res
-
-		return res, nil
+		return "", ErrNotFound
 	}
 
 	return val, nil
-}
-
-// get gets value by key from db.
-func (s *Storage) get(key string) (string, error) {
-	c := s.DBStore.Collection("map")
-	filter := bson.D{{"Key", key}}
-
-	var kv schema.KeyValue
-	ctx := context.Background()
-	if err := c.FindOne(ctx, filter).Decode(&kv); err != nil {
-		log.Println(err)
-		return "", err
-	}
-
-	return kv.Value, nil
 }
 
 func (s *Storage) Save() error {
@@ -133,5 +112,5 @@ func (s *Storage) Save() error {
 		}
 	}
 
-	return s.TLogger.Clear()
+	return s.tLogger.Clear()
 }

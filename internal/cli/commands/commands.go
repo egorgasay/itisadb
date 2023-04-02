@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"grpc-storage/pkg/api/balancer"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -36,7 +37,16 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
-		return c.get(args[0])
+
+		var server = -1
+		if len(args) != 1 {
+			num, err := strconv.Atoi(args[len(args)-1])
+			if err == nil {
+				server = num
+			}
+		}
+
+		return c.get(args[0], int32(server))
 	case set:
 		if len(args) < 2 {
 			return "", ErrWrongInput
@@ -47,8 +57,8 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 	return "", ErrUnknownCMD
 }
 
-func (c *Commands) get(key string) (string, error) {
-	res, err := c.cl.Get(context.Background(), &balancer.BalancerGetRequest{Key: key})
+func (c *Commands) get(key string, server int32) (string, error) {
+	res, err := c.cl.Get(context.Background(), &balancer.BalancerGetRequest{Key: key, Server: server})
 	if err != nil {
 		return "", err
 	} else if res.Value == "" {
