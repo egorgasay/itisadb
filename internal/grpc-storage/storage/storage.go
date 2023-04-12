@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"grpc-storage/internal/grpc-storage/config"
-	transactionlogger "grpc-storage/internal/grpc-storage/transaction-logger"
+	tlogger "grpc-storage/internal/grpc-storage/transaction-logger"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"grpc-storage/pkg/logger"
 	"sync"
@@ -21,17 +21,17 @@ type Storage struct {
 	DBStore *mongo.Database
 	sync.RWMutex
 	RAMStorage map[string]string
-	tLogger    transactionlogger.ITransactionLogger
+	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
 
-func New(cfg *config.DBConfig, logger logger.ILogger) (*Storage, error) {
+func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
 	}
 
 	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DataSourceCred))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DBConfig.DataSourceCred))
 	if err != nil {
 		return nil, err
 	}
@@ -42,17 +42,17 @@ func New(cfg *config.DBConfig, logger logger.ILogger) (*Storage, error) {
 		logger:     logger,
 	}
 
-	err = st.InitTLogger()
+	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
 	if err != nil {
 		return nil, err
 	}
+
 	return st, nil
 }
 
-func (s *Storage) InitTLogger() error {
+func (s *Storage) InitTLogger(Type string, dir string) error {
 	var err error
-
-	s.tLogger, err = transactionlogger.NewTransactionLogger("transaction.log")
+	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {
 		return fmt.Errorf("failed to create event logger: %w", err)
 	}
@@ -72,7 +72,7 @@ func (s *Storage) InitTLogger() error {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (s *Storage) Set(key string, val string) {

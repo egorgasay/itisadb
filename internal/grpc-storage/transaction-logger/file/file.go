@@ -21,8 +21,9 @@ type TransactionLogger struct {
 	sync.RWMutex
 }
 
-func NewLogger() (*TransactionLogger, error) {
-	path := "transactions"
+func NewLogger(path string) (*TransactionLogger, error) {
+	// TODO: ADD CHANGING SERVER NUMBER
+	path += "/transactionLogger"
 
 	return &TransactionLogger{
 		path: path,

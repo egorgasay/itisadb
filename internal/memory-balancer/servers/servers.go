@@ -127,8 +127,8 @@ func (s *Servers) GetServers() []string {
 	defer s.RUnlock()
 
 	var servers = make([]string, 0, 5)
-	for num, cl := range s.servers {
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", num, cl.Available, cl.Total))
+	for _, cl := range s.servers {
+		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number, cl.Available, cl.Total))
 	}
 
 	return servers
