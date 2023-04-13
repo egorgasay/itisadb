@@ -37,8 +37,8 @@ func init() {
 	f.host = flag.String("a", defaultHost, "-a=host")
 	f.dsn = flag.String("d", "", "-d=connection_string")
 	f.balancer = flag.String("connect", "", "-connect=ip:port")
-	f.tloggerType = flag.String("tlog_type", "file", "-tlog_type=db")
-	f.tLoggerDir = flag.String("tlog_dir", "/tmp", "-tlog_dir=/tmp")
+	f.tloggerType = flag.String("tlog_type", "db", "-tlog_type=db")
+	f.tLoggerDir = flag.String("tlog_dir", "/", "-tlog_dir=/tmp")
 }
 
 func New() *Config {
