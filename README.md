@@ -5,9 +5,9 @@ This is a system consisting of several microservices (Memory Balancer, Storage, 
 <img src="https://user-images.githubusercontent.com/102957432/231838305-8903c6b4-8590-43a0-a7d5-ce7840be0070.png"  width="1000" />
 </p>
 
-# Clients  
+# Drivers  
   
-- Go - [gRPCis-client](https://github.com/egorgasay/gRPCis-client)
+- Go - [grpcis-go-sdk](github.com/egorgasay/grpcis-go-sdk)
 
 # Unique value search algorithm:  
   

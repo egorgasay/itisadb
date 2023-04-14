@@ -18,9 +18,9 @@ import (
 var ErrNotFound = errors.New("the value does not exist")
 
 type Storage struct {
-	DBStore *mongo.Database
+	dbStore *mongo.Database
 	sync.RWMutex
-	RAMStorage map[string]string
+	ramStorage map[string]string
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
@@ -37,8 +37,8 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	}
 
 	st := &Storage{
-		DBStore:    client.Database("grpc-server"),
-		RAMStorage: make(map[string]string, 10),
+		dbStore:    client.Database("grpc-server"),
+		ramStorage: make(map[string]string, 10),
 		logger:     logger,
 	}
 
@@ -78,7 +78,7 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 func (s *Storage) Set(key string, val string) {
 	s.Lock()
 	defer s.Unlock()
-	s.RAMStorage[key] = val
+	s.ramStorage[key] = val
 }
 
 func (s *Storage) WriteSet(key string, val string) {
@@ -88,7 +88,7 @@ func (s *Storage) WriteSet(key string, val string) {
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
 	defer s.RUnlock()
-	val, ok := s.RAMStorage[key]
+	val, ok := s.ramStorage[key]
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -97,13 +97,13 @@ func (s *Storage) Get(key string) (string, error) {
 }
 
 func (s *Storage) Save() error {
-	c := s.DBStore.Collection("map")
+	c := s.dbStore.Collection("map")
 	s.Lock()
 	defer s.Unlock()
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	for key, value := range s.RAMStorage {
+	for key, value := range s.ramStorage {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)
