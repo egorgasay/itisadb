@@ -13,7 +13,7 @@ import (
 )
 
 type Storage struct {
-	DBStore *mongo.Database
+	dbStore *mongo.Database
 }
 
 func New(cfg *config.Config) (*Storage, error) {
@@ -28,13 +28,13 @@ func New(cfg *config.Config) (*Storage, error) {
 	}
 
 	return &Storage{
-		DBStore: client.Database("grpc-server"),
+		dbStore: client.Database("grpc-server"),
 	}, nil
 }
 
 // Set adds key:value pair to db.
 func (s *Storage) Set(key string, val string) error {
-	c := s.DBStore.Collection("map")
+	c := s.dbStore.Collection("map")
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
 
@@ -47,7 +47,7 @@ func (s *Storage) Set(key string, val string) error {
 
 // Get gets value by key from db.
 func (s *Storage) Get(key string) (string, error) {
-	c := s.DBStore.Collection("map")
+	c := s.dbStore.Collection("map")
 	filter := bson.D{{"Key", key}}
 
 	var kv schema.KeyValue

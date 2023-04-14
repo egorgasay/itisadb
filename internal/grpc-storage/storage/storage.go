@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"grpc-storage/internal/grpc-storage/config"
-	transactionlogger "grpc-storage/internal/grpc-storage/transaction-logger"
+	tlogger "grpc-storage/internal/grpc-storage/transaction-logger"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"grpc-storage/pkg/logger"
 	"sync"
@@ -18,41 +18,41 @@ import (
 var ErrNotFound = errors.New("the value does not exist")
 
 type Storage struct {
-	DBStore *mongo.Database
+	dbStore *mongo.Database
 	sync.RWMutex
-	RAMStorage map[string]string
-	tLogger    transactionlogger.ITransactionLogger
+	ramStorage map[string]string
+	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
 
-func New(cfg *config.DBConfig, logger logger.ILogger) (*Storage, error) {
+func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
 	}
 
 	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DataSourceCred))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DBConfig.DataSourceCred))
 	if err != nil {
 		return nil, err
 	}
 
 	st := &Storage{
-		DBStore:    client.Database("grpc-server"),
-		RAMStorage: make(map[string]string, 10),
+		dbStore:    client.Database("grpc-server"),
+		ramStorage: make(map[string]string, 10),
 		logger:     logger,
 	}
 
-	err = st.InitTLogger()
+	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
 	if err != nil {
 		return nil, err
 	}
+
 	return st, nil
 }
 
-func (s *Storage) InitTLogger() error {
+func (s *Storage) InitTLogger(Type string, dir string) error {
 	var err error
-
-	s.tLogger, err = transactionlogger.NewTransactionLogger("transaction.log")
+	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {
 		return fmt.Errorf("failed to create event logger: %w", err)
 	}
@@ -72,13 +72,13 @@ func (s *Storage) InitTLogger() error {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (s *Storage) Set(key string, val string) {
 	s.Lock()
 	defer s.Unlock()
-	s.RAMStorage[key] = val
+	s.ramStorage[key] = val
 }
 
 func (s *Storage) WriteSet(key string, val string) {
@@ -88,7 +88,7 @@ func (s *Storage) WriteSet(key string, val string) {
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
 	defer s.RUnlock()
-	val, ok := s.RAMStorage[key]
+	val, ok := s.ramStorage[key]
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -97,13 +97,13 @@ func (s *Storage) Get(key string) (string, error) {
 }
 
 func (s *Storage) Save() error {
-	c := s.DBStore.Collection("map")
+	c := s.dbStore.Collection("map")
 	s.Lock()
 	defer s.Unlock()
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	for key, value := range s.RAMStorage {
+	for key, value := range s.ramStorage {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"grpc-storage/internal/grpc-storage/config"
 	"grpc-storage/internal/grpc-storage/handler"
+	"grpc-storage/internal/grpc-storage/servernumber"
 	"grpc-storage/internal/grpc-storage/storage"
 	"grpc-storage/internal/grpc-storage/usecase"
 	"grpc-storage/pkg/api/balancer"
@@ -27,7 +28,8 @@ func main() {
 	lg := httplog.NewLogger("grpc-storage", httplog.Options{
 		Concise: true,
 	})
-	store, err := storage.New(cfg.DBConfig, logger.New(lg))
+
+	store, err := storage.New(cfg, logger.New(lg))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
@@ -39,12 +41,14 @@ func main() {
 		log.Fatalf("Failed to connect: %v", err)
 	}
 	defer conn.Close()
+
 	ram := usecase.RAMUsage()
 
 	cr := &balancer.ConnectRequest{
 		Address:   cfg.Host,
 		Total:     ram.Total,
 		Available: ram.Available,
+		Server:    servernumber.Get(cfg.TLoggerDir),
 	}
 
 	cl := balancer.NewBalancerClient(conn)
@@ -52,7 +56,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to connect to the balancer: %v", err)
 	}
+
+	if cr.Server == 0 {
+		err := servernumber.Set(cfg.TLoggerDir, resp.ServerNumber)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	}
+
 	grpcServer := grpc.NewServer()
+
+	//err = store.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir, &resp.ServerNumber)
+	//if err != nil {
+	//	log.Fatal("Failed to init TLogger:", err)
+	//}
 
 	go func() {
 		log.Println("Starting Server ...")

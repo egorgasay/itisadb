@@ -1,8 +1,10 @@
 package transactionlogger
 
 import (
+	"grpc-storage/internal/grpc-storage/transaction-logger/db"
 	"grpc-storage/internal/grpc-storage/transaction-logger/file"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"os"
 )
 
 type ITransactionLogger interface {
@@ -17,10 +19,17 @@ type ITransactionLogger interface {
 }
 
 const File = "file"
+const DB = "db"
 
-func NewTransactionLogger(Type string) (ITransactionLogger, error) {
+func NewTransactionLogger(Type string, dir string) (ITransactionLogger, error) {
+	err := os.MkdirAll(dir, 0644)
+	if err != nil {
+		return nil, err
+	}
 	switch Type {
-	default:
-		return file.NewLogger()
+	case DB:
+		return db.NewLogger(dir)
+	default: // File logger by default
+		return file.NewLogger(dir)
 	}
 }
