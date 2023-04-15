@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,8 +23,7 @@ type TransactionLogger struct {
 }
 
 func NewLogger(path string) (*TransactionLogger, error) {
-	// TODO: ADD CHANGING SERVER NUMBER
-	path += "/transactionLogger"
+	path = strings.TrimRight(path, "/") + "/transactionLogger"
 
 	return &TransactionLogger{
 		path: path,
@@ -40,23 +40,39 @@ func (t *TransactionLogger) WriteDelete(key string) {
 
 func (t *TransactionLogger) Run() {
 	events := make(chan service.Event, 20)
-	errors := make(chan error, 20)
 
 	t.events = events
-	t.errors = errors
+
+	var sb = strings.Builder{}
+	var count = 0
 
 	go func() {
-		t.Lock()
 		for e := range events {
-			_, err := t.file.WriteString(fmt.Sprintf("%v %s %s\n", e.EventType, e.Key, e.Value))
-			if err != nil {
-				errors <- err
-				return
+			sb.WriteString(fmt.Sprintf("%v %s %s\n", e.EventType, e.Key, e.Value))
+			if count == 20 {
+				go t.flash(sb.String())
+				sb.Reset()
+				count = 0
 			}
+			count++
 		}
-		t.Unlock()
 	}()
 }
+
+// flash grabs 20 events and saves them to the db.
+func (t *TransactionLogger) flash(data string) {
+	t.Lock()
+	defer t.Unlock()
+	errorsch := make(chan error, 20)
+	t.errors = errorsch
+
+	_, err := t.file.WriteString(data)
+	if err != nil {
+		log.Println("flash: ", err)
+		errorsch <- err
+	}
+}
+
 func (t *TransactionLogger) Err() <-chan error {
 	return t.errors
 }

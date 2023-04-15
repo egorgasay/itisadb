@@ -1,34 +1,57 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"github.com/egorgasay/dockerdb/v2"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"log"
+	"strings"
+	"sync"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jackc/pgx"
 )
 
 type TransactionLogger struct {
 	db   *sql.DB
+	mu   sync.Mutex
 	path string
 
 	events chan service.Event
 	errors chan error
 }
 
+const insertQuery = `UPSERT INTO transactions (event_type, key, value) VALUES 
+                                                      ($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12), 
+                                                      ($13, $14, $15), ($16, $17, $18), ($19, $20, $21), ($22, $23, $24),
+                                                      ($25, $26, $27), ($28, $29, $30), ($31, $32, $33), ($34, $35, $36),
+                                                      ($37, $38, $39), ($40, $41, $42), ($43, $44, $45), ($46, $47, $48), 
+                                                      ($49, $50, $51), ($52, $53, $54), ($55, $56, $57), ($58, $59, $60) `
+
+var insertEvent *sql.Stmt
+
 func NewLogger(path string) (*TransactionLogger, error) {
-	path += "/transactionLoggerDB"
-	db, err := sql.Open("sqlite3", path)
+	path = strings.TrimRight(path, "/") + "/transactionLoggerDB"
+	cfg := dockerdb.CustomDB{
+		DB: dockerdb.DB{
+			Name:     "adm",
+			User:     "adm",
+			Password: "adm",
+		},
+		Port:   "334",
+		Vendor: dockerdb.Postgres15,
+	}
+
+	vdb, err := dockerdb.New(context.Background(), cfg)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
-	driver, err := sqlite.WithInstance(db, &sqlite.Config{})
+	driver, err := postgres.WithInstance(vdb.DB, &postgres.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +70,13 @@ func NewLogger(path string) (*TransactionLogger, error) {
 		}
 	}
 
+	insertEvent, err = vdb.DB.Prepare(insertQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TransactionLogger{
-		db:   db,
+		db:   vdb.DB,
 		path: path,
 	}, nil
 }
@@ -63,22 +91,42 @@ func (t *TransactionLogger) WriteDelete(key string) {
 
 func (t *TransactionLogger) Run() {
 	events := make(chan service.Event, 20)
-	errorsch := make(chan error, 20)
 
 	t.events = events
-	t.errors = errorsch
-
+	var data = make([]service.Event, 0, 20)
+	var dataBackup = make([]service.Event, 20)
 	go func() {
 		for e := range events {
-			_, err := t.db.Exec("INSERT INTO transactions (event_type, key, value) VALUES (?, ?, ?)", e.EventType, e.Key, e.Value)
-			if err != nil {
-				log.Println("Run:", err)
-				errorsch <- err
-				return
+			data = append(data, e)
+			if len(data) == 20 {
+				copy(dataBackup, data)
+				go t.flash(dataBackup)
+				data = data[:0]
 			}
 		}
 	}()
 }
+
+// flash grabs 20 events and saves them to the db.
+func (t *TransactionLogger) flash(data []service.Event) {
+	//t.mu.Lock()
+	//defer t.mu.Unlock()
+	errorsch := make(chan error, 20)
+	t.errors = errorsch
+
+	var anys = make([]any, 0, len(data)*3)
+
+	for _, e := range data {
+		anys = append(anys, e.EventType, e.Key, e.Value)
+	}
+
+	_, err := insertEvent.Exec(anys...)
+	if err != nil {
+		log.Println("Run:", err)
+		errorsch <- err
+	}
+}
+
 func (t *TransactionLogger) Err() <-chan error {
 	return t.errors
 }
