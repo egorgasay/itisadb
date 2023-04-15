@@ -44,11 +44,12 @@ go run cmd/grpc-storage/main.go -a=':PORT' -d='MONGODB_URI' -connect='BALANCER_I
 
 # Preview of the WebApplication
 
-## Demo: https://grpc-storage.egorpoletaikin.repl.co
+## Demo: https://grpc-storage.egorpoletaikin.repl.co (The launch of a web application can take up to 30 seconds)
   
 ## Main page
   
 ![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
+
 
 ## Help command
 set key value server(optional) - Sets the value to the storage.  
@@ -62,6 +63,7 @@ get key server(optional) - Gets the value from the storage.
 server > 0 - Search on a specific server (speed: fast).  
 server = 0 (default) - Deep search (speed: slow). 
 server = -1 - DB search (speed: medium). 
+
 
 history - History of user actions.  
 servers - List of active servers with stats.  
