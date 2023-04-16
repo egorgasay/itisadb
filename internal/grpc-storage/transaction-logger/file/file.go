@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"log"
+	"modernc.org/strutil"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,15 +45,17 @@ func (t *TransactionLogger) Run() {
 	t.events = events
 
 	var sb = strings.Builder{}
-	var count = 0
+	var count = 1
 
 	go func() {
 		for e := range events {
-			sb.WriteString(fmt.Sprintf("%v %s %s\n", e.EventType, e.Key, e.Value))
+			sb.Write(strutil.Base64Encode([]byte(fmt.Sprintf("%v %s %s", e.EventType, e.Key, e.Value))))
+			sb.WriteByte('\n')
 			if count == 20 {
 				go t.flash(sb.String())
 				sb.Reset()
-				count = 0
+				count = 1
+				continue
 			}
 			count++
 		}
@@ -94,7 +97,13 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 		defer close(outError)
 
 		for scanner.Scan() {
-			args := strings.Split(scanner.Text(), " ")
+			action := scanner.Text()
+			decode, err := strutil.Base64Decode([]byte(action))
+			if err != nil {
+				return
+			}
+
+			args := strings.Split(string(decode), " ")
 			for len(args) < 3 {
 				args = append(args, "")
 			}
