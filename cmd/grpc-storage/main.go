@@ -66,11 +66,6 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	//err = store.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir, &resp.ServerNumber)
-	//if err != nil {
-	//	log.Fatal("Failed to init TLogger:", err)
-	//}
-
 	go func() {
 		log.Println("Starting Server ...")
 		lis, err := net.Listen("tcp", fmt.Sprintf(cfg.Host))

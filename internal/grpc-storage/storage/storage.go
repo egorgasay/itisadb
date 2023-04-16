@@ -42,7 +42,12 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 		logger:     logger,
 	}
 
-	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
+	var Type uint8
+	if cfg.DSN == "" {
+		Type = 1
+	}
+
+	err = st.InitTLogger(Type, cfg.TLoggerDir)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +55,7 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	return st, nil
 }
 
-func (s *Storage) InitTLogger(Type string, dir string) error {
+func (s *Storage) InitTLogger(Type uint8, dir string) error {
 	var err error
 	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {

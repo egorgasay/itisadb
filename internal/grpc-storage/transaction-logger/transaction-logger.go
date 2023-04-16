@@ -18,10 +18,10 @@ type ITransactionLogger interface {
 	Clear() error
 }
 
-const File = "file"
-const DB = "db"
+const File = 0
+const DB = 1
 
-func NewTransactionLogger(Type string, dir string) (ITransactionLogger, error) {
+func NewTransactionLogger(Type uint8, dir string) (ITransactionLogger, error) {
 	err := os.MkdirAll(dir, 0644)
 	if err != nil {
 		return nil, err
