@@ -6,12 +6,11 @@ import (
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"log"
 	"modernc.org/strutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 )
-
-import "os"
 
 type TransactionLogger struct {
 	path string

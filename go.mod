@@ -7,8 +7,8 @@ require (
 	github.com/egorgasay/dockerdb/v2 v2.0.2
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/httplog v0.2.5
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/rs/zerolog v1.27.0
@@ -16,7 +16,6 @@ require (
 	go.mongodb.org/mongo-driver v1.7.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.8.0
-	golang.org/x/tools v0.6.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.28.1
 	modernc.org/strutil v1.1.0
@@ -35,10 +34,8 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
-	github.com/lib/pq v1.10.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -57,5 +54,6 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 )
