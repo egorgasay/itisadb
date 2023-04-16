@@ -11,14 +11,13 @@ import (
 )
 
 type Handler struct {
-	api.UnsafeBalancerServer
+	api.UnimplementedBalancerServer
 	logic *usecase.UseCase
 }
 
 func New(logic *usecase.UseCase) *Handler {
 	return &Handler{logic: logic}
 }
-
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
 	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server)
 

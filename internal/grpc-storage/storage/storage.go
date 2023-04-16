@@ -13,6 +13,8 @@ import (
 	"grpc-storage/internal/grpc-storage/transaction-logger/service"
 	"grpc-storage/pkg/logger"
 	"sync"
+
+	"github.com/dolthub/swiss"
 )
 
 var ErrNotFound = errors.New("the value does not exist")
@@ -20,7 +22,7 @@ var ErrNotFound = errors.New("the value does not exist")
 type Storage struct {
 	dbStore *mongo.Database
 	sync.RWMutex
-	ramStorage map[string]string
+	ramStorage *swiss.Map[string, string]
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
@@ -35,10 +37,9 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	st := &Storage{
 		dbStore:    client.Database("grpc-server"),
-		ramStorage: make(map[string]string, 10),
+		ramStorage: swiss.NewMap[string, string](100000),
 		logger:     logger,
 	}
 
@@ -83,7 +84,7 @@ func (s *Storage) InitTLogger(Type uint8, dir string) error {
 func (s *Storage) Set(key string, val string) {
 	s.Lock()
 	defer s.Unlock()
-	s.ramStorage[key] = val
+	s.ramStorage.Put(key, val)
 }
 
 func (s *Storage) WriteSet(key string, val string) {
@@ -93,7 +94,7 @@ func (s *Storage) WriteSet(key string, val string) {
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
 	defer s.RUnlock()
-	val, ok := s.ramStorage[key]
+	val, ok := s.ramStorage.Get(key)
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -108,14 +109,15 @@ func (s *Storage) Save() error {
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	for key, value := range s.ramStorage {
+	s.ramStorage.Iter(func(key string, value string) bool {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)
 		if err != nil {
 			s.logger.Warn(err.Error())
 		}
-	}
+		return true
+	})
 
 	return s.tLogger.Clear()
 }

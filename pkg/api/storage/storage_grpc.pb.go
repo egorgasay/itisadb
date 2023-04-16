@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageClient interface {
-	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Set(ctx context.Context, opts ...grpc.CallOption) (Storage_SetClient, error)
+	Get(ctx context.Context, opts ...grpc.CallOption) (Storage_GetClient, error)
 }
 
 type storageClient struct {
@@ -34,30 +34,74 @@ func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 	return &storageClient{cc}
 }
 
-func (c *storageClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
-	out := new(SetResponse)
-	err := c.cc.Invoke(ctx, "/api.Storage/Set", in, out, opts...)
+func (c *storageClient) Set(ctx context.Context, opts ...grpc.CallOption) (Storage_SetClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Storage_ServiceDesc.Streams[0], "/api.Storage/Set", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &storageSetClient{stream}
+	return x, nil
 }
 
-func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/api.Storage/Get", in, out, opts...)
+type Storage_SetClient interface {
+	Send(*SetRequest) error
+	Recv() (*SetResponse, error)
+	grpc.ClientStream
+}
+
+type storageSetClient struct {
+	grpc.ClientStream
+}
+
+func (x *storageSetClient) Send(m *SetRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *storageSetClient) Recv() (*SetResponse, error) {
+	m := new(SetResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *storageClient) Get(ctx context.Context, opts ...grpc.CallOption) (Storage_GetClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Storage_ServiceDesc.Streams[1], "/api.Storage/Get", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &storageGetClient{stream}
+	return x, nil
+}
+
+type Storage_GetClient interface {
+	Send(*GetRequest) error
+	Recv() (*GetResponse, error)
+	grpc.ClientStream
+}
+
+type storageGetClient struct {
+	grpc.ClientStream
+}
+
+func (x *storageGetClient) Send(m *GetRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *storageGetClient) Recv() (*GetResponse, error) {
+	m := new(GetResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility
 type StorageServer interface {
-	Set(context.Context, *SetRequest) (*SetResponse, error)
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Set(Storage_SetServer) error
+	Get(Storage_GetServer) error
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -65,11 +109,11 @@ type StorageServer interface {
 type UnimplementedStorageServer struct {
 }
 
-func (UnimplementedStorageServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+func (UnimplementedStorageServer) Set(Storage_SetServer) error {
+	return status.Errorf(codes.Unimplemented, "method Set not implemented")
 }
-func (UnimplementedStorageServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedStorageServer) Get(Storage_GetServer) error {
+	return status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
@@ -84,40 +128,56 @@ func RegisterStorageServer(s grpc.ServiceRegistrar, srv StorageServer) {
 	s.RegisterService(&Storage_ServiceDesc, srv)
 }
 
-func _Storage_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).Set(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Storage/Set",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Set(ctx, req.(*SetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _Storage_Set_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StorageServer).Set(&storageSetServer{stream})
 }
 
-func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
-	if err := dec(in); err != nil {
+type Storage_SetServer interface {
+	Send(*SetResponse) error
+	Recv() (*SetRequest, error)
+	grpc.ServerStream
+}
+
+type storageSetServer struct {
+	grpc.ServerStream
+}
+
+func (x *storageSetServer) Send(m *SetResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *storageSetServer) Recv() (*SetRequest, error) {
+	m := new(SetRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(StorageServer).Get(ctx, in)
+	return m, nil
+}
+
+func _Storage_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StorageServer).Get(&storageGetServer{stream})
+}
+
+type Storage_GetServer interface {
+	Send(*GetResponse) error
+	Recv() (*GetRequest, error)
+	grpc.ServerStream
+}
+
+type storageGetServer struct {
+	grpc.ServerStream
+}
+
+func (x *storageGetServer) Send(m *GetResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *storageGetServer) Recv() (*GetRequest, error) {
+	m := new(GetRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
 	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Storage/Get",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Get(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
@@ -126,16 +186,20 @@ func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interfa
 var Storage_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "api.Storage",
 	HandlerType: (*StorageServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "Set",
-			Handler:    _Storage_Set_Handler,
+			StreamName:    "Set",
+			Handler:       _Storage_Set_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 		{
-			MethodName: "Get",
-			Handler:    _Storage_Get_Handler,
+			StreamName:    "Get",
+			Handler:       _Storage_Get_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/proto/storage.proto",
 }

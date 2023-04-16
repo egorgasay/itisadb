@@ -103,7 +103,7 @@ fl:
 			cr.Server = resp.ServerNumber
 			_, err = cl.Connect(context.Background(), cr)
 			if err != nil {
-				log.Fatalf("Unable to connect to the balancer: %v", err)
+				log.Println("Unable to connect to the balancer: %w", err)
 			}
 			fmt.Print("PRESS ENTER FOR RECONNECT")
 		}

@@ -85,11 +85,23 @@ func (s *Servers) AddClient(address string, available, total uint64, server int3
 	}
 
 	cl := storage.NewStorageClient(conn)
+
 	var stClient = &Server{
 		storage:   cl,
 		Available: available,
 		Total:     total,
+
+		sc: nil,
+		gc: nil,
+
+		inGet:  make(chan key, 20000),
+		inSet:  make(chan keyValue, 20000),
+		outGet: make(chan *storage.GetResponse, 20000),
+		outSet: make(chan *storage.SetResponse, 20000),
 	}
+
+	go stClient.get()
+	go stClient.set()
 
 	if server != 0 {
 		stClient.Number = server
