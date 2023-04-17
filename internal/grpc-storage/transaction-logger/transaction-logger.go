@@ -18,17 +18,20 @@ type ITransactionLogger interface {
 	Clear() error
 }
 
-const File = 0
-const DB = 1
+const File = "file"
+const DB = "db"
+const VDB = "docker_db"
 
-func NewTransactionLogger(Type uint8, dir string) (ITransactionLogger, error) {
+func NewTransactionLogger(Type string, dir string) (ITransactionLogger, error) {
 	err := os.MkdirAll(dir, 0644)
 	if err != nil {
 		return nil, err
 	}
 	switch Type {
 	case DB:
-		return db.NewLogger(dir)
+		return db.NewLogger(dir, false)
+	case VDB:
+		return db.NewLogger(dir, true)
 	default: // File logger by default
 		return file.NewLogger(dir)
 	}

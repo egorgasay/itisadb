@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"github.com/pbnjay/memory"
-	"github.com/sourcegraph/conc/pool"
 	"grpc-storage/internal/grpc-storage/storage"
 	"grpc-storage/pkg/logger"
 )
@@ -10,18 +9,15 @@ import (
 type UseCase struct {
 	storage *storage.Storage
 	logger  logger.ILogger
-	pool    *pool.Pool
 }
 
 func New(storage *storage.Storage, logger logger.ILogger) *UseCase {
-	gpool := pool.New()
-	gpool.WithMaxGoroutines(20000)
-	return &UseCase{storage: storage, logger: logger, pool: gpool}
+	return &UseCase{storage: storage, logger: logger}
 }
 
-func (uc *UseCase) Set(key string, val string) RAM {
+func (uc *UseCase) Set(key, val string) RAM {
 	uc.storage.Set(key, val)
-	uc.pool.Go(func() { uc.storage.WriteSet(key, val) })
+	uc.storage.WriteSet(key, val)
 	return RAMUsage()
 }
 

@@ -39,14 +39,17 @@ func (t *TransactionLogger) WriteDelete(key string) {
 }
 
 func (t *TransactionLogger) Run() {
-	events := make(chan service.Event, 20)
-
+	events := make(chan service.Event, 60000)
+	errorsch := make(chan error, 60000)
+	t.errors = errorsch
 	t.events = events
 
 	var sb = strings.Builder{}
 	var count = 1
 
 	go func() {
+		defer close(events)
+		defer close(errorsch)
 		for e := range events {
 			sb.Write(strutil.Base64Encode([]byte(fmt.Sprintf("%v %s %s", e.EventType, e.Key, e.Value))))
 			sb.WriteByte('\n')
@@ -65,13 +68,11 @@ func (t *TransactionLogger) Run() {
 func (t *TransactionLogger) flash(data string) {
 	t.Lock()
 	defer t.Unlock()
-	errorsch := make(chan error, 20)
-	t.errors = errorsch
 
 	_, err := t.file.WriteString(data)
 	if err != nil {
 		log.Println("flash: ", err)
-		errorsch <- err
+		t.errors <- err
 	}
 }
 

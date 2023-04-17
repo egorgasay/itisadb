@@ -43,12 +43,7 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 		logger:     logger,
 	}
 
-	var Type uint8
-	if cfg.DSN == "" {
-		Type = 1
-	}
-
-	err = st.InitTLogger(Type, cfg.TLoggerDir)
+	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +51,7 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	return st, nil
 }
 
-func (s *Storage) InitTLogger(Type uint8, dir string) error {
+func (s *Storage) InitTLogger(Type string, dir string) error {
 	var err error
 	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {
@@ -81,13 +76,13 @@ func (s *Storage) InitTLogger(Type uint8, dir string) error {
 	return nil
 }
 
-func (s *Storage) Set(key string, val string) {
+func (s *Storage) Set(key, val string) {
 	s.Lock()
 	defer s.Unlock()
 	s.ramStorage.Put(key, val)
 }
 
-func (s *Storage) WriteSet(key string, val string) {
+func (s *Storage) WriteSet(key, val string) {
 	s.tLogger.WriteSet(key, val)
 }
 

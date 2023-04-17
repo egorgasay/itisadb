@@ -10,12 +10,14 @@ type DBConfig struct {
 }
 
 type Config struct {
-	Host       string
-	Key        []byte
-	DBConfig   *DBConfig
-	Balancer   string
-	TLoggerDir string
-	DSN        string
+	Host        string
+	Key         []byte
+	DBConfig    *DBConfig
+	Balancer    string
+	TLoggerDir  string
+	TLoggerDSN  string
+	DSN         string
+	TLoggerType string
 }
 
 const (
@@ -23,19 +25,23 @@ const (
 )
 
 type Flag struct {
-	host       *string
-	dsn        *string
-	balancer   *string
-	tLoggerDir *string
+	host        *string
+	dsn         *string
+	balancer    *string
+	tLoggerDir  *string
+	tLoggerDSN  *string
+	tLoggerType *string
 }
 
 var f Flag
 
 func init() {
 	f.host = flag.String("a", defaultHost, "-a=host")
-	f.dsn = flag.String("d", "", "-d=mysql_connection_string")
+	f.dsn = flag.String("d", "", "-d=mongodb_connection_string")
 	f.balancer = flag.String("connect", "", "-connect=ip:port")
 	f.tLoggerDir = flag.String("tlog_dir", "/", "-tlog_dir=/tmp")
+	f.tLoggerDSN = flag.String("tlog_dsn", "", "-tlog_dsn=mysql_connection_string")
+	f.tLoggerType = flag.String("tlog_type", "file", "-tlog_type=docker_db || db || file(default)")
 }
 
 func New() *Config {
@@ -48,8 +54,11 @@ func New() *Config {
 			DriverName:     "mongo",
 			DataSourceCred: *f.dsn,
 		},
-		Balancer:   *f.balancer,
-		DSN:        *f.dsn,
-		TLoggerDir: *f.tLoggerDir,
+		Balancer: *f.balancer,
+		DSN:      *f.dsn,
+
+		TLoggerDir:  *f.tLoggerDir,
+		TLoggerType: *f.tLoggerType,
+		TLoggerDSN:  *f.tLoggerDSN,
 	}
 }

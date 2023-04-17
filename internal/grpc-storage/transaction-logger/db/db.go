@@ -31,24 +31,30 @@ const insertQuery = "INSERT INTO transactions (`event_type`, `wrench`, `value`) 
 
 var insertEvent *sql.Stmt
 
-func NewLogger(path string) (*TransactionLogger, error) {
+func NewLogger(path string, vdb bool) (*TransactionLogger, error) {
 	path = strings.TrimRight(path, "/") + "/transactionLoggerDB"
-	cfg := dockerdb.CustomDB{
-		DB: dockerdb.DB{
-			Name:     "a34dm8",
-			User:     "adm",
-			Password: "adm",
-		},
-		Port:   "3247",
-		Vendor: dockerdb.MySQL8Image,
+
+	var db *sql.DB
+	if vdb {
+		cfg := dockerdb.CustomDB{
+			DB: dockerdb.DB{
+				Name:     "a34dm8",
+				User:     "adm",
+				Password: "adm",
+			},
+			Port:   "3247",
+			Vendor: dockerdb.MySQL8Image,
+		}
+
+		dockerDB, err := dockerdb.New(context.Background(), cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		db = dockerDB.DB
 	}
 
-	vdb, err := dockerdb.New(context.Background(), cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	driver, err := mysql.WithInstance(vdb.DB, &mysql.Config{})
+	driver, err := mysql.WithInstance(db, &mysql.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -67,16 +73,16 @@ func NewLogger(path string) (*TransactionLogger, error) {
 		}
 	}
 
-	vdb.DB.SetMaxOpenConns(20)
-	vdb.DB.SetMaxIdleConns(20)
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(20)
 
-	insertEvent, err = vdb.DB.Prepare(insertQuery)
+	insertEvent, err = db.Prepare(insertQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	return &TransactionLogger{
-		db:   vdb.DB,
+		db:   db,
 		path: path,
 	}, nil
 }
