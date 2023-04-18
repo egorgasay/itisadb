@@ -16,12 +16,12 @@ type Server struct {
 }
 
 func (s *Server) Set(ctx context.Context, Key, Value string) (*storage.SetResponse, error) {
-	sr, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value})
+	res, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value})
 	if err != nil {
 		return nil, err
 	}
 
-	return sr, err
+	return res, err
 }
 
 func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, error) {

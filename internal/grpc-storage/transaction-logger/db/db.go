@@ -96,11 +96,11 @@ func (t *TransactionLogger) WriteDelete(key string) {
 }
 
 func (t *TransactionLogger) Run() {
-	events := make(chan service.Event, 20)
+	events := make(chan service.Event, 30000)
 
 	t.events = events
-	var data = make([]service.Event, 0, 20)
-	var dataBackup = make([]service.Event, 20)
+	var data = make([]service.Event, 0, 30000)
+	var dataBackup = make([]service.Event, 30000)
 	go func() {
 		for e := range events {
 			data = append(data, e)
@@ -144,6 +144,7 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 		outError <- err
 		return outEvent, outError
 	}
+	defer rows.Close()
 
 	go func() {
 		var event service.Event
