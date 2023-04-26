@@ -2,7 +2,7 @@
 # <p align="center">gRPCis<br> ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/egorgasay/grpc-storage) ![GitHub issues](https://img.shields.io/github/issues/egorgasay/grpc-storage) ![License](https://img.shields.io/badge/license-MIT-green)</p>
 This is a system consisting of several microservices (Memory Balancer, Storage, WebApplication), which is a distributed key-value database. There can be an unlimited number of Storage instances, they are all connected to the Memory Balancer via gRPC, which distributes the load between them. You can connect to the Web Application (Echo) via the Web interface to enter the necessary data manually. The system is fault-tolerant, guarantees complete data recovery even after a power outage.
 <p align="center" >
-<img src="https://user-images.githubusercontent.com/102957432/231838305-8903c6b4-8590-43a0-a7d5-ce7840be0070.png"  width="1000" />
+<img src="https://user-images.githubusercontent.com/102957432/234682767-c21f9dcc-acfc-4e7b-a23f-5e213b75c606.png"  width="1000" />
 </p>
 
 # Drivers  
@@ -55,6 +55,7 @@ https://grpc-web.egorpoletaikin.repl.co
 ![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
   
 ## PHP
+![изображение](https://user-images.githubusercontent.com/102957432/234688999-76a4e627-5a6b-41d1-9220-9d27db1d312f.png)
 
 ## Usage
 set key value server(optional) - Sets the value to the storage.  
