@@ -5,7 +5,7 @@ option go_package = "./";
 package api;
 
 service Storage {
-  rpc Set(SetRequest) returns (SetResponse) {}
+  rpc Set(stream SetRequest) returns (stream SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
 }
 

@@ -42,16 +42,21 @@ go run cmd/grpc-storage/main.go -a=':PORT' -d='MONGODB_URI' -connect='BALANCER_I
   
 !!! DO NOT USE temporary directories for tlog_dir !!!
 
-# Preview of the WebApplication
+# Preview of the WebApplication  
+(The launch of a web application can take up to 30 seconds)
 
-## Demo: https://grpc-storage.egorpoletaikin.repl.co (The launch of a web application can take up to 30 seconds)
-  
+## Go 
+https://grpc-storage.egorpoletaikin.repl.co 
+## PHP
+https://grpc-web.egorpoletaikin.repl.co   
+
 ## Main page
-  
+## Go  
 ![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
+  
+## PHP
 
-
-## Help command
+## Usage
 set key value server(optional) - Sets the value to the storage.  
 server > 0 - Save to exact server.  
 server = 0 (default) - Automatic saving to a less loaded server.  

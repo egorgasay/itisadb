@@ -159,13 +159,11 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 	}
 
 	allIsDone := make(chan struct{})
-	defer close(allIsDone)
 
 	go func() {
+		defer close(allIsDone)
 		wg.Wait()
-		if _, ok := <-allIsDone; ok {
-			allIsDone <- struct{}{}
-		}
+		allIsDone <- struct{}{}
 	}()
 
 	select {

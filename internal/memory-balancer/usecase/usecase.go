@@ -43,7 +43,7 @@ func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
 }
 
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32) (int32, error) {
-	if uc.servers.Len() == 0 {
+	if uc.servers.Len() == 0 && serverNumber != -1 {
 		err := uc.storage.Set(key, val)
 		if err != nil {
 			uc.logger.Warn(err.Error())
