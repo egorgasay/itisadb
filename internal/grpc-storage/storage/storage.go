@@ -18,6 +18,7 @@ import (
 )
 
 var ErrNotFound = errors.New("the value does not exist")
+var ErrAlreadyExists = errors.New("the value already exists")
 
 type Storage struct {
 	dbStore *mongo.Database
@@ -68,7 +69,7 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 			switch e.EventType {
 			case service.Delete:
 			case service.Set:
-				s.Set(e.Key, e.Value)
+				s.Set(e.Key, e.Value, false)
 			}
 		}
 	}
@@ -76,10 +77,16 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 	return nil
 }
 
-func (s *Storage) Set(key, val string) {
+func (s *Storage) Set(key, val string, unique bool) error {
 	s.Lock()
 	defer s.Unlock()
+	if unique {
+		if _, ok := s.ramStorage.Get(key); ok {
+			return ErrAlreadyExists
+		}
+	}
 	s.ramStorage.Put(key, val)
+	return nil
 }
 
 func (s *Storage) WriteSet(key, val string) {

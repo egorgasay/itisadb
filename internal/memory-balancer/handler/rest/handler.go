@@ -27,7 +27,9 @@ func (h *Handler) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	case "/get":
 		h.get(ctx)
 	case "/set":
-		h.set(ctx)
+		h.set(ctx, false)
+	case "/unique-set":
+		h.set(ctx, true)
 	case "/servers":
 		h.servers(ctx)
 	}
@@ -51,7 +53,7 @@ func (h *Handler) get(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody([]byte(value))
 }
 
-func (h *Handler) set(ctx *fasthttp.RequestCtx) {
+func (h *Handler) set(ctx *fasthttp.RequestCtx, uniques bool) {
 	var r schema.SetRequest
 	b := ctx.Request.Body()
 	if err := BindJSON(b, &r); err != nil {
@@ -59,7 +61,7 @@ func (h *Handler) set(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server)
+	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server, uniques)
 	if err != nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		ctx.SetBody([]byte(fmt.Sprint(setTo)))

@@ -5,13 +5,14 @@ option go_package = "./";
 package api;
 
 service Storage {
-  rpc Set(stream SetRequest) returns (stream SetResponse) {}
+  rpc Set(SetRequest) returns (SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
 }
 
 message SetRequest {
   string key = 1;
   string value = 2;
+  bool unique = 3;
 }
 
 message GetRequest {
@@ -25,7 +26,6 @@ message GetResponse {
 }
 
 message SetResponse {
-  string status = 1;
-  uint64 Total = 2;
-  uint64 Available = 3;
+  uint64 Total = 1;
+  uint64 Available = 2;
 }

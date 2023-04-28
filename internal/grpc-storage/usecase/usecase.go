@@ -15,10 +15,10 @@ func New(storage *storage.Storage, logger logger.ILogger) *UseCase {
 	return &UseCase{storage: storage, logger: logger}
 }
 
-func (uc *UseCase) Set(key, val string) RAM {
-	uc.storage.Set(key, val)
+func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
+	err := uc.storage.Set(key, val, uniques)
 	uc.storage.WriteSet(key, val)
-	return RAMUsage()
+	return RAMUsage(), err
 }
 
 type RAM struct {

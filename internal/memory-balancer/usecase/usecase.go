@@ -42,9 +42,14 @@ func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
 	}, nil
 }
 
-func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32) (int32, error) {
+func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
+	setDB := uc.storage.Set
+	if uniques {
+		setDB = uc.storage.SetUnique
+	}
+
 	if uc.servers.Len() == 0 && serverNumber != -1 {
-		err := uc.storage.Set(key, val)
+		err := setDB(key, val)
 		if err != nil {
 			uc.logger.Warn(err.Error())
 			return 0, fmt.Errorf("error while setting new pair to dbstorage with no active grpc-storages: %w", err)
@@ -55,21 +60,21 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32)
 	switch serverNumber {
 	case dbOnly:
 		uc.logger.Info("setting k:val to db")
-		return dbOnly, uc.storage.Set(key, val)
+		return dbOnly, setDB(key, val)
 	case setToAll:
-		failedServers := uc.servers.SetToAll(ctx, key, val)
+		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
 			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
 		return setToAll, nil
 	case AllAndDB:
 		uc.logger.Info("setting key:val to all instance")
-		failedServers := uc.servers.SetToAll(ctx, key, val)
+		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
 			return AllAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
 		uc.logger.Info("setting key:val to db")
-		return AllAndDB, uc.storage.Set(key, val)
+		return AllAndDB, setDB(key, val)
 	}
 
 	var cl *servers.Server
@@ -83,7 +88,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32)
 	} else {
 		cl, ok = uc.servers.GetClient()
 		if !ok || cl == nil {
-			err := uc.storage.Set(key, val)
+			err := setDB(key, val)
 			if err != nil {
 				uc.logger.Warn(err.Error())
 				return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
@@ -92,7 +97,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32)
 		}
 	}
 
-	resp, err := cl.Set(context.Background(), key, val)
+	resp, err := cl.Set(context.Background(), key, val, uniques)
 	if err != nil {
 		return 0, err
 	}

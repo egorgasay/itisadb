@@ -5,32 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"grpc-storage/pkg/api/balancer"
-	"log"
 	"strconv"
 	"strings"
 )
 
 type Commands struct {
 	cl balancer.BalancerClient
-	gc balancer.Balancer_GetClient
-	sc balancer.Balancer_SetClient
 }
 
 func New(cl balancer.BalancerClient) *Commands {
-	gc, err := cl.Get(context.Background())
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	sc, err := cl.Set(context.Background())
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	return &Commands{
 		cl: cl,
-		gc: gc,
-		sc: sc,
 	}
 }
 
@@ -42,8 +27,9 @@ var ErrEmpty = errors.New("the value does not exist")
 var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
-	get = "get"
-	set = "set"
+	get  = "get"
+	set  = "set"
+	uset = "uset"
 )
 
 const (
@@ -69,7 +55,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 
 		return c.get(args[0], int32(server))
-	case set:
+	case set, uset:
 		if len(args) < 2 {
 			return "", ErrWrongInput
 		}
@@ -79,61 +65,48 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 			num, err := strconv.Atoi(args[len(args)-1])
 			if err == nil {
 				server = int32(num)
-				return c.set(args[0], strings.Join(args[1:len(args)-1], " "), server)
+				return c.set(args[0], strings.Join(args[1:len(args)-1], " "), server, uset == act)
 			}
 		}
 
-		return c.set(args[0], strings.Join(args[1:], " "), server)
+		return c.set(args[0], strings.Join(args[1:], " "), server, uset == act)
 	}
 
 	return "", ErrUnknownCMD
 }
 
 func (c *Commands) get(key string, server int32) (string, error) {
-	err := c.gc.Send(&balancer.BalancerGetRequest{Key: key, Server: server})
+	resp, err := c.cl.Get(context.Background(), &balancer.BalancerGetRequest{Key: key, Server: server})
 	if err != nil {
 		return "", err
 	}
 
-	recv, err := c.gc.Recv()
-	if err != nil {
-		return "", err
-	}
-
-	if recv.Value == "" {
+	if resp.Value == "" {
 		return "", ErrEmpty
 	}
-
-	log.Println(recv.Value)
-	return recv.Value, nil
+	return resp.Value, nil
 }
 
-func (c *Commands) set(key, value string, server int32) (string, error) {
-	err := c.sc.Send(&balancer.BalancerSetRequest{Key: key, Value: value, Server: server})
+func (c *Commands) set(key, value string, server int32, uniques bool) (string, error) {
+	response, err := c.cl.Set(context.Background(), &balancer.BalancerSetRequest{Key: key, Value: value, Server: server,
+		Uniques: uniques})
 	if err != nil {
 		return "", err
 	}
-
-	recv, err := c.sc.Recv()
-	if err != nil {
-		return "", err
-	}
-
-	log.Println(recv.String())
 
 	resp := ""
 
-	switch server {
+	switch response.SavedTo {
 	case 0:
-		resp = fmt.Sprintf("status: %s, saved on server #%d", recv.Status, recv.SavedTo)
+		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
 	case dbOnly:
-		resp = fmt.Sprintf("status: %s, saved on the database", recv.Status)
+		resp = fmt.Sprintf("status: ok, saved on the database")
 	case setToAll:
-		resp = fmt.Sprintf("status: %s, saved on all servers", recv.Status)
+		resp = fmt.Sprintf("status: ok, saved on all servers")
 	case AllAndDB:
-		resp = fmt.Sprintf("status: %s, saved on all servers and in the database", recv.Status)
+		resp = fmt.Sprintf("status: ok, saved on all servers and in the database")
 	default:
-		resp = fmt.Sprintf("status: %s, saved on server #%d", recv.Status, recv.SavedTo)
+		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
 	}
 
 	return resp, nil

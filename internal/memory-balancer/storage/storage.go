@@ -45,6 +45,17 @@ func (s *Storage) Set(key string, val string) error {
 	return err
 }
 
+// SetUnique adds key:value pair to db and returns an error if it already exists.
+func (s *Storage) SetUnique(key string, val string) error {
+	c := s.dbStore.Collection("map")
+	ctx := context.Background()
+	opts := options.Update().SetUpsert(true)
+	filter := bson.D{{"Key", key}}
+	update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", val}}}}
+	_, err := c.UpdateOne(ctx, filter, update, opts)
+	return err
+}
+
 // Get gets value by key from db.
 func (s *Storage) Get(key string) (string, error) {
 	c := s.dbStore.Collection("map")

@@ -20,12 +20,18 @@ func New(logic *usecase.UseCase) *Handler {
 }
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	memUsage := h.logic.Set(r.Key, r.Value)
+	memUsage, err := h.logic.Set(r.Key, r.Value, r.Unique)
+	if errors.Is(err, storage.ErrAlreadyExists) {
+		return &api.SetResponse{
+			Total:     memUsage.Total,
+			Available: memUsage.Available,
+		}, status.Error(codes.AlreadyExists, err.Error())
+	}
+
 	return &api.SetResponse{
-		Status:    "ok",
 		Total:     memUsage.Total,
 		Available: memUsage.Available,
-	}, nil
+	}, err
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
