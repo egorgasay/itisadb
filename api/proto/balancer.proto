@@ -16,6 +16,7 @@ message BalancerSetRequest {
   string key = 1;
   string value = 2;
   int32 server = 3;
+  bool uniques = 4;
 }
 
 message BalancerGetRequest {
@@ -41,8 +42,7 @@ message BalancerGetResponse {
 }
 
 message BalancerSetResponse {
-  string status = 1;
-  int32 savedTo = 2;
+  int32 savedTo = 1;
 }
 
 message ConnectResponse {

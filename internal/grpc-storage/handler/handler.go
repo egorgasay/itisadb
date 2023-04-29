@@ -5,9 +5,9 @@ import (
 	"errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/grpc-storage/storage"
-	"grpc-storage/internal/grpc-storage/usecase"
-	api "grpc-storage/pkg/api/storage"
+	"itisadb/internal/grpc-storage/storage"
+	"itisadb/internal/grpc-storage/usecase"
+	api "itisadb/pkg/api/storage"
 )
 
 type Handler struct {
@@ -20,12 +20,18 @@ func New(logic *usecase.UseCase) *Handler {
 }
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	memUsage := h.logic.Set(r.Key, r.Value)
+	memUsage, err := h.logic.Set(r.Key, r.Value, r.Unique)
+	if errors.Is(err, storage.ErrAlreadyExists) {
+		return &api.SetResponse{
+			Total:     memUsage.Total,
+			Available: memUsage.Available,
+		}, status.Error(codes.AlreadyExists, err.Error())
+	}
+
 	return &api.SetResponse{
-		Status:    "ok",
 		Total:     memUsage.Total,
 		Available: memUsage.Available,
-	}, nil
+	}, err
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {

@@ -1,15 +1,17 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"github.com/egorgasay/dockerdb/v2"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"log"
-
-	_ "github.com/mattn/go-sqlite3"
+	"strings"
 )
 
 type TransactionLogger struct {
@@ -20,21 +22,45 @@ type TransactionLogger struct {
 	errors chan error
 }
 
-func NewLogger(path string) (*TransactionLogger, error) {
-	path += "/transactionLoggerDB"
-	db, err := sql.Open("sqlite3", path)
-	if err != nil {
-		log.Println(err)
-		return nil, err
+const insertQuery = "INSERT INTO transactions (`event_type`, `wrench`, `value`) VALUES " +
+	" (?, ?, ?), (?, ?, ?), (?, ?, ?), (?, ?, ?)," +
+	"(?, ?, ?), (?, ?, ?), (?, ?, ?), (?, ?, ?), " +
+	" (?, ?, ?), (?, ?, ?), (?, ?, ?), (?, ?, ?), " +
+	"(?, ?, ?), (?, ?, ?), (?, ?, ?), (?, ?, ?), " +
+	"(?, ?, ?), (?, ?, ?), (?, ?, ?), (?, ?, ?)"
+
+var insertEvent *sql.Stmt
+
+func NewLogger(path string, vdb bool) (*TransactionLogger, error) {
+	path = strings.TrimRight(path, "/") + "/transactionLoggerDB"
+
+	var db *sql.DB
+	if vdb {
+		cfg := dockerdb.CustomDB{
+			DB: dockerdb.DB{
+				Name:     "a34dm8",
+				User:     "adm",
+				Password: "adm",
+			},
+			Port:   "3247",
+			Vendor: dockerdb.MySQL8Image,
+		}
+
+		dockerDB, err := dockerdb.New(context.Background(), cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		db = dockerDB.DB
 	}
 
-	driver, err := sqlite.WithInstance(db, &sqlite.Config{})
+	driver, err := mysql.WithInstance(db, &mysql.Config{})
 	if err != nil {
 		return nil, err
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations/sqlite3_tlogger",
+		"file://migrations/mysql_tlogger",
 		"sqlite", driver)
 	if err != nil {
 		return nil, err
@@ -45,6 +71,14 @@ func NewLogger(path string) (*TransactionLogger, error) {
 		if err.Error() != "no change" {
 			log.Fatal(err)
 		}
+	}
+
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(20)
+
+	insertEvent, err = db.Prepare(insertQuery)
+	if err != nil {
+		return nil, err
 	}
 
 	return &TransactionLogger{
@@ -62,23 +96,41 @@ func (t *TransactionLogger) WriteDelete(key string) {
 }
 
 func (t *TransactionLogger) Run() {
-	events := make(chan service.Event, 20)
-	errorsch := make(chan error, 20)
+	events := make(chan service.Event, 30000)
 
 	t.events = events
-	t.errors = errorsch
-
+	var data = make([]service.Event, 0, 30000)
+	var dataBackup = make([]service.Event, 30000)
 	go func() {
 		for e := range events {
-			_, err := t.db.Exec("INSERT INTO transactions (event_type, key, value) VALUES (?, ?, ?)", e.EventType, e.Key, e.Value)
-			if err != nil {
-				log.Println("Run:", err)
-				errorsch <- err
-				return
+			data = append(data, e)
+			if len(data) == 20 {
+				copy(dataBackup, data)
+				go t.flash(dataBackup)
+				data = data[:0]
 			}
 		}
 	}()
 }
+
+// flash grabs 20 events and saves them to the db.
+func (t *TransactionLogger) flash(data []service.Event) {
+	errorsch := make(chan error, 20)
+	t.errors = errorsch
+
+	var anys = make([]any, 0, len(data)*3)
+
+	for _, e := range data {
+		anys = append(anys, e.EventType, e.Key, e.Value)
+	}
+
+	_, err := insertEvent.Exec(anys...)
+	if err != nil {
+		log.Println("Run:", err)
+		errorsch <- err
+	}
+}
+
 func (t *TransactionLogger) Err() <-chan error {
 	return t.errors
 }
@@ -87,11 +139,12 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 	outEvent := make(chan service.Event)
 	outError := make(chan error, 1)
 
-	rows, err := t.db.Query("SELECT event_type, key, value FROM transactions")
+	rows, err := t.db.Query("SELECT `event_type`, `wrench`, `value` FROM transactions")
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		outError <- err
 		return outEvent, outError
 	}
+	defer rows.Close()
 
 	go func() {
 		var event service.Event

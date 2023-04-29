@@ -7,14 +7,14 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"grpc-storage/internal/grpc-storage/config"
-	"grpc-storage/internal/grpc-storage/handler"
-	"grpc-storage/internal/grpc-storage/servernumber"
-	"grpc-storage/internal/grpc-storage/storage"
-	"grpc-storage/internal/grpc-storage/usecase"
-	"grpc-storage/pkg/api/balancer"
-	pb "grpc-storage/pkg/api/storage"
-	"grpc-storage/pkg/logger"
+	"itisadb/internal/grpc-storage/config"
+	"itisadb/internal/grpc-storage/handler"
+	"itisadb/internal/grpc-storage/servernumber"
+	"itisadb/internal/grpc-storage/storage"
+	"itisadb/internal/grpc-storage/usecase"
+	"itisadb/pkg/api/balancer"
+	pb "itisadb/pkg/api/storage"
+	"itisadb/pkg/logger"
 	"log"
 	"net"
 	"os"
@@ -66,11 +66,6 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	//err = store.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir, &resp.ServerNumber)
-	//if err != nil {
-	//	log.Fatal("Failed to init TLogger:", err)
-	//}
-
 	go func() {
 		log.Println("Starting Server ...")
 		lis, err := net.Listen("tcp", fmt.Sprintf(cfg.Host))
@@ -108,7 +103,7 @@ fl:
 			cr.Server = resp.ServerNumber
 			_, err = cl.Connect(context.Background(), cr)
 			if err != nil {
-				log.Fatalf("Unable to connect to the balancer: %v", err)
+				log.Println("Unable to connect to the balancer: %w", err)
 			}
 			fmt.Print("PRESS ENTER FOR RECONNECT")
 		}

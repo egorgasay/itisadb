@@ -3,13 +3,14 @@ package file
 import (
 	"bufio"
 	"fmt"
-	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"itisadb/internal/grpc-storage/transaction-logger/service"
+	"log"
+	"modernc.org/strutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 )
-
-import "os"
 
 type TransactionLogger struct {
 	path string
@@ -22,8 +23,7 @@ type TransactionLogger struct {
 }
 
 func NewLogger(path string) (*TransactionLogger, error) {
-	// TODO: ADD CHANGING SERVER NUMBER
-	path += "/transactionLogger"
+	path = strings.TrimRight(path, "/") + "/transactionLogger"
 
 	return &TransactionLogger{
 		path: path,
@@ -39,24 +39,43 @@ func (t *TransactionLogger) WriteDelete(key string) {
 }
 
 func (t *TransactionLogger) Run() {
-	events := make(chan service.Event, 20)
-	errors := make(chan error, 20)
-
+	events := make(chan service.Event, 60000)
+	errorsch := make(chan error, 60000)
+	t.errors = errorsch
 	t.events = events
-	t.errors = errors
+
+	var sb = strings.Builder{}
+	var count = 1
 
 	go func() {
-		t.Lock()
+		defer close(events)
+		defer close(errorsch)
 		for e := range events {
-			_, err := t.file.WriteString(fmt.Sprintf("%v %s %s\n", e.EventType, e.Key, e.Value))
-			if err != nil {
-				errors <- err
-				return
+			sb.Write(strutil.Base64Encode([]byte(fmt.Sprintf("%v %s %s", e.EventType, e.Key, e.Value))))
+			sb.WriteByte('\n')
+			if count == 20 {
+				go t.flash(sb.String())
+				sb.Reset()
+				count = 1
+				continue
 			}
+			count++
 		}
-		t.Unlock()
 	}()
 }
+
+// flash grabs 20 events and saves them to the db.
+func (t *TransactionLogger) flash(data string) {
+	t.Lock()
+	defer t.Unlock()
+
+	_, err := t.file.WriteString(data)
+	if err != nil {
+		log.Println("flash: ", err)
+		t.errors <- err
+	}
+}
+
 func (t *TransactionLogger) Err() <-chan error {
 	return t.errors
 }
@@ -78,7 +97,13 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 		defer close(outError)
 
 		for scanner.Scan() {
-			args := strings.Split(scanner.Text(), " ")
+			action := scanner.Text()
+			decode, err := strutil.Base64Decode([]byte(action))
+			if err != nil {
+				return
+			}
+
+			args := strings.Split(string(decode), " ")
 			for len(args) < 3 {
 				args = append(args, "")
 			}

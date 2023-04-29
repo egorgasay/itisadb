@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"grpc-storage/pkg/api/storage"
+	"itisadb/pkg/api/storage"
 	"os"
 	"strconv"
 	"sync"
@@ -85,6 +85,7 @@ func (s *Servers) AddClient(address string, available, total uint64, server int3
 	}
 
 	cl := storage.NewStorageClient(conn)
+
 	var stClient = &Server{
 		storage:   cl,
 		Available: available,
@@ -199,16 +200,19 @@ func (s *Servers) Exists(number int32) bool {
 	return ok
 }
 
-func (s *Servers) SetToAll(ctx context.Context, key string, val string) []int32 {
+func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) []int32 {
 	var failedServers = make([]int32, 0)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+
+	s.RLock()
+	defer s.RUnlock()
 
 	wg.Add(len(s.servers))
 	for n, serv := range s.servers {
 		go func(server *Server, number int32) {
 			defer wg.Done()
-			set, err := server.Set(ctx, key, val)
+			set, err := server.Set(ctx, key, val, uniques)
 			if err != nil {
 				if server.Tries > 2 {
 					delete(s.servers, number)

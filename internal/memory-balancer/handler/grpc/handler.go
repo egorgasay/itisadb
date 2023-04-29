@@ -1,33 +1,34 @@
-package handler
+package grpc
 
 import (
 	"context"
 	"errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/memory-balancer/usecase"
-	api "grpc-storage/pkg/api/balancer"
+	"itisadb/internal/memory-balancer/servers"
+	"itisadb/internal/memory-balancer/usecase"
+	api "itisadb/pkg/api/balancer"
 	"strings"
 )
 
 type Handler struct {
-	api.UnsafeBalancerServer
+	api.UnimplementedBalancerServer
 	logic *usecase.UseCase
 }
 
 func New(logic *usecase.UseCase) *Handler {
 	return &Handler{logic: logic}
 }
-
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
-	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server)
-
+	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server, r.Uniques)
 	if err != nil {
+		if errors.Is(err, servers.ErrAlreadyExists) {
+			return nil, status.Error(codes.AlreadyExists, "")
+		}
 		return nil, err
 	}
 
 	return &api.BalancerSetResponse{
-		Status:  "ok",
 		SavedTo: setTo,
 	}, nil
 }

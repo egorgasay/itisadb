@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"grpc-storage/internal/memory-balancer/config"
-	"grpc-storage/internal/memory-balancer/handler"
-	"grpc-storage/internal/memory-balancer/storage"
-	"grpc-storage/internal/memory-balancer/usecase"
-	balancer "grpc-storage/pkg/api/balancer"
+	"itisadb/internal/memory-balancer/config"
+	grpchandler "itisadb/internal/memory-balancer/handler/grpc"
+	resthandler "itisadb/internal/memory-balancer/handler/rest"
+	"itisadb/internal/memory-balancer/storage"
+	"itisadb/internal/memory-balancer/usecase"
+	balancer "itisadb/pkg/api/balancer"
 	"log"
 	"net"
 	"os"
@@ -33,22 +34,32 @@ func main() {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
 
-	h := handler.New(logic)
+	h := grpchandler.New(logic)
 	grpcServer := grpc.NewServer()
 
 	log.Println("Starting Balancer ...")
-	lis, err := net.Listen("tcp", fmt.Sprintf(cfg.Host))
+	lis, err := net.Listen("tcp", cfg.Host)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	balancer.RegisterBalancerServer(grpcServer, h)
 
 	go func() {
+		log.Println("Starting GRPC", cfg.Host)
 		err = grpcServer.Serve(lis)
 		if err != nil {
 			log.Fatalf("grpcServer Serve: %v", err)
 		}
 
+	}()
+
+	handler := resthandler.New(logic)
+
+	go func() {
+		log.Println("Starting FastHTTP 127.0.0.1:890")
+		if err := fasthttp.ListenAndServe("127.0.0.1:890", handler.ServeHTTP); err != nil {
+			log.Fatalf("Error in ListenAndServe: %v", err)
+		}
 	}()
 
 	quit := make(chan os.Signal, 1)
