@@ -7,7 +7,7 @@ This is a system consisting of several microservices (Memory Balancer, Storage, 
 
 # Drivers  
   
-- Go - [itisadb-go-sdk](github.com/egorgasay/grpcis-go-sdk)
+- Go - [itisadb-go-sdk](http://github.com/egorgasay/itisadb-go-sdk)
 
 # Unique value search algorithm:  
   
