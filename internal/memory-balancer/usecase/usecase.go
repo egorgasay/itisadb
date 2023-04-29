@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/memory-balancer/servers"
-	repo "grpc-storage/internal/memory-balancer/storage"
+	"itisadb/internal/memory-balancer/servers"
+	repo "itisadb/internal/memory-balancer/storage"
 )
 
 var ErrNoData = errors.New("the value is not found")

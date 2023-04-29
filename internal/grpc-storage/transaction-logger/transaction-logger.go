@@ -1,9 +1,9 @@
 package transactionlogger
 
 import (
-	"grpc-storage/internal/grpc-storage/transaction-logger/db"
-	"grpc-storage/internal/grpc-storage/transaction-logger/file"
-	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"itisadb/internal/grpc-storage/transaction-logger/db"
+	"itisadb/internal/grpc-storage/transaction-logger/file"
+	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"os"
 )
 

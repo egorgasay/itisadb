@@ -6,11 +6,11 @@ import (
 	"github.com/labstack/echo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/cli/config"
-	"grpc-storage/internal/cli/cookies"
-	"grpc-storage/internal/cli/schema"
-	"grpc-storage/internal/cli/usecase"
-	"grpc-storage/pkg/logger"
+	"itisadb/internal/cli/config"
+	"itisadb/internal/cli/cookies"
+	"itisadb/internal/cli/schema"
+	"itisadb/internal/cli/usecase"
+	"itisadb/pkg/logger"
 	"net/http"
 )
 

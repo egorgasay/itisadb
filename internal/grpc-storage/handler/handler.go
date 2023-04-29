@@ -5,9 +5,9 @@ import (
 	"errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/grpc-storage/storage"
-	"grpc-storage/internal/grpc-storage/usecase"
-	api "grpc-storage/pkg/api/storage"
+	"itisadb/internal/grpc-storage/storage"
+	"itisadb/internal/grpc-storage/usecase"
+	api "itisadb/pkg/api/storage"
 )
 
 type Handler struct {

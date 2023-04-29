@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"github.com/pbnjay/memory"
-	"grpc-storage/internal/grpc-storage/storage"
-	"grpc-storage/pkg/logger"
+	"itisadb/internal/grpc-storage/storage"
+	"itisadb/pkg/logger"
 )
 
 type UseCase struct {

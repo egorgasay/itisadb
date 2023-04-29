@@ -5,9 +5,9 @@ import (
 	"errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/internal/memory-balancer/servers"
-	"grpc-storage/internal/memory-balancer/usecase"
-	api "grpc-storage/pkg/api/balancer"
+	"itisadb/internal/memory-balancer/servers"
+	"itisadb/internal/memory-balancer/usecase"
+	api "itisadb/pkg/api/balancer"
 	"strings"
 )
 

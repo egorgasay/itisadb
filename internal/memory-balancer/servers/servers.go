@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"grpc-storage/pkg/api/storage"
+	"itisadb/pkg/api/storage"
 	"os"
 	"strconv"
 	"sync"

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/valyala/fasthttp"
-	"grpc-storage/internal/memory-balancer/schema"
-	"grpc-storage/internal/memory-balancer/usecase"
+	"itisadb/internal/memory-balancer/schema"
+	"itisadb/internal/memory-balancer/usecase"
 	"log"
 	"strings"
 )

@@ -8,8 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"grpc-storage/internal/memory-balancer/config"
-	"grpc-storage/internal/schema"
+	"itisadb/internal/memory-balancer/config"
+	"itisadb/internal/schema"
 )
 
 type Storage struct {

@@ -7,11 +7,11 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"grpc-storage/internal/cli/commands"
-	"grpc-storage/internal/cli/config"
-	"grpc-storage/pkg/api/balancer"
+	"itisadb/internal/cli/commands"
+	"itisadb/internal/cli/config"
+	"itisadb/pkg/api/balancer"
 
-	"grpc-storage/internal/cli/storage"
+	"itisadb/internal/cli/storage"
 )
 
 type UseCase struct {

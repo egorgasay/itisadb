@@ -1,4 +1,4 @@
-module grpc-storage
+module itisadb
 
 go 1.19
 

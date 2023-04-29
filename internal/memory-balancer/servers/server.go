@@ -5,7 +5,7 @@ import (
 	"errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-storage/pkg/api/storage"
+	"itisadb/pkg/api/storage"
 )
 
 // =============== server ====================== //

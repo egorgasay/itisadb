@@ -3,7 +3,7 @@ package file
 import (
 	"bufio"
 	"fmt"
-	"grpc-storage/internal/grpc-storage/transaction-logger/service"
+	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"log"
 	"modernc.org/strutil"
 	"os"
