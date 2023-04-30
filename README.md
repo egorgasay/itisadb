@@ -7,15 +7,17 @@ This is a system consisting of several microservices (Memory Balancer, Storage, 
 
 # Drivers  
 
-[itisadb-go-sdk](http://github.com/egorgasay/itisadb-go-sdk)  
+- Go - [itisadb-go-sdk](http://github.com/egorgasay/itisadb-go-sdk)  
   
 # Unique value search algorithm:  
   
 By default, the value is saved to the minimally loaded server and returns its number to the Client. The client takes all the dirty work of storing and using this number for subsequent accesses to this key. The search for all instances occurs only when the -2 flag is specified and is performed in parallel gorutins.
 
-# Areas  
+# Index  
   
-Instead of the usual tables, a model close to object orientation is used here. Each "Area" has attributes and can have nested "Areas". When creating an "Area", the server with the lowest load will be selected, which means that nested areas can be created on other servers, this allows you to distribute the load between servers.
+Instead of the usual tables, a model close to object orientation is used here. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, which means that nested areas can be created on other servers, this allows you to distribute the load between servers.
+
+<img src="https://user-images.githubusercontent.com/102957432/235368951-660ad979-a9e8-4660-a9f8-fea0c4401426.png"  width="1000" />
 
 
 # Transaction Logger
