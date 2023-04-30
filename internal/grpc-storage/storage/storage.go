@@ -12,6 +12,7 @@ import (
 	tlogger "itisadb/internal/grpc-storage/transaction-logger"
 	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"itisadb/pkg/logger"
+	"strings"
 	"sync"
 
 	"github.com/dolthub/swiss"
@@ -23,7 +24,8 @@ var ErrAlreadyExists = errors.New("the value already exists")
 type Storage struct {
 	dbStore *mongo.Database
 	sync.RWMutex
-	ramStorage *swiss.Map[string, string]
+	ramStorage *swiss.Map[string, any]
+	indexes    sync.Map
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
@@ -40,7 +42,7 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	}
 	st := &Storage{
 		dbStore:    client.Database("grpc-server"),
-		ramStorage: swiss.NewMap[string, string](100000),
+		ramStorage: swiss.NewMap[string, any](100000),
 		logger:     logger,
 	}
 
@@ -103,7 +105,130 @@ func (s *Storage) Get(key string) (string, error) {
 	}
 
 	s.RUnlock()
+
+	switch val.(type) {
+	case string:
+		return val.(string), nil
+	default:
+		return "", errors.New("wrong type")
+	}
+}
+
+var ErrIndexNotFound = errors.New("index not found")
+
+func (s *Storage) GetFromIndex(name, key string) (string, error) {
+	path := strings.Split(name, "/")
+
+	if len(path) == 0 {
+		return "", ErrIndexNotFound
+	}
+
+	var index any
+	var ok bool
+
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		return "", ErrIndexNotFound
+	}
+
+	for _, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				return "", ErrIndexNotFound
+			}
+		default:
+			return "", ErrIndexNotFound
+		}
+	}
+
+	final, ok := index.(*swiss.Map[string, any])
+	if !ok {
+		return "", ErrIndexNotFound
+	}
+
+	value, ok := final.Get(key)
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	val, ok := value.(string)
+	if !ok {
+		return "", ErrNotFound
+	}
+
 	return val, nil
+}
+
+func (s *Storage) SetToIndex(name, key, value string) error {
+	path := strings.Split(name, "/")
+
+	if len(path) == 0 {
+		return ErrIndexNotFound
+	}
+
+	var index any
+	var ok bool
+
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		return ErrIndexNotFound
+	}
+
+	for _, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				return ErrIndexNotFound
+			}
+		default:
+			return ErrIndexNotFound
+		}
+	}
+
+	final, ok := index.(*swiss.Map[string, any])
+	if !ok {
+		return ErrIndexNotFound
+	}
+
+	final.Put(key, value)
+	return nil
+}
+
+func (s *Storage) IsIndex(name string) (bool, error) {
+	path := strings.Split(name, "/")
+
+	if len(path) == 0 {
+		return false, ErrNotFound
+	}
+
+	var index any
+	var ok bool
+
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		return false, ErrNotFound
+	}
+
+	for _, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				return false, ErrNotFound
+			}
+		default:
+			return false, ErrNotFound
+		}
+	}
+
+	_, ok = index.(*swiss.Map[string, any])
+	return ok, nil
 }
 
 func (s *Storage) Save() error {
@@ -112,7 +237,7 @@ func (s *Storage) Save() error {
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	s.ramStorage.Iter(func(key string, value string) bool {
+	s.ramStorage.Iter(func(key string, value any) bool {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)

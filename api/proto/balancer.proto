@@ -13,6 +13,8 @@ service Balancer {
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc Servers(ServersRequest) returns (ServersResponse) {}
+  rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
+  rpc IsIndex(GetIndexRequest) returns (IsIndexResponse) {}
 }
 
 message BalancerSetRequest {
@@ -20,6 +22,22 @@ message BalancerSetRequest {
   string value = 2;
   int32 server = 3;
   bool uniques = 4;
+}
+
+message GetIndexRequest {
+  string name = 1;
+}
+
+message SetToIndexRequest {
+  string key = 1;
+  string value = 2;
+  bool unique = 3;
+  string name = 4;
+}
+
+message GetToIndexRequest {
+  string key = 1;
+  string name = 2;
 }
 
 message BalancerSetToIndexRequest {
@@ -61,6 +79,16 @@ message ServersRequest{ }
 
 message BalancerGetResponse {
   string value = 1;
+}
+
+message IsIndexResponse {
+  bool ok = 1;
+}
+
+message GetIndexResponse {
+  map<string, string> index = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
 }
 
 message BalancerSetResponse {

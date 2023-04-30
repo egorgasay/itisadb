@@ -57,3 +57,42 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 		Value:     value,
 	}, nil
 }
+
+func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*api.SetResponse, error) {
+	memUsage, err := h.logic.SetToIndex(r.Key, r.Value, r.Unique)
+	if errors.Is(err, storage.ErrAlreadyExists) {
+		return &api.SetResponse{
+			Total:     memUsage.Total,
+			Available: memUsage.Available,
+		}, status.Error(codes.AlreadyExists, err.Error())
+	}
+
+	return &api.SetResponse{
+		Total:     memUsage.Total,
+		Available: memUsage.Available,
+	}, err
+}
+
+func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) (*api.GetResponse, error) {
+	ram, value, err := h.logic.Get(r.Key)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return &api.GetResponse{
+				Available: ram.Available,
+				Total:     ram.Total,
+				Value:     err.Error(),
+			}, status.Error(codes.NotFound, err.Error())
+		}
+		return &api.GetResponse{
+			Available: ram.Available,
+			Total:     ram.Total,
+			Value:     err.Error(),
+		}, err
+	}
+
+	return &api.GetResponse{
+		Available: ram.Available,
+		Total:     ram.Total,
+		Value:     value,
+	}, nil
+}

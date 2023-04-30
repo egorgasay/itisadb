@@ -30,6 +30,8 @@ type BalancerClient interface {
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
 	Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error)
+	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
+	IsIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
 }
 
 type balancerClient struct {
@@ -112,6 +114,24 @@ func (c *balancerClient) Servers(ctx context.Context, in *ServersRequest, opts .
 	return out, nil
 }
 
+func (c *balancerClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error) {
+	out := new(GetIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/GetIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) IsIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error) {
+	out := new(IsIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/IsIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BalancerServer is the server API for Balancer service.
 // All implementations must embed UnimplementedBalancerServer
 // for forward compatibility
@@ -124,6 +144,8 @@ type BalancerServer interface {
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
 	Servers(context.Context, *ServersRequest) (*ServersResponse, error)
+	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
+	IsIndex(context.Context, *GetIndexRequest) (*IsIndexResponse, error)
 	mustEmbedUnimplementedBalancerServer()
 }
 
@@ -154,6 +176,12 @@ func (UnimplementedBalancerServer) Disconnect(context.Context, *DisconnectReques
 }
 func (UnimplementedBalancerServer) Servers(context.Context, *ServersRequest) (*ServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
+}
+func (UnimplementedBalancerServer) GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
+}
+func (UnimplementedBalancerServer) IsIndex(context.Context, *GetIndexRequest) (*IsIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
 }
 func (UnimplementedBalancerServer) mustEmbedUnimplementedBalancerServer() {}
 
@@ -312,6 +340,42 @@ func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).GetIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/GetIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).GetIndex(ctx, req.(*GetIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_IsIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).IsIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/IsIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).IsIndex(ctx, req.(*GetIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Balancer_ServiceDesc is the grpc.ServiceDesc for Balancer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -350,6 +414,14 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Servers",
 			Handler:    _Balancer_Servers_Handler,
+		},
+		{
+			MethodName: "GetIndex",
+			Handler:    _Balancer_GetIndex_Handler,
+		},
+		{
+			MethodName: "IsIndex",
+			Handler:    _Balancer_IsIndex_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

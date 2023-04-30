@@ -24,6 +24,11 @@ const _ = grpc.SupportPackageIsVersion7
 type StorageClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	SetToIndex(ctx context.Context, in *SetToIndexRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	GetFromIndex(ctx context.Context, in *GetFromIndexRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
+	IsIndex(ctx context.Context, in *IsIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
+	NewIndex(ctx context.Context, in *NewIndexRequest, opts ...grpc.CallOption) (*NewIndexResponse, error)
 }
 
 type storageClient struct {
@@ -52,12 +57,62 @@ func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *storageClient) SetToIndex(ctx context.Context, in *SetToIndexRequest, opts ...grpc.CallOption) (*SetResponse, error) {
+	out := new(SetResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/SetToIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) GetFromIndex(ctx context.Context, in *GetFromIndexRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/GetFromIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error) {
+	out := new(GetIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/GetIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) IsIndex(ctx context.Context, in *IsIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error) {
+	out := new(IsIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/IsIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) NewIndex(ctx context.Context, in *NewIndexRequest, opts ...grpc.CallOption) (*NewIndexResponse, error) {
+	out := new(NewIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/NewIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility
 type StorageServer interface {
 	Set(context.Context, *SetRequest) (*SetResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	SetToIndex(context.Context, *SetToIndexRequest) (*SetResponse, error)
+	GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error)
+	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
+	IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error)
+	NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -70,6 +125,21 @@ func (UnimplementedStorageServer) Set(context.Context, *SetRequest) (*SetRespons
 }
 func (UnimplementedStorageServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedStorageServer) SetToIndex(context.Context, *SetToIndexRequest) (*SetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetToIndex not implemented")
+}
+func (UnimplementedStorageServer) GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFromIndex not implemented")
+}
+func (UnimplementedStorageServer) GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
+}
+func (UnimplementedStorageServer) IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
+}
+func (UnimplementedStorageServer) NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewIndex not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
@@ -120,6 +190,96 @@ func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Storage_SetToIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetToIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).SetToIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/SetToIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).SetToIndex(ctx, req.(*SetToIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_GetFromIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFromIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).GetFromIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/GetFromIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).GetFromIndex(ctx, req.(*GetFromIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).GetIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/GetIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).GetIndex(ctx, req.(*GetIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_IsIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).IsIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/IsIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).IsIndex(ctx, req.(*IsIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_NewIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).NewIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/NewIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).NewIndex(ctx, req.(*NewIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +294,26 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _Storage_Get_Handler,
+		},
+		{
+			MethodName: "SetToIndex",
+			Handler:    _Storage_SetToIndex_Handler,
+		},
+		{
+			MethodName: "GetFromIndex",
+			Handler:    _Storage_GetFromIndex_Handler,
+		},
+		{
+			MethodName: "GetIndex",
+			Handler:    _Storage_GetIndex_Handler,
+		},
+		{
+			MethodName: "IsIndex",
+			Handler:    _Storage_IsIndex_Handler,
+		},
+		{
+			MethodName: "NewIndex",
+			Handler:    _Storage_NewIndex_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

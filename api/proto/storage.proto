@@ -7,6 +7,11 @@ package api;
 service Storage {
   rpc Set(SetRequest) returns (SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
+  rpc SetToIndex(SetToIndexRequest) returns (SetResponse) {}
+  rpc GetFromIndex(GetFromIndexRequest) returns (GetResponse) {}
+  rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
+  rpc IsIndex(IsIndexRequest) returns (IsIndexResponse) {}
+  rpc NewIndex(NewIndexRequest) returns (NewIndexResponse) {}
 }
 
 message SetRequest {
@@ -19,11 +24,48 @@ message GetRequest {
   string key = 1;
 }
 
+message GetIndexRequest {
+  string name = 1;
+}
+
+message IsIndexRequest {
+  string name = 1;
+}
+
+message NewIndexRequest {
+  string name = 1;
+}
+
+message SetToIndexRequest {
+  string key = 1;
+  string value = 2;
+  bool unique = 3;
+  string name = 4;
+}
+
+message GetFromIndexRequest {
+  string key = 1;
+  string name = 2;
+}
+
 message GetResponse {
   string value = 1;
   uint64 Total = 2;
   uint64 Available = 3;
 }
+
+message IsIndexResponse {
+  bool ok = 1;
+}
+
+message GetIndexResponse {
+  map<string, string> index = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
+}
+
+
+message NewIndexResponse{ }
 
 message SetResponse {
   uint64 Total = 1;
