@@ -15,7 +15,7 @@ By default, the value is saved to the minimally loaded server and returns its nu
 
 # Index  
   
-Instead of the usual tables, a model close to object orientation is used here. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, which means that nested areas can be created on other servers, this allows you to distribute the load between servers.
+Instead of the usual tables, a model close to object orientation is used here. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, which means that nested indexes can be created on other servers, this allows you to distribute the load between servers.
 
 <img src="https://user-images.githubusercontent.com/102957432/235368951-660ad979-a9e8-4660-a9f8-fea0c4401426.png"  width="1000" />
 

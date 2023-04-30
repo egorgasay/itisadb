@@ -79,13 +79,14 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.Lock()
-	defer s.Unlock()
 	if unique {
 		if _, ok := s.ramStorage.Get(key); ok {
 			return ErrAlreadyExists
 		}
 	}
 	s.ramStorage.Put(key, val)
+
+	s.Unlock()
 	return nil
 }
 
@@ -95,19 +96,19 @@ func (s *Storage) WriteSet(key, val string) {
 
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
-	defer s.RUnlock()
+
 	val, ok := s.ramStorage.Get(key)
 	if !ok {
 		return "", ErrNotFound
 	}
 
+	s.RUnlock()
 	return val, nil
 }
 
 func (s *Storage) Save() error {
 	c := s.dbStore.Collection("map")
 	s.Lock()
-	defer s.Unlock()
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
@@ -121,5 +122,6 @@ func (s *Storage) Save() error {
 		return true
 	})
 
+	s.Unlock()
 	return s.tLogger.Clear()
 }

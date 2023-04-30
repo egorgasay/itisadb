@@ -5,11 +5,11 @@ option go_package = "./";
 package api;
 
 service Balancer {
-  rpc NewArea(NewAreaRequest) returns (NewAreaResponse) {}
+  rpc Index(IndexRequest) returns (IndexResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
-  rpc SetToArea(BalancerSetToAreaRequest) returns (BalancerSetResponse) {}
+  rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
-  rpc GetFromArea(BalancerGetFromAreaRequest) returns (BalancerGetResponse) {}
+  rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetResponse) {}
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc Servers(ServersRequest) returns (ServersResponse) {}
@@ -22,12 +22,12 @@ message BalancerSetRequest {
   bool uniques = 4;
 }
 
-message BalancerSetToAreaRequest {
+message BalancerSetToIndexRequest {
   string key = 1;
   string value = 2;
   int32 server = 3;
   bool uniques = 4;
-  string area = 5;
+  string index = 5;
 }
 
 message BalancerGetRequest {
@@ -35,10 +35,10 @@ message BalancerGetRequest {
   int32 server = 2;
 }
 
-message BalancerGetFromAreaRequest {
+message BalancerGetFromIndexRequest {
   string key = 1;
   int32 server = 2;
-  string area = 3;
+  string index = 3;
 }
 
 message ConnectRequest {
@@ -48,7 +48,7 @@ message ConnectRequest {
   int32 server = 4;
 }
 
-message NewAreaRequest {
+message IndexRequest {
   string name = 1;
 //  string defaultAttributes = 2;
 }
@@ -74,7 +74,7 @@ message ConnectResponse {
 
 message DisconnectResponse{ }
 
-message NewAreaResponse{ }
+message IndexResponse{ }
 
 message ServersResponse {
   string serversInfo = 1;

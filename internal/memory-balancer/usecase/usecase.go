@@ -31,8 +31,8 @@ type UseCase struct {
 	storage *repo.Storage
 
 	// TODO: add copy to disk
-	areas map[string]int32
-	mu    sync.RWMutex
+	indexes map[string]int32
+	mu      sync.RWMutex
 	//queue   *queue.Queue[int32]
 }
 
@@ -45,7 +45,7 @@ func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
 		servers: s,
 		storage: repository,
 		logger:  logger,
-		areas:   make(map[string]int32, 10000),
+		indexes: make(map[string]int32, 10000),
 	}, nil
 }
 
