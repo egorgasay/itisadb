@@ -67,9 +67,9 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 		case err, ok = <-errs:
 		case e, ok = <-events:
 			switch e.EventType {
-			case service.Delete:
 			case service.Set:
 				s.Set(e.Key, e.Value, false)
+			case service.Delete:
 			}
 		}
 	}

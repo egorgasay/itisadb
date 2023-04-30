@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+
 	//"github.com/tomakado/containers/queue"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -27,6 +29,10 @@ type UseCase struct {
 	servers *servers.Servers
 	logger  *zap.Logger
 	storage *repo.Storage
+
+	// TODO: add copy to disk
+	areas map[string]int32
+	mu    sync.RWMutex
 	//queue   *queue.Queue[int32]
 }
 
@@ -39,6 +45,7 @@ func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
 		servers: s,
 		storage: repository,
 		logger:  logger,
+		areas:   make(map[string]int32, 10000),
 	}, nil
 }
 

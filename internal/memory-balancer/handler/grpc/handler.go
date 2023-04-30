@@ -33,8 +33,47 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 	}, nil
 }
 
+func (h *Handler) SetToArea(ctx context.Context, r *api.BalancerSetToAreaRequest) (*api.BalancerSetResponse, error) {
+	setTo, err := h.logic.SetToArea(ctx, r.Area, r.Key, r.Value, r.Server, r.Uniques)
+	if err != nil {
+		if errors.Is(err, servers.ErrAlreadyExists) {
+			return nil, status.Error(codes.AlreadyExists, "")
+		}
+		return nil, err
+	}
+
+	return &api.BalancerSetResponse{
+		SavedTo: setTo,
+	}, nil
+}
+
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
 	value, err := h.logic.Get(ctx, r.Key, r.Server)
+	if errors.Is(err, usecase.ErrNoData) {
+		return &api.BalancerGetResponse{
+			Value: err.Error(),
+		}, status.Error(codes.NotFound, err.Error())
+	}
+
+	if errors.Is(err, usecase.ErrUnknownServer) {
+		return &api.BalancerGetResponse{
+			Value: err.Error(),
+		}, status.Error(codes.Unavailable, err.Error())
+	}
+
+	if err != nil {
+		return &api.BalancerGetResponse{
+			Value: err.Error(),
+		}, err
+	}
+
+	return &api.BalancerGetResponse{
+		Value: value,
+	}, nil
+}
+
+func (h *Handler) GetFromArea(ctx context.Context, r *api.BalancerGetFromAreaRequest) (*api.BalancerGetResponse, error) {
+	value, err := h.logic.GetFromArea(ctx, r.GetArea(), r.GetKey(), r.GetServer())
 	if errors.Is(err, usecase.ErrNoData) {
 		return &api.BalancerGetResponse{
 			Value: err.Error(),
@@ -68,6 +107,15 @@ func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*ap
 		Status:       "connected successfully",
 		ServerNumber: serverNum,
 	}, nil
+}
+
+func (h *Handler) NewArea(ctx context.Context, request *api.NewAreaRequest) (*api.NewAreaResponse, error) {
+	_, err := h.logic.NewArea(ctx, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.NewAreaResponse{}, nil
 }
 
 func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {

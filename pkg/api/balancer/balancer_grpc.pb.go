@@ -22,8 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalancerClient interface {
+	NewArea(ctx context.Context, in *NewAreaRequest, opts ...grpc.CallOption) (*NewAreaResponse, error)
 	Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
+	SetToArea(ctx context.Context, in *BalancerSetToAreaRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
 	Get(ctx context.Context, in *BalancerGetRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
+	GetFromArea(ctx context.Context, in *BalancerGetFromAreaRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
 	Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error)
@@ -37,6 +40,15 @@ func NewBalancerClient(cc grpc.ClientConnInterface) BalancerClient {
 	return &balancerClient{cc}
 }
 
+func (c *balancerClient) NewArea(ctx context.Context, in *NewAreaRequest, opts ...grpc.CallOption) (*NewAreaResponse, error) {
+	out := new(NewAreaResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/NewArea", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *balancerClient) Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error) {
 	out := new(BalancerSetResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Set", in, out, opts...)
@@ -46,9 +58,27 @@ func (c *balancerClient) Set(ctx context.Context, in *BalancerSetRequest, opts .
 	return out, nil
 }
 
+func (c *balancerClient) SetToArea(ctx context.Context, in *BalancerSetToAreaRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error) {
+	out := new(BalancerSetResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/SetToArea", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *balancerClient) Get(ctx context.Context, in *BalancerGetRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error) {
 	out := new(BalancerGetResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) GetFromArea(ctx context.Context, in *BalancerGetFromAreaRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error) {
+	out := new(BalancerGetResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/GetFromArea", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +116,11 @@ func (c *balancerClient) Servers(ctx context.Context, in *ServersRequest, opts .
 // All implementations must embed UnimplementedBalancerServer
 // for forward compatibility
 type BalancerServer interface {
+	NewArea(context.Context, *NewAreaRequest) (*NewAreaResponse, error)
 	Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error)
+	SetToArea(context.Context, *BalancerSetToAreaRequest) (*BalancerSetResponse, error)
 	Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error)
+	GetFromArea(context.Context, *BalancerGetFromAreaRequest) (*BalancerGetResponse, error)
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
 	Servers(context.Context, *ServersRequest) (*ServersResponse, error)
@@ -98,11 +131,20 @@ type BalancerServer interface {
 type UnimplementedBalancerServer struct {
 }
 
+func (UnimplementedBalancerServer) NewArea(context.Context, *NewAreaRequest) (*NewAreaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewArea not implemented")
+}
 func (UnimplementedBalancerServer) Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
 }
+func (UnimplementedBalancerServer) SetToArea(context.Context, *BalancerSetToAreaRequest) (*BalancerSetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetToArea not implemented")
+}
 func (UnimplementedBalancerServer) Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedBalancerServer) GetFromArea(context.Context, *BalancerGetFromAreaRequest) (*BalancerGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFromArea not implemented")
 }
 func (UnimplementedBalancerServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
@@ -126,6 +168,24 @@ func RegisterBalancerServer(s grpc.ServiceRegistrar, srv BalancerServer) {
 	s.RegisterService(&Balancer_ServiceDesc, srv)
 }
 
+func _Balancer_NewArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).NewArea(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/NewArea",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).NewArea(ctx, req.(*NewAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Balancer_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BalancerSetRequest)
 	if err := dec(in); err != nil {
@@ -144,6 +204,24 @@ func _Balancer_Set_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_SetToArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerSetToAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).SetToArea(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/SetToArea",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).SetToArea(ctx, req.(*BalancerSetToAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Balancer_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BalancerGetRequest)
 	if err := dec(in); err != nil {
@@ -158,6 +236,24 @@ func _Balancer_Get_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BalancerServer).Get(ctx, req.(*BalancerGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_GetFromArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerGetFromAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).GetFromArea(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/GetFromArea",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).GetFromArea(ctx, req.(*BalancerGetFromAreaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -224,12 +320,24 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BalancerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "NewArea",
+			Handler:    _Balancer_NewArea_Handler,
+		},
+		{
 			MethodName: "Set",
 			Handler:    _Balancer_Set_Handler,
 		},
 		{
+			MethodName: "SetToArea",
+			Handler:    _Balancer_SetToArea_Handler,
+		},
+		{
 			MethodName: "Get",
 			Handler:    _Balancer_Get_Handler,
+		},
+		{
+			MethodName: "GetFromArea",
+			Handler:    _Balancer_GetFromArea_Handler,
 		},
 		{
 			MethodName: "Connect",

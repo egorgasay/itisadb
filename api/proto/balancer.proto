@@ -5,8 +5,11 @@ option go_package = "./";
 package api;
 
 service Balancer {
+  rpc NewArea(NewAreaRequest) returns (NewAreaResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
+  rpc SetToArea(BalancerSetToAreaRequest) returns (BalancerSetResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
+  rpc GetFromArea(BalancerGetFromAreaRequest) returns (BalancerGetResponse) {}
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc Servers(ServersRequest) returns (ServersResponse) {}
@@ -19,9 +22,23 @@ message BalancerSetRequest {
   bool uniques = 4;
 }
 
+message BalancerSetToAreaRequest {
+  string key = 1;
+  string value = 2;
+  int32 server = 3;
+  bool uniques = 4;
+  string area = 5;
+}
+
 message BalancerGetRequest {
   string key = 1;
   int32 server = 2;
+}
+
+message BalancerGetFromAreaRequest {
+  string key = 1;
+  int32 server = 2;
+  string area = 3;
 }
 
 message ConnectRequest {
@@ -29,6 +46,11 @@ message ConnectRequest {
   uint64 Total = 2;
   uint64 Available = 3;
   int32 server = 4;
+}
+
+message NewAreaRequest {
+  string name = 1;
+//  string defaultAttributes = 2;
 }
 
 message DisconnectRequest{
@@ -51,6 +73,8 @@ message ConnectResponse {
 }
 
 message DisconnectResponse{ }
+
+message NewAreaResponse{ }
 
 message ServersResponse {
   string serversInfo = 1;

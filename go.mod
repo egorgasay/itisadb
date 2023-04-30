@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/docker/distribution v2.8.1+incompatible
+	github.com/dolthub/swiss v0.1.0
 	github.com/egorgasay/dockerdb/v2 v2.0.2
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/httplog v0.2.5
@@ -12,7 +13,7 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/rs/zerolog v1.27.0
-	github.com/sourcegraph/conc v0.3.0
+	github.com/valyala/fasthttp v1.46.0
 	go.mongodb.org/mongo-driver v1.7.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.8.0
@@ -29,7 +30,6 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/maphash v0.0.0-20221220182448-74e1e1ea1577 // indirect
-	github.com/dolthub/swiss v0.1.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -45,7 +45,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.46.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
