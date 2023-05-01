@@ -22,16 +22,17 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalancerClient interface {
-	Index(ctx context.Context, in *IndexRequest, opts ...grpc.CallOption) (*IndexResponse, error)
+	Index(ctx context.Context, in *BalancerIndexRequest, opts ...grpc.CallOption) (*BalancerIndexResponse, error)
 	Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
-	SetToIndex(ctx context.Context, in *BalancerSetToIndexRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
+	SetToIndex(ctx context.Context, in *BalancerSetToIndexRequest, opts ...grpc.CallOption) (*BalancerSetToIndexResponse, error)
 	Get(ctx context.Context, in *BalancerGetRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
-	GetFromIndex(ctx context.Context, in *BalancerGetFromIndexRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
-	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
-	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
-	Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error)
-	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
-	IsIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
+	GetFromIndex(ctx context.Context, in *BalancerGetFromIndexRequest, opts ...grpc.CallOption) (*BalancerGetFromIndexResponse, error)
+	Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error)
+	Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error)
+	Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error)
+	GetIndex(ctx context.Context, in *BalancerGetIndexRequest, opts ...grpc.CallOption) (*BalancerGetIndexResponse, error)
+	IsIndex(ctx context.Context, in *BalancerIsIndexRequest, opts ...grpc.CallOption) (*BalancerIsIndexResponse, error)
+	Size(ctx context.Context, in *BalancerIndexSizeRequest, opts ...grpc.CallOption) (*BalancerIndexSizeResponse, error)
 }
 
 type balancerClient struct {
@@ -42,8 +43,8 @@ func NewBalancerClient(cc grpc.ClientConnInterface) BalancerClient {
 	return &balancerClient{cc}
 }
 
-func (c *balancerClient) Index(ctx context.Context, in *IndexRequest, opts ...grpc.CallOption) (*IndexResponse, error) {
-	out := new(IndexResponse)
+func (c *balancerClient) Index(ctx context.Context, in *BalancerIndexRequest, opts ...grpc.CallOption) (*BalancerIndexResponse, error) {
+	out := new(BalancerIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Index", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -60,8 +61,8 @@ func (c *balancerClient) Set(ctx context.Context, in *BalancerSetRequest, opts .
 	return out, nil
 }
 
-func (c *balancerClient) SetToIndex(ctx context.Context, in *BalancerSetToIndexRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error) {
-	out := new(BalancerSetResponse)
+func (c *balancerClient) SetToIndex(ctx context.Context, in *BalancerSetToIndexRequest, opts ...grpc.CallOption) (*BalancerSetToIndexResponse, error) {
+	out := new(BalancerSetToIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/SetToIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,8 +79,8 @@ func (c *balancerClient) Get(ctx context.Context, in *BalancerGetRequest, opts .
 	return out, nil
 }
 
-func (c *balancerClient) GetFromIndex(ctx context.Context, in *BalancerGetFromIndexRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error) {
-	out := new(BalancerGetResponse)
+func (c *balancerClient) GetFromIndex(ctx context.Context, in *BalancerGetFromIndexRequest, opts ...grpc.CallOption) (*BalancerGetFromIndexResponse, error) {
+	out := new(BalancerGetFromIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/GetFromIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -87,8 +88,8 @@ func (c *balancerClient) GetFromIndex(ctx context.Context, in *BalancerGetFromIn
 	return out, nil
 }
 
-func (c *balancerClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
-	out := new(ConnectResponse)
+func (c *balancerClient) Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error) {
+	out := new(BalancerConnectResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Connect", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -96,8 +97,8 @@ func (c *balancerClient) Connect(ctx context.Context, in *ConnectRequest, opts .
 	return out, nil
 }
 
-func (c *balancerClient) Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error) {
-	out := new(DisconnectResponse)
+func (c *balancerClient) Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error) {
+	out := new(BalancerDisconnectResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Disconnect", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -105,8 +106,8 @@ func (c *balancerClient) Disconnect(ctx context.Context, in *DisconnectRequest, 
 	return out, nil
 }
 
-func (c *balancerClient) Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error) {
-	out := new(ServersResponse)
+func (c *balancerClient) Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error) {
+	out := new(BalancerServersResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/Servers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -114,8 +115,8 @@ func (c *balancerClient) Servers(ctx context.Context, in *ServersRequest, opts .
 	return out, nil
 }
 
-func (c *balancerClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error) {
-	out := new(GetIndexResponse)
+func (c *balancerClient) GetIndex(ctx context.Context, in *BalancerGetIndexRequest, opts ...grpc.CallOption) (*BalancerGetIndexResponse, error) {
+	out := new(BalancerGetIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/GetIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -123,9 +124,18 @@ func (c *balancerClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts
 	return out, nil
 }
 
-func (c *balancerClient) IsIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error) {
-	out := new(IsIndexResponse)
+func (c *balancerClient) IsIndex(ctx context.Context, in *BalancerIsIndexRequest, opts ...grpc.CallOption) (*BalancerIsIndexResponse, error) {
+	out := new(BalancerIsIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/IsIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) Size(ctx context.Context, in *BalancerIndexSizeRequest, opts ...grpc.CallOption) (*BalancerIndexSizeResponse, error) {
+	out := new(BalancerIndexSizeResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/Size", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,16 +146,17 @@ func (c *balancerClient) IsIndex(ctx context.Context, in *GetIndexRequest, opts 
 // All implementations must embed UnimplementedBalancerServer
 // for forward compatibility
 type BalancerServer interface {
-	Index(context.Context, *IndexRequest) (*IndexResponse, error)
+	Index(context.Context, *BalancerIndexRequest) (*BalancerIndexResponse, error)
 	Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error)
-	SetToIndex(context.Context, *BalancerSetToIndexRequest) (*BalancerSetResponse, error)
+	SetToIndex(context.Context, *BalancerSetToIndexRequest) (*BalancerSetToIndexResponse, error)
 	Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error)
-	GetFromIndex(context.Context, *BalancerGetFromIndexRequest) (*BalancerGetResponse, error)
-	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
-	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
-	Servers(context.Context, *ServersRequest) (*ServersResponse, error)
-	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
-	IsIndex(context.Context, *GetIndexRequest) (*IsIndexResponse, error)
+	GetFromIndex(context.Context, *BalancerGetFromIndexRequest) (*BalancerGetFromIndexResponse, error)
+	Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error)
+	Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error)
+	Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error)
+	GetIndex(context.Context, *BalancerGetIndexRequest) (*BalancerGetIndexResponse, error)
+	IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error)
+	Size(context.Context, *BalancerIndexSizeRequest) (*BalancerIndexSizeResponse, error)
 	mustEmbedUnimplementedBalancerServer()
 }
 
@@ -153,35 +164,38 @@ type BalancerServer interface {
 type UnimplementedBalancerServer struct {
 }
 
-func (UnimplementedBalancerServer) Index(context.Context, *IndexRequest) (*IndexResponse, error) {
+func (UnimplementedBalancerServer) Index(context.Context, *BalancerIndexRequest) (*BalancerIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Index not implemented")
 }
 func (UnimplementedBalancerServer) Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
 }
-func (UnimplementedBalancerServer) SetToIndex(context.Context, *BalancerSetToIndexRequest) (*BalancerSetResponse, error) {
+func (UnimplementedBalancerServer) SetToIndex(context.Context, *BalancerSetToIndexRequest) (*BalancerSetToIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetToIndex not implemented")
 }
 func (UnimplementedBalancerServer) Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedBalancerServer) GetFromIndex(context.Context, *BalancerGetFromIndexRequest) (*BalancerGetResponse, error) {
+func (UnimplementedBalancerServer) GetFromIndex(context.Context, *BalancerGetFromIndexRequest) (*BalancerGetFromIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFromIndex not implemented")
 }
-func (UnimplementedBalancerServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
+func (UnimplementedBalancerServer) Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
 }
-func (UnimplementedBalancerServer) Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error) {
+func (UnimplementedBalancerServer) Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
 }
-func (UnimplementedBalancerServer) Servers(context.Context, *ServersRequest) (*ServersResponse, error) {
+func (UnimplementedBalancerServer) Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
 }
-func (UnimplementedBalancerServer) GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error) {
+func (UnimplementedBalancerServer) GetIndex(context.Context, *BalancerGetIndexRequest) (*BalancerGetIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
 }
-func (UnimplementedBalancerServer) IsIndex(context.Context, *GetIndexRequest) (*IsIndexResponse, error) {
+func (UnimplementedBalancerServer) IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
+}
+func (UnimplementedBalancerServer) Size(context.Context, *BalancerIndexSizeRequest) (*BalancerIndexSizeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Size not implemented")
 }
 func (UnimplementedBalancerServer) mustEmbedUnimplementedBalancerServer() {}
 
@@ -197,7 +211,7 @@ func RegisterBalancerServer(s grpc.ServiceRegistrar, srv BalancerServer) {
 }
 
 func _Balancer_Index_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IndexRequest)
+	in := new(BalancerIndexRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -209,7 +223,7 @@ func _Balancer_Index_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/api.Balancer/Index",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Index(ctx, req.(*IndexRequest))
+		return srv.(BalancerServer).Index(ctx, req.(*BalancerIndexRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -287,7 +301,7 @@ func _Balancer_GetFromIndex_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _Balancer_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConnectRequest)
+	in := new(BalancerConnectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -299,13 +313,13 @@ func _Balancer_Connect_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/api.Balancer/Connect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Connect(ctx, req.(*ConnectRequest))
+		return srv.(BalancerServer).Connect(ctx, req.(*BalancerConnectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Balancer_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisconnectRequest)
+	in := new(BalancerDisconnectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -317,13 +331,13 @@ func _Balancer_Disconnect_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/api.Balancer/Disconnect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Disconnect(ctx, req.(*DisconnectRequest))
+		return srv.(BalancerServer).Disconnect(ctx, req.(*BalancerDisconnectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServersRequest)
+	in := new(BalancerServersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -335,13 +349,13 @@ func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/api.Balancer/Servers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Servers(ctx, req.(*ServersRequest))
+		return srv.(BalancerServer).Servers(ctx, req.(*BalancerServersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Balancer_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetIndexRequest)
+	in := new(BalancerGetIndexRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -353,13 +367,13 @@ func _Balancer_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: "/api.Balancer/GetIndex",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).GetIndex(ctx, req.(*GetIndexRequest))
+		return srv.(BalancerServer).GetIndex(ctx, req.(*BalancerGetIndexRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Balancer_IsIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetIndexRequest)
+	in := new(BalancerIsIndexRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -371,7 +385,25 @@ func _Balancer_IsIndex_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/api.Balancer/IsIndex",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).IsIndex(ctx, req.(*GetIndexRequest))
+		return srv.(BalancerServer).IsIndex(ctx, req.(*BalancerIsIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_Size_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerIndexSizeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Size(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/Size",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Size(ctx, req.(*BalancerIndexSizeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -422,6 +454,10 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsIndex",
 			Handler:    _Balancer_IsIndex_Handler,
+		},
+		{
+			MethodName: "Size",
+			Handler:    _Balancer_Size_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

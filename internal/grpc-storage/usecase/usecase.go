@@ -21,6 +21,12 @@ func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
 	return RAMUsage(), err
 }
 
+func (uc *UseCase) SetToIndex(name, key, val string) (RAM, error) {
+	err := uc.storage.SetToIndex(name, key, val)
+	uc.storage.WriteSet(key, val)
+	return RAMUsage(), err
+}
+
 type RAM struct {
 	Total     uint64
 	Available uint64
@@ -39,10 +45,29 @@ func (uc *UseCase) Get(key string) (RAM, string, error) {
 	return RAMUsage(), s, err
 }
 
+func (uc *UseCase) GetFromIndex(name, key string) (RAM, string, error) {
+	s, err := uc.storage.GetFromIndex(name, key)
+	return RAMUsage(), s, err
+}
+
+func (uc *UseCase) GetIndex(name string) (RAM, map[string]string, error) {
+	index, err := uc.storage.GetIndex(name)
+	return RAMUsage(), index, err
+}
+
 func (uc *UseCase) Save() {
 	uc.logger.Info("Saving values ...")
 	err := uc.storage.Save()
 	if err != nil {
 		uc.logger.Warn(err.Error())
 	}
+}
+
+func (uc *UseCase) NewIndex(name string) (RAM, error) {
+	return RAMUsage(), uc.storage.CreateIndex(name)
+}
+
+func (uc *UseCase) Size(name string) (RAM, uint64, error) {
+	size, err := uc.storage.Size(name)
+	return RAMUsage(), size, err
 }

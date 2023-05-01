@@ -33,8 +33,8 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 	}, nil
 }
 
-func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexRequest) (*api.BalancerSetResponse, error) {
-	setTo, err := h.logic.SetToIndex(ctx, r.Index, r.Key, r.Value, r.Server, r.Uniques)
+func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexRequest) (*api.BalancerSetToIndexResponse, error) {
+	setTo, err := h.logic.SetToIndex(ctx, r.Index, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		if errors.Is(err, servers.ErrAlreadyExists) {
 			return nil, status.Error(codes.AlreadyExists, "")
@@ -42,7 +42,7 @@ func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexReque
 		return nil, err
 	}
 
-	return &api.BalancerSetResponse{
+	return &api.BalancerSetToIndexResponse{
 		SavedTo: setTo,
 	}, nil
 }
@@ -52,20 +52,14 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
-			return &api.BalancerGetResponse{
-				Value: err.Error(),
-			}, status.Error(codes.NotFound, err.Error())
+			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
 		if errors.Is(err, usecase.ErrUnknownServer) {
-			return &api.BalancerGetResponse{
-				Value: err.Error(),
-			}, status.Error(codes.Unavailable, err.Error())
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 
-		return &api.BalancerGetResponse{
-			Value: err.Error(),
-		}, err
+		return nil, err
 	}
 
 	return &api.BalancerGetResponse{
@@ -73,63 +67,96 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 	}, nil
 }
 
-func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexRequest) (*api.BalancerGetResponse, error) {
+func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexRequest) (*api.BalancerGetFromIndexResponse, error) {
 	value, err := h.logic.GetFromIndex(ctx, r.GetIndex(), r.GetKey(), r.GetServer())
 
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
-			return &api.BalancerGetResponse{
+			return &api.BalancerGetFromIndexResponse{
 				Value: err.Error(),
 			}, status.Error(codes.NotFound, err.Error())
 		}
 
 		if errors.Is(err, usecase.ErrUnknownServer) {
-			return &api.BalancerGetResponse{
+			return &api.BalancerGetFromIndexResponse{
 				Value: err.Error(),
 			}, status.Error(codes.Unavailable, err.Error())
 		}
 
-		return &api.BalancerGetResponse{
+		return &api.BalancerGetFromIndexResponse{
 			Value: err.Error(),
 		}, err
 	}
 
-	return &api.BalancerGetResponse{
+	return &api.BalancerGetFromIndexResponse{
 		Value: value,
 	}, nil
 }
 
-func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
+func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectRequest) (*api.BalancerConnectResponse, error) {
 	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal(), request.Server)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.ConnectResponse{
+	return &api.BalancerConnectResponse{
 		Status:       "connected successfully",
 		ServerNumber: serverNum,
 	}, nil
 }
 
-func (h *Handler) Index(ctx context.Context, request *api.IndexRequest) (*api.IndexResponse, error) {
+func (h *Handler) Index(ctx context.Context, request *api.BalancerIndexRequest) (*api.BalancerIndexResponse, error) {
 	_, err := h.logic.Index(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.IndexResponse{}, nil
+	return &api.BalancerIndexResponse{}, nil
 }
 
-func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {
+func (h *Handler) GetIndex(ctx context.Context, request *api.BalancerGetIndexRequest) (*api.BalancerGetIndexResponse, error) {
+	m, err := h.logic.GetIndex(ctx, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BalancerGetIndexResponse{
+		Index: m,
+	}, nil
+}
+
+func (h *Handler) IsIndex(ctx context.Context, request *api.BalancerIsIndexRequest) (*api.BalancerIsIndexResponse, error) {
+	ok, err := h.logic.IsIndex(ctx, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BalancerIsIndexResponse{
+		Ok: ok,
+	}, nil
+}
+
+func (h *Handler) Size(ctx context.Context, request *api.BalancerIndexSizeRequest) (*api.BalancerIndexSizeResponse, error) {
+	size, err := h.logic.Size(ctx, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BalancerIndexSizeResponse{
+		Size: size,
+	}, nil
+}
+
+func (h *Handler) Disconnect(ctx context.Context, request *api.BalancerDisconnectRequest) (*api.BalancerDisconnectResponse, error) {
 	h.logic.Disconnect(request.GetServerNumber())
 
-	return &api.DisconnectResponse{}, nil
+	return &api.BalancerDisconnectResponse{}, nil
 }
 
-func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*api.ServersResponse, error) {
+func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersRequest) (*api.BalancerServersResponse, error) {
 	servers := h.logic.Servers()
 	s := strings.Join(servers, "<br>")
-	return &api.ServersResponse{
+	return &api.BalancerServersResponse{
 		ServersInfo: s,
 	}, nil
 }

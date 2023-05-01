@@ -12,6 +12,7 @@ service Storage {
   rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
   rpc IsIndex(IsIndexRequest) returns (IsIndexResponse) {}
   rpc NewIndex(NewIndexRequest) returns (NewIndexResponse) {}
+  rpc Size(IndexSizeRequest) returns (IndexSizeResponse) {}
 }
 
 message SetRequest {
@@ -35,6 +36,11 @@ message IsIndexRequest {
 message NewIndexRequest {
   string name = 1;
 }
+
+message IndexSizeRequest {
+  string name = 1;
+}
+
 
 message SetToIndexRequest {
   string key = 1;
@@ -70,4 +76,10 @@ message NewIndexResponse{ }
 message SetResponse {
   uint64 Total = 1;
   uint64 Available = 2;
+}
+
+message IndexSizeResponse {
+  uint64 Size = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
 }

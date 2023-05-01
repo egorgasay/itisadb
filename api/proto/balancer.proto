@@ -5,16 +5,17 @@ option go_package = "./";
 package api;
 
 service Balancer {
-  rpc Index(IndexRequest) returns (IndexResponse) {}
+  rpc Index(BalancerIndexRequest) returns (BalancerIndexResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
-  rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetResponse) {}
+  rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetToIndexResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
-  rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetResponse) {}
-  rpc Connect(ConnectRequest) returns (ConnectResponse) {}
-  rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
-  rpc Servers(ServersRequest) returns (ServersResponse) {}
-  rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
-  rpc IsIndex(GetIndexRequest) returns (IsIndexResponse) {}
+  rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetFromIndexResponse) {}
+  rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
+  rpc Disconnect(BalancerDisconnectRequest) returns (BalancerDisconnectResponse) {}
+  rpc Servers(BalancerServersRequest) returns (BalancerServersResponse) {}
+  rpc GetIndex(BalancerGetIndexRequest) returns (BalancerGetIndexResponse) {}
+  rpc IsIndex(BalancerIsIndexRequest) returns (BalancerIsIndexResponse) {}
+  rpc Size(BalancerIndexSizeRequest) returns (BalancerIndexSizeResponse) {}
 }
 
 message BalancerSetRequest {
@@ -24,18 +25,16 @@ message BalancerSetRequest {
   bool uniques = 4;
 }
 
-message GetIndexRequest {
+message BalancerIndexSizeRequest {
   string name = 1;
 }
 
-message SetToIndexRequest {
-  string key = 1;
-  string value = 2;
-  bool unique = 3;
-  string name = 4;
+message BalancerGetIndexRequest {
+  string name = 1;
 }
 
-message GetToIndexRequest {
+
+message BalancerGetToIndexRequest {
   string key = 1;
   string name = 2;
 }
@@ -43,9 +42,8 @@ message GetToIndexRequest {
 message BalancerSetToIndexRequest {
   string key = 1;
   string value = 2;
-  int32 server = 3;
-  bool uniques = 4;
-  string index = 5;
+  bool uniques = 3;
+  string index = 4;
 }
 
 message BalancerGetRequest {
@@ -59,51 +57,65 @@ message BalancerGetFromIndexRequest {
   string index = 3;
 }
 
-message ConnectRequest {
+message BalancerConnectRequest {
   string Address = 1;
   uint64 Total = 2;
   uint64 Available = 3;
   int32 server = 4;
 }
 
-message IndexRequest {
+message BalancerIndexRequest {
   string name = 1;
 //  string defaultAttributes = 2;
 }
 
-message DisconnectRequest{
+message BalancerIsIndexRequest {
+  string name = 1;
+}
+
+message BalancerDisconnectRequest{
   int32 serverNumber = 1;
 }
 
-message ServersRequest{ }
+message BalancerServersRequest{ }
 
 message BalancerGetResponse {
   string value = 1;
 }
 
-message IsIndexResponse {
+message BalancerIsIndexResponse {
   bool ok = 1;
 }
 
-message GetIndexResponse {
+message BalancerGetIndexResponse {
   map<string, string> index = 1;
-  uint64 Total = 2;
-  uint64 Available = 3;
 }
 
 message BalancerSetResponse {
   int32 savedTo = 1;
 }
 
-message ConnectResponse {
+message BalancerConnectResponse {
   string status = 1;
   int32 serverNumber = 2;
 }
 
-message DisconnectResponse{ }
+message BalancerDisconnectResponse{ }
 
-message IndexResponse{ }
+message BalancerSetToIndexResponse {
+  int32 savedTo = 1;
+}
 
-message ServersResponse {
+message BalancerIndexSizeResponse {
+  uint64 size = 1;
+}
+
+message BalancerGetFromIndexResponse {
+  string value = 1;
+}
+
+message BalancerIndexResponse{ }
+
+message BalancerServersResponse {
   string serversInfo = 1;
 }

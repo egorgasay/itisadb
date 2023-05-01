@@ -21,6 +21,10 @@ import (
 var ErrNotFound = errors.New("the value does not exist")
 var ErrAlreadyExists = errors.New("the value already exists")
 
+var ErrIndexNotFound = errors.New("index not found")
+var ErrSomethingExists = errors.New("something with this name already exists")
+var ErrEmptyIndexName = errors.New("index name is empty")
+
 type Storage struct {
 	dbStore *mongo.Database
 	sync.RWMutex
@@ -114,42 +118,13 @@ func (s *Storage) Get(key string) (string, error) {
 	}
 }
 
-var ErrIndexNotFound = errors.New("index not found")
-
 func (s *Storage) GetFromIndex(name, key string) (string, error) {
-	path := strings.Split(name, "/")
-
-	if len(path) == 0 {
-		return "", ErrIndexNotFound
+	index, err := s.findIndex(name)
+	if err != nil {
+		return "", err
 	}
 
-	var index any
-	var ok bool
-
-	index, ok = s.indexes.Load(path[0])
-	if !ok {
-		return "", ErrIndexNotFound
-	}
-
-	for _, indexName := range path {
-		switch index.(type) {
-		case *swiss.Map[string, any]:
-			ind := index.(*swiss.Map[string, any])
-			index, ok = ind.Get(indexName)
-			if !ok {
-				return "", ErrIndexNotFound
-			}
-		default:
-			return "", ErrIndexNotFound
-		}
-	}
-
-	final, ok := index.(*swiss.Map[string, any])
-	if !ok {
-		return "", ErrIndexNotFound
-	}
-
-	value, ok := final.Get(key)
+	value, ok := index.Get(key)
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -163,10 +138,74 @@ func (s *Storage) GetFromIndex(name, key string) (string, error) {
 }
 
 func (s *Storage) SetToIndex(name, key, value string) error {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return err
+	}
+
+	index.Put(key, value)
+	return nil
+}
+
+func (s *Storage) CreateIndex(name string) error {
+	path := strings.Split(name, "/")
+	if len(path) == 0 {
+		return ErrEmptyIndexName
+	}
+	var index any
+	var ok bool
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		index = swiss.NewMap[string, any](100000)
+		s.indexes.Store(path[0], index)
+		return nil
+	}
+
+	path = path[1:]
+
+	for i, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				index = swiss.NewMap[string, any](100000)
+				ind.Put(indexName, index)
+				return nil
+			} else if ok && i == len(path)-1 {
+				return nil
+			}
+			index = ind
+		default:
+			return ErrSomethingExists
+		}
+	}
+	return nil
+}
+
+func (s *Storage) GetIndex(name string) (map[string]string, error) {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]string)
+	index.Iter(func(key string, value any) bool {
+		k, ok := value.(string)
+		if !ok {
+			k = "index"
+		}
+		result[key] = k
+		return false
+	})
+	return result, nil
+}
+
+func (s *Storage) findIndex(name string) (*swiss.Map[string, any], error) {
 	path := strings.Split(name, "/")
 
 	if len(path) == 0 {
-		return ErrIndexNotFound
+		return nil, ErrNotFound
 	}
 
 	var index any
@@ -174,8 +213,10 @@ func (s *Storage) SetToIndex(name, key, value string) error {
 
 	index, ok = s.indexes.Load(path[0])
 	if !ok {
-		return ErrIndexNotFound
+		return nil, ErrNotFound
 	}
+
+	path = path[1:]
 
 	for _, indexName := range path {
 		switch index.(type) {
@@ -183,51 +224,37 @@ func (s *Storage) SetToIndex(name, key, value string) error {
 			ind := index.(*swiss.Map[string, any])
 			index, ok = ind.Get(indexName)
 			if !ok {
-				return ErrIndexNotFound
+				return nil, ErrIndexNotFound
 			}
 		default:
-			return ErrIndexNotFound
+			return nil, ErrSomethingExists
 		}
 	}
 
 	final, ok := index.(*swiss.Map[string, any])
 	if !ok {
-		return ErrIndexNotFound
+		return nil, ErrSomethingExists
 	}
 
-	final.Put(key, value)
-	return nil
+	return final, nil
 }
 
-func (s *Storage) IsIndex(name string) (bool, error) {
-	path := strings.Split(name, "/")
-
-	if len(path) == 0 {
-		return false, ErrNotFound
+// Size returns the size of the index
+func (s *Storage) Size(name string) (uint64, error) {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return 0, err
 	}
+	return uint64(index.Count()), nil
+}
 
-	var index any
-	var ok bool
-
-	index, ok = s.indexes.Load(path[0])
-	if !ok {
-		return false, ErrNotFound
-	}
-
-	for _, indexName := range path {
-		switch index.(type) {
-		case *swiss.Map[string, any]:
-			ind := index.(*swiss.Map[string, any])
-			index, ok = ind.Get(indexName)
-			if !ok {
-				return false, ErrNotFound
-			}
-		default:
-			return false, ErrNotFound
+func (s *Storage) IsIndex(name string) (ok bool, err error) {
+	if _, err = s.findIndex(name); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return false, nil
 		}
+		return false, err
 	}
-
-	_, ok = index.(*swiss.Map[string, any])
 	return ok, nil
 }
 

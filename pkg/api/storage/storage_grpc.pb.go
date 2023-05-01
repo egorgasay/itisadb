@@ -29,6 +29,7 @@ type StorageClient interface {
 	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
 	IsIndex(ctx context.Context, in *IsIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
 	NewIndex(ctx context.Context, in *NewIndexRequest, opts ...grpc.CallOption) (*NewIndexResponse, error)
+	Size(ctx context.Context, in *IndexSizeRequest, opts ...grpc.CallOption) (*IndexSizeResponse, error)
 }
 
 type storageClient struct {
@@ -102,6 +103,15 @@ func (c *storageClient) NewIndex(ctx context.Context, in *NewIndexRequest, opts 
 	return out, nil
 }
 
+func (c *storageClient) Size(ctx context.Context, in *IndexSizeRequest, opts ...grpc.CallOption) (*IndexSizeResponse, error) {
+	out := new(IndexSizeResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/Size", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility
@@ -113,6 +123,7 @@ type StorageServer interface {
 	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
 	IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error)
 	NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error)
+	Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -140,6 +151,9 @@ func (UnimplementedStorageServer) IsIndex(context.Context, *IsIndexRequest) (*Is
 }
 func (UnimplementedStorageServer) NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewIndex not implemented")
+}
+func (UnimplementedStorageServer) Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Size not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
@@ -280,6 +294,24 @@ func _Storage_NewIndex_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Storage_Size_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IndexSizeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).Size(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/Size",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).Size(ctx, req.(*IndexSizeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,6 +346,10 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NewIndex",
 			Handler:    _Storage_NewIndex_Handler,
+		},
+		{
+			MethodName: "Size",
+			Handler:    _Storage_Size_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
