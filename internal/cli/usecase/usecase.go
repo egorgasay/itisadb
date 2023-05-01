@@ -41,6 +41,6 @@ func (uc *UseCase) History(cookie string) (string, error) {
 
 func (uc *UseCase) Servers() (string, error) {
 	b := balancer.NewBalancerClient(uc.conn)
-	servers, err := b.Servers(context.TODO(), &balancer.ServersRequest{})
+	servers, err := b.Servers(context.TODO(), &balancer.BalancerServersRequest{})
 	return servers.ServersInfo, err
 }

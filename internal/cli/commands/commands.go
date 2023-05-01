@@ -27,9 +27,12 @@ var ErrEmpty = errors.New("the value does not exist")
 var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
-	get  = "get"
-	set  = "set"
-	uset = "uset"
+	get        = "get"
+	set        = "set"
+	uset       = "uset"
+	new_index  = "new_index"
+	index      = "index"
+	show_index = "show_index"
 )
 
 const (
@@ -70,9 +73,96 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 
 		return c.set(args[0], strings.Join(args[1:], " "), server, uset == act)
+	case new_index:
+		if len(args) < 1 {
+			return "", ErrWrongInput
+		}
+		name := args[0]
+		return c.newIndex(name)
+	case index:
+		if len(args) < 3 {
+			return "", ErrWrongInput
+		}
+		name := args[0]
+		act := args[1]
+		key := args[2]
+		value := ""
+		if len(args) > 3 {
+			value = strings.Join(args[3:], " ")
+		}
+		return c.index(act, name, key, value)
+	case show_index:
+		if len(args) < 1 {
+			return "", ErrWrongInput
+		}
+		name := args[0]
+		return c.showIndex(name)
 	}
 
 	return "", ErrUnknownCMD
+}
+
+func (c *Commands) newIndex(name string) (string, error) {
+	_, err := c.cl.Index(context.Background(), &balancer.BalancerIndexRequest{Name: name})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("status: ok, index %s created", name), nil
+}
+
+func (c *Commands) showIndex(name string) (string, error) {
+	m, err := c.cl.GetIndex(context.Background(), &balancer.BalancerGetIndexRequest{Name: name})
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("index %s:<br>", name))
+	for k, v := range m.Index {
+		sb.WriteString(fmt.Sprintf("%s: %s<br>", k, v))
+	}
+
+	return sb.String(), nil
+}
+
+func (c *Commands) index(act, name, key, value string) (string, error) {
+	switch act {
+	case set:
+		return c.setIndex(name, key, value)
+	case get:
+		return c.getIndex(name, key)
+	default:
+		return "", fmt.Errorf("unknown action")
+	}
+
+}
+
+func (c *Commands) setIndex(name, key, value string) (string, error) {
+	r, err := c.cl.SetToIndex(context.Background(), &balancer.BalancerSetToIndexRequest{
+		Index: name,
+		Key:   key,
+		Value: value,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("status: ok, saved in index %s, on server #%d", name, r.SavedTo), nil
+}
+
+func (c *Commands) getIndex(name, key string) (string, error) {
+	r, err := c.cl.GetFromIndex(context.Background(), &balancer.BalancerGetFromIndexRequest{
+		Index: name,
+		Key:   key,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return r.Value, nil
 }
 
 func (c *Commands) get(key string, server int32) (string, error) {

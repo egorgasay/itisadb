@@ -45,7 +45,7 @@ func (h *Handler) Action(c echo.Context) error {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code().String() == codes.NotFound.String() {
-			err = errors.New("the value is not found")
+			err = errors.New("not found")
 		} else if st.Message() == "unknown server" {
 			err = errors.New("unknown server")
 		} else if ok && st.Code().String() == codes.Unavailable.String() {
