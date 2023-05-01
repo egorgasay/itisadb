@@ -17,7 +17,7 @@ By default, the value is saved to the minimally loaded server and returns its nu
   
 Instead of the usual tables, a model close to object orientation is used here. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, but nested indexes can only be created on its parent index server, this allows you to be sure that all data in one index is always available.
 
-<img src="https://user-images.githubusercontent.com/102957432/235368951-660ad979-a9e8-4660-a9f8-fea0c4401426.png"  width="1000" />
+<img src="https://user-images.githubusercontent.com/102957432/235522411-dfdf5dae-5536-475e-b0a3-69fbb53c1884.png"  width="1000" />
 
 
 # Transaction Logger
