@@ -44,7 +44,7 @@ func main() {
 
 	ram := usecase.RAMUsage()
 
-	cr := &balancer.ConnectRequest{
+	cr := &balancer.BalancerConnectRequest{
 		Address:   cfg.Host,
 		Total:     ram.Total,
 		Available: ram.Available,
@@ -90,7 +90,7 @@ fl:
 	for sc.Scan() {
 		select {
 		case <-quit:
-			_, err = cl.Disconnect(context.Background(), &balancer.DisconnectRequest{ServerNumber: resp.GetServerNumber()})
+			_, err = cl.Disconnect(context.Background(), &balancer.BalancerDisconnectRequest{ServerNumber: resp.GetServerNumber()})
 			if err != nil {
 				log.Println(err)
 			}

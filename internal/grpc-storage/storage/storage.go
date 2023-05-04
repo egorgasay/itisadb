@@ -12,6 +12,7 @@ import (
 	tlogger "itisadb/internal/grpc-storage/transaction-logger"
 	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"itisadb/pkg/logger"
+	"strings"
 	"sync"
 
 	"github.com/dolthub/swiss"
@@ -20,10 +21,15 @@ import (
 var ErrNotFound = errors.New("the value does not exist")
 var ErrAlreadyExists = errors.New("the value already exists")
 
+var ErrIndexNotFound = errors.New("index not found")
+var ErrSomethingExists = errors.New("something with this name already exists")
+var ErrEmptyIndexName = errors.New("index name is empty")
+
 type Storage struct {
 	dbStore *mongo.Database
 	sync.RWMutex
-	ramStorage *swiss.Map[string, string]
+	ramStorage *swiss.Map[string, any]
+	indexes    sync.Map
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
 }
@@ -40,7 +46,7 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	}
 	st := &Storage{
 		dbStore:    client.Database("grpc-server"),
-		ramStorage: swiss.NewMap[string, string](100000),
+		ramStorage: swiss.NewMap[string, any](100000),
 		logger:     logger,
 	}
 
@@ -67,9 +73,9 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 		case err, ok = <-errs:
 		case e, ok = <-events:
 			switch e.EventType {
-			case service.Delete:
 			case service.Set:
 				s.Set(e.Key, e.Value, false)
+			case service.Delete:
 			}
 		}
 	}
@@ -79,13 +85,14 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.Lock()
-	defer s.Unlock()
 	if unique {
 		if _, ok := s.ramStorage.Get(key); ok {
 			return ErrAlreadyExists
 		}
 	}
 	s.ramStorage.Put(key, val)
+
+	s.Unlock()
 	return nil
 }
 
@@ -95,8 +102,34 @@ func (s *Storage) WriteSet(key, val string) {
 
 func (s *Storage) Get(key string) (string, error) {
 	s.RLock()
-	defer s.RUnlock()
+
 	val, ok := s.ramStorage.Get(key)
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	s.RUnlock()
+
+	switch val.(type) {
+	case string:
+		return val.(string), nil
+	default:
+		return "", errors.New("wrong type")
+	}
+}
+
+func (s *Storage) GetFromIndex(name, key string) (string, error) {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return "", err
+	}
+
+	value, ok := index.Get(key)
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	val, ok := value.(string)
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -104,14 +137,134 @@ func (s *Storage) Get(key string) (string, error) {
 	return val, nil
 }
 
+func (s *Storage) SetToIndex(name, key, value string) error {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return err
+	}
+
+	index.Put(key, value)
+	return nil
+}
+
+func (s *Storage) CreateIndex(name string) error {
+	path := strings.Split(name, "/")
+	if len(path) == 0 {
+		return ErrEmptyIndexName
+	}
+	var index any
+	var ok bool
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		index = swiss.NewMap[string, any](100000)
+		s.indexes.Store(path[0], index)
+		return nil
+	}
+
+	path = path[1:]
+
+	for i, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				index = swiss.NewMap[string, any](100000)
+				ind.Put(indexName, index)
+				return nil
+			} else if ok && i == len(path)-1 {
+				return nil
+			}
+			index = ind
+		default:
+			return ErrSomethingExists
+		}
+	}
+	return nil
+}
+
+func (s *Storage) GetIndex(name string) (map[string]string, error) {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]string)
+	index.Iter(func(key string, value any) bool {
+		k, ok := value.(string)
+		if !ok {
+			k = "index"
+		}
+		result[key] = k
+		return false
+	})
+	return result, nil
+}
+
+func (s *Storage) findIndex(name string) (*swiss.Map[string, any], error) {
+	path := strings.Split(name, "/")
+
+	if len(path) == 0 {
+		return nil, ErrNotFound
+	}
+
+	var index any
+	var ok bool
+
+	index, ok = s.indexes.Load(path[0])
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	path = path[1:]
+
+	for _, indexName := range path {
+		switch index.(type) {
+		case *swiss.Map[string, any]:
+			ind := index.(*swiss.Map[string, any])
+			index, ok = ind.Get(indexName)
+			if !ok {
+				return nil, ErrIndexNotFound
+			}
+		default:
+			return nil, ErrSomethingExists
+		}
+	}
+
+	final, ok := index.(*swiss.Map[string, any])
+	if !ok {
+		return nil, ErrSomethingExists
+	}
+
+	return final, nil
+}
+
+// Size returns the size of the index
+func (s *Storage) Size(name string) (uint64, error) {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(index.Count()), nil
+}
+
+func (s *Storage) IsIndex(name string) (ok bool, err error) {
+	if _, err = s.findIndex(name); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return ok, nil
+}
+
 func (s *Storage) Save() error {
 	c := s.dbStore.Collection("map")
 	s.Lock()
-	defer s.Unlock()
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	s.ramStorage.Iter(func(key string, value string) bool {
+	s.ramStorage.Iter(func(key string, value any) bool {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)
@@ -121,5 +274,6 @@ func (s *Storage) Save() error {
 		return true
 	})
 
+	s.Unlock()
 	return s.tLogger.Clear()
 }

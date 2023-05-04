@@ -7,13 +7,21 @@ This is a system consisting of several microservices (Memory Balancer, Storage, 
 
 # Drivers  
   
-- Go - [itisadb-go-sdk](http://github.com/egorgasay/itisadb-go-sdk)
-
+- Go - [itisadb-go-sdk](http://github.com/egorgasay/itisadb-go-sdk)  
+  
 # Unique value search algorithm:  
   
 By default, the value is saved to the minimally loaded server and returns its number to the Client. The client takes all the dirty work of storing and using this number for subsequent accesses to this key. The search for all instances occurs only when the -2 flag is specified and is performed in parallel gorutins.
 
+# Index  
+  
+Instead of the usual tables, a model close to object orientation is used here. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, but nested indexes can only be created on its parent index server, this allows you to be sure that all data in one index is always available.
+
+<img src="https://user-images.githubusercontent.com/102957432/235522411-dfdf5dae-5536-475e-b0a3-69fbb53c1884.png"  width="1000" />
+
+
 # Transaction Logger
+  
 Protection against data loss in case of various hardware problems is achieved by using Transaction Logger. Each operation in the background is written to disk and performed again when the server is turned on after a failure (in other cases this does not happen).
 
 The data is stored in a database or in a text file (depending on the type that was passed as a flag):  

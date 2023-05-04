@@ -91,6 +91,226 @@ func (x *BalancerSetRequest) GetUniques() bool {
 	return false
 }
 
+type BalancerIndexSizeRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *BalancerIndexSizeRequest) Reset() {
+	*x = BalancerIndexSizeRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIndexSizeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIndexSizeRequest) ProtoMessage() {}
+
+func (x *BalancerIndexSizeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIndexSizeRequest.ProtoReflect.Descriptor instead.
+func (*BalancerIndexSizeRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *BalancerIndexSizeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BalancerGetIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *BalancerGetIndexRequest) Reset() {
+	*x = BalancerGetIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerGetIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerGetIndexRequest) ProtoMessage() {}
+
+func (x *BalancerGetIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerGetIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerGetIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BalancerGetIndexRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BalancerGetToIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key  string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *BalancerGetToIndexRequest) Reset() {
+	*x = BalancerGetToIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerGetToIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerGetToIndexRequest) ProtoMessage() {}
+
+func (x *BalancerGetToIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerGetToIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerGetToIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BalancerGetToIndexRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *BalancerGetToIndexRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BalancerSetToIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key     string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value   string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Uniques bool   `protobuf:"varint,3,opt,name=uniques,proto3" json:"uniques,omitempty"`
+	Index   string `protobuf:"bytes,4,opt,name=index,proto3" json:"index,omitempty"`
+}
+
+func (x *BalancerSetToIndexRequest) Reset() {
+	*x = BalancerSetToIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerSetToIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerSetToIndexRequest) ProtoMessage() {}
+
+func (x *BalancerSetToIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerSetToIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerSetToIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BalancerSetToIndexRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *BalancerSetToIndexRequest) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *BalancerSetToIndexRequest) GetUniques() bool {
+	if x != nil {
+		return x.Uniques
+	}
+	return false
+}
+
+func (x *BalancerSetToIndexRequest) GetIndex() string {
+	if x != nil {
+		return x.Index
+	}
+	return ""
+}
+
 type BalancerGetRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -103,7 +323,7 @@ type BalancerGetRequest struct {
 func (x *BalancerGetRequest) Reset() {
 	*x = BalancerGetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[1]
+		mi := &file_api_proto_balancer_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -116,7 +336,7 @@ func (x *BalancerGetRequest) String() string {
 func (*BalancerGetRequest) ProtoMessage() {}
 
 func (x *BalancerGetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[1]
+	mi := &file_api_proto_balancer_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -129,7 +349,7 @@ func (x *BalancerGetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BalancerGetRequest.ProtoReflect.Descriptor instead.
 func (*BalancerGetRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *BalancerGetRequest) GetKey() string {
@@ -146,7 +366,70 @@ func (x *BalancerGetRequest) GetServer() int32 {
 	return 0
 }
 
-type ConnectRequest struct {
+type BalancerGetFromIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key    string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Server int32  `protobuf:"varint,2,opt,name=server,proto3" json:"server,omitempty"`
+	Index  string `protobuf:"bytes,3,opt,name=index,proto3" json:"index,omitempty"`
+}
+
+func (x *BalancerGetFromIndexRequest) Reset() {
+	*x = BalancerGetFromIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerGetFromIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerGetFromIndexRequest) ProtoMessage() {}
+
+func (x *BalancerGetFromIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerGetFromIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerGetFromIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *BalancerGetFromIndexRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *BalancerGetFromIndexRequest) GetServer() int32 {
+	if x != nil {
+		return x.Server
+	}
+	return 0
+}
+
+func (x *BalancerGetFromIndexRequest) GetIndex() string {
+	if x != nil {
+		return x.Index
+	}
+	return ""
+}
+
+type BalancerConnectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -157,23 +440,23 @@ type ConnectRequest struct {
 	Server    int32  `protobuf:"varint,4,opt,name=server,proto3" json:"server,omitempty"`
 }
 
-func (x *ConnectRequest) Reset() {
-	*x = ConnectRequest{}
+func (x *BalancerConnectRequest) Reset() {
+	*x = BalancerConnectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[2]
+		mi := &file_api_proto_balancer_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *ConnectRequest) String() string {
+func (x *BalancerConnectRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ConnectRequest) ProtoMessage() {}
+func (*BalancerConnectRequest) ProtoMessage() {}
 
-func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[2]
+func (x *BalancerConnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,40 +467,134 @@ func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ConnectRequest.ProtoReflect.Descriptor instead.
-func (*ConnectRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use BalancerConnectRequest.ProtoReflect.Descriptor instead.
+func (*BalancerConnectRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ConnectRequest) GetAddress() string {
+func (x *BalancerConnectRequest) GetAddress() string {
 	if x != nil {
 		return x.Address
 	}
 	return ""
 }
 
-func (x *ConnectRequest) GetTotal() uint64 {
+func (x *BalancerConnectRequest) GetTotal() uint64 {
 	if x != nil {
 		return x.Total
 	}
 	return 0
 }
 
-func (x *ConnectRequest) GetAvailable() uint64 {
+func (x *BalancerConnectRequest) GetAvailable() uint64 {
 	if x != nil {
 		return x.Available
 	}
 	return 0
 }
 
-func (x *ConnectRequest) GetServer() int32 {
+func (x *BalancerConnectRequest) GetServer() int32 {
 	if x != nil {
 		return x.Server
 	}
 	return 0
 }
 
-type DisconnectRequest struct {
+type BalancerIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` //  string defaultAttributes = 2;
+}
+
+func (x *BalancerIndexRequest) Reset() {
+	*x = BalancerIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIndexRequest) ProtoMessage() {}
+
+func (x *BalancerIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *BalancerIndexRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BalancerIsIndexRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *BalancerIsIndexRequest) Reset() {
+	*x = BalancerIsIndexRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIsIndexRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIsIndexRequest) ProtoMessage() {}
+
+func (x *BalancerIsIndexRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIsIndexRequest.ProtoReflect.Descriptor instead.
+func (*BalancerIsIndexRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BalancerIsIndexRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BalancerDisconnectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -225,23 +602,23 @@ type DisconnectRequest struct {
 	ServerNumber int32 `protobuf:"varint,1,opt,name=serverNumber,proto3" json:"serverNumber,omitempty"`
 }
 
-func (x *DisconnectRequest) Reset() {
-	*x = DisconnectRequest{}
+func (x *BalancerDisconnectRequest) Reset() {
+	*x = BalancerDisconnectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[3]
+		mi := &file_api_proto_balancer_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *DisconnectRequest) String() string {
+func (x *BalancerDisconnectRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DisconnectRequest) ProtoMessage() {}
+func (*BalancerDisconnectRequest) ProtoMessage() {}
 
-func (x *DisconnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[3]
+func (x *BalancerDisconnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,41 +629,41 @@ func (x *DisconnectRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DisconnectRequest.ProtoReflect.Descriptor instead.
-func (*DisconnectRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{3}
+// Deprecated: Use BalancerDisconnectRequest.ProtoReflect.Descriptor instead.
+func (*BalancerDisconnectRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *DisconnectRequest) GetServerNumber() int32 {
+func (x *BalancerDisconnectRequest) GetServerNumber() int32 {
 	if x != nil {
 		return x.ServerNumber
 	}
 	return 0
 }
 
-type ServersRequest struct {
+type BalancerServersRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *ServersRequest) Reset() {
-	*x = ServersRequest{}
+func (x *BalancerServersRequest) Reset() {
+	*x = BalancerServersRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[4]
+		mi := &file_api_proto_balancer_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *ServersRequest) String() string {
+func (x *BalancerServersRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ServersRequest) ProtoMessage() {}
+func (*BalancerServersRequest) ProtoMessage() {}
 
-func (x *ServersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[4]
+func (x *BalancerServersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -297,9 +674,9 @@ func (x *ServersRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ServersRequest.ProtoReflect.Descriptor instead.
-func (*ServersRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use BalancerServersRequest.ProtoReflect.Descriptor instead.
+func (*BalancerServersRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{11}
 }
 
 type BalancerGetResponse struct {
@@ -313,7 +690,7 @@ type BalancerGetResponse struct {
 func (x *BalancerGetResponse) Reset() {
 	*x = BalancerGetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[5]
+		mi := &file_api_proto_balancer_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -326,7 +703,7 @@ func (x *BalancerGetResponse) String() string {
 func (*BalancerGetResponse) ProtoMessage() {}
 
 func (x *BalancerGetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[5]
+	mi := &file_api_proto_balancer_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -339,7 +716,7 @@ func (x *BalancerGetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BalancerGetResponse.ProtoReflect.Descriptor instead.
 func (*BalancerGetResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BalancerGetResponse) GetValue() string {
@@ -347,6 +724,100 @@ func (x *BalancerGetResponse) GetValue() string {
 		return x.Value
 	}
 	return ""
+}
+
+type BalancerIsIndexResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Ok bool `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+}
+
+func (x *BalancerIsIndexResponse) Reset() {
+	*x = BalancerIsIndexResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIsIndexResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIsIndexResponse) ProtoMessage() {}
+
+func (x *BalancerIsIndexResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIsIndexResponse.ProtoReflect.Descriptor instead.
+func (*BalancerIsIndexResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *BalancerIsIndexResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+type BalancerGetIndexResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Index map[string]string `protobuf:"bytes,1,rep,name=index,proto3" json:"index,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *BalancerGetIndexResponse) Reset() {
+	*x = BalancerGetIndexResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerGetIndexResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerGetIndexResponse) ProtoMessage() {}
+
+func (x *BalancerGetIndexResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerGetIndexResponse.ProtoReflect.Descriptor instead.
+func (*BalancerGetIndexResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *BalancerGetIndexResponse) GetIndex() map[string]string {
+	if x != nil {
+		return x.Index
+	}
+	return nil
 }
 
 type BalancerSetResponse struct {
@@ -360,7 +831,7 @@ type BalancerSetResponse struct {
 func (x *BalancerSetResponse) Reset() {
 	*x = BalancerSetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[6]
+		mi := &file_api_proto_balancer_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -373,7 +844,7 @@ func (x *BalancerSetResponse) String() string {
 func (*BalancerSetResponse) ProtoMessage() {}
 
 func (x *BalancerSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[6]
+	mi := &file_api_proto_balancer_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +857,7 @@ func (x *BalancerSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BalancerSetResponse.ProtoReflect.Descriptor instead.
 func (*BalancerSetResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *BalancerSetResponse) GetSavedTo() int32 {
@@ -396,7 +867,7 @@ func (x *BalancerSetResponse) GetSavedTo() int32 {
 	return 0
 }
 
-type ConnectResponse struct {
+type BalancerConnectResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -405,23 +876,23 @@ type ConnectResponse struct {
 	ServerNumber int32  `protobuf:"varint,2,opt,name=serverNumber,proto3" json:"serverNumber,omitempty"`
 }
 
-func (x *ConnectResponse) Reset() {
-	*x = ConnectResponse{}
+func (x *BalancerConnectResponse) Reset() {
+	*x = BalancerConnectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[7]
+		mi := &file_api_proto_balancer_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *ConnectResponse) String() string {
+func (x *BalancerConnectResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ConnectResponse) ProtoMessage() {}
+func (*BalancerConnectResponse) ProtoMessage() {}
 
-func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[7]
+func (x *BalancerConnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,48 +903,48 @@ func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ConnectResponse.ProtoReflect.Descriptor instead.
-func (*ConnectResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use BalancerConnectResponse.ProtoReflect.Descriptor instead.
+func (*BalancerConnectResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ConnectResponse) GetStatus() string {
+func (x *BalancerConnectResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *ConnectResponse) GetServerNumber() int32 {
+func (x *BalancerConnectResponse) GetServerNumber() int32 {
 	if x != nil {
 		return x.ServerNumber
 	}
 	return 0
 }
 
-type DisconnectResponse struct {
+type BalancerDisconnectResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *DisconnectResponse) Reset() {
-	*x = DisconnectResponse{}
+func (x *BalancerDisconnectResponse) Reset() {
+	*x = BalancerDisconnectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[8]
+		mi := &file_api_proto_balancer_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *DisconnectResponse) String() string {
+func (x *BalancerDisconnectResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DisconnectResponse) ProtoMessage() {}
+func (*BalancerDisconnectResponse) ProtoMessage() {}
 
-func (x *DisconnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[8]
+func (x *BalancerDisconnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,12 +955,191 @@ func (x *DisconnectResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DisconnectResponse.ProtoReflect.Descriptor instead.
-func (*DisconnectResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use BalancerDisconnectResponse.ProtoReflect.Descriptor instead.
+func (*BalancerDisconnectResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{17}
 }
 
-type ServersResponse struct {
+type BalancerSetToIndexResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SavedTo int32 `protobuf:"varint,1,opt,name=savedTo,proto3" json:"savedTo,omitempty"`
+}
+
+func (x *BalancerSetToIndexResponse) Reset() {
+	*x = BalancerSetToIndexResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerSetToIndexResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerSetToIndexResponse) ProtoMessage() {}
+
+func (x *BalancerSetToIndexResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerSetToIndexResponse.ProtoReflect.Descriptor instead.
+func (*BalancerSetToIndexResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *BalancerSetToIndexResponse) GetSavedTo() int32 {
+	if x != nil {
+		return x.SavedTo
+	}
+	return 0
+}
+
+type BalancerIndexSizeResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Size uint64 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+}
+
+func (x *BalancerIndexSizeResponse) Reset() {
+	*x = BalancerIndexSizeResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIndexSizeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIndexSizeResponse) ProtoMessage() {}
+
+func (x *BalancerIndexSizeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIndexSizeResponse.ProtoReflect.Descriptor instead.
+func (*BalancerIndexSizeResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *BalancerIndexSizeResponse) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type BalancerGetFromIndexResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Value string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *BalancerGetFromIndexResponse) Reset() {
+	*x = BalancerGetFromIndexResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerGetFromIndexResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerGetFromIndexResponse) ProtoMessage() {}
+
+func (x *BalancerGetFromIndexResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerGetFromIndexResponse.ProtoReflect.Descriptor instead.
+func (*BalancerGetFromIndexResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *BalancerGetFromIndexResponse) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type BalancerIndexResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *BalancerIndexResponse) Reset() {
+	*x = BalancerIndexResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_proto_balancer_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalancerIndexResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalancerIndexResponse) ProtoMessage() {}
+
+func (x *BalancerIndexResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalancerIndexResponse.ProtoReflect.Descriptor instead.
+func (*BalancerIndexResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{21}
+}
+
+type BalancerServersResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -497,23 +1147,23 @@ type ServersResponse struct {
 	ServersInfo string `protobuf:"bytes,1,opt,name=serversInfo,proto3" json:"serversInfo,omitempty"`
 }
 
-func (x *ServersResponse) Reset() {
-	*x = ServersResponse{}
+func (x *BalancerServersResponse) Reset() {
+	*x = BalancerServersResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_proto_balancer_proto_msgTypes[9]
+		mi := &file_api_proto_balancer_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *ServersResponse) String() string {
+func (x *BalancerServersResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ServersResponse) ProtoMessage() {}
+func (*BalancerServersResponse) ProtoMessage() {}
 
-func (x *ServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_balancer_proto_msgTypes[9]
+func (x *BalancerServersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_balancer_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,12 +1174,12 @@ func (x *ServersResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ServersResponse.ProtoReflect.Descriptor instead.
-func (*ServersResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_balancer_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use BalancerServersResponse.ProtoReflect.Descriptor instead.
+func (*BalancerServersResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_balancer_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *ServersResponse) GetServersInfo() string {
+func (x *BalancerServersResponse) GetServersInfo() string {
 	if x != nil {
 		return x.ServersInfo
 	}
@@ -548,57 +1198,144 @@ var file_api_proto_balancer_proto_rawDesc = []byte{
 	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73,
 	0x65, 0x72, 0x76, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73,
 	0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x22,
-	0x3e, 0x0a, 0x12, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65,
+	0x2e, 0x0a, 0x18, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65, 0x78,
+	0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22,
+	0x2d, 0x0a, 0x17, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x41,
+	0x0a, 0x19, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x54, 0x6f, 0x49,
+	0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x22, 0x73, 0x0a, 0x19, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74,
+	0x54, 0x6f, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65,
+	0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73,
+	0x12, 0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x22, 0x3e, 0x0a, 0x12, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63,
+	0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03,
+	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x5d, 0x0a, 0x1b, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63,
+	0x65, 0x72, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22,
-	0x76, 0x0a, 0x0e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x18, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x54,
-	0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x54, 0x6f, 0x74, 0x61,
-	0x6c, 0x12, 0x1c, 0x0a, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x12,
-	0x16, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x37, 0x0a, 0x11, 0x44, 0x69, 0x73, 0x63, 0x6f,
+	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x12,
+	0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x69, 0x6e, 0x64, 0x65, 0x78, 0x22, 0x7e, 0x0a, 0x16, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65,
+	0x72, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x18, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x74,
+	0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x12,
+	0x1c, 0x0a, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x04, 0x52, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x16, 0x0a,
+	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x2a, 0x0a, 0x14, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65,
+	0x72, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x22, 0x2c, 0x0a, 0x16, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x73, 0x49,
+	0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22,
+	0x3f, 0x0a, 0x19, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x44, 0x69, 0x73, 0x63, 0x6f,
 	0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x22, 0x0a, 0x0c,
 	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x05, 0x52, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72,
-	0x22, 0x10, 0x0a, 0x0e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x22, 0x2b, 0x0a, 0x13, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65,
-	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22,
-	0x2f, 0x0a, 0x13, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54,
-	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f,
-	0x22, 0x4d, 0x0a, 0x0f, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x22, 0x0a, 0x0c, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x22,
-	0x14, 0x0a, 0x12, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x0f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x32, 0xb3, 0x02, 0x0a, 0x08, 0x42,
-	0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x12, 0x3a, 0x0a, 0x03, 0x53, 0x65, 0x74, 0x12, 0x17,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61,
-	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x12, 0x3a, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
+	0x22, 0x18, 0x0a, 0x16, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x2b, 0x0a, 0x13, 0x42, 0x61,
+	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x29, 0x0a, 0x17, 0x42, 0x61, 0x6c, 0x61, 0x6e,
+	0x63, 0x65, 0x72, 0x49, 0x73, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02,
+	0x6f, 0x6b, 0x22, 0x94, 0x01, 0x0a, 0x18, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47,
+	0x65, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x3e, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x28,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x1a,
+	0x38, 0x0a, 0x0a, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
+	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
+	0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x2f, 0x0a, 0x13, 0x42, 0x61, 0x6c,
+	0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x18, 0x0a, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x22, 0x55, 0x0a, 0x17, 0x42, 0x61,
+	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x22, 0x0a,
+	0x0c, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4e, 0x75, 0x6d, 0x62, 0x65,
+	0x72, 0x22, 0x1c, 0x0a, 0x1a, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x44, 0x69, 0x73,
+	0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x36, 0x0a, 0x1a, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x54, 0x6f,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a,
+	0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07,
+	0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x22, 0x2f, 0x0a, 0x19, 0x42, 0x61, 0x6c, 0x61, 0x6e,
+	0x63, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x04, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x22, 0x34, 0x0a, 0x1c, 0x42, 0x61, 0x6c, 0x61,
+	0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x17,
+	0x0a, 0x15, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3b, 0x0a, 0x17, 0x42, 0x61, 0x6c, 0x61, 0x6e,
+	0x63, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x49, 0x6e, 0x66,
+	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73,
+	0x49, 0x6e, 0x66, 0x6f, 0x32, 0xa9, 0x06, 0x0a, 0x08, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65,
+	0x72, 0x12, 0x40, 0x0a, 0x05, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x19, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61,
+	0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x3a, 0x0a, 0x03, 0x53, 0x65, 0x74, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63,
-	0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
-	0x36, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x13, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x69, 0x73, 0x63, 0x6f,
-	0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x69, 0x73, 0x63,
-	0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x36, 0x0a, 0x07, 0x53, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x73, 0x12, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x65, 0x72, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x4f, 0x0a, 0x0a, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x1e, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x54,
+	0x6f, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x74, 0x54,
+	0x6f, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x3a, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61,
+	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47,
+	0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x55, 0x0a, 0x0c,
+	0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x20, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74, 0x46, 0x72,
+	0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74,
+	0x46, 0x72, 0x6f, 0x6d, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x46, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x1b,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x43, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4f, 0x0a, 0x0a, 0x44,
+	0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x1e, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x46, 0x0a, 0x07,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x12, 0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61,
+	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e,
+	0x63, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x12, 0x49, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78,
+	0x12, 0x1c, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47,
+	0x65, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x47, 0x65, 0x74,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x46, 0x0a, 0x07, 0x49, 0x73, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x1b, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x73, 0x49, 0x6e, 0x64, 0x65, 0x78,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61,
+	0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x73, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x47, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12,
+	0x1d, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e,
+	0x64, 0x65, 0x78, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x72, 0x49, 0x6e, 0x64,
+	0x65, 0x78, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
 	0x42, 0x04, 0x5a, 0x02, 0x2e, 0x2f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
@@ -614,35 +1351,62 @@ func file_api_proto_balancer_proto_rawDescGZIP() []byte {
 	return file_api_proto_balancer_proto_rawDescData
 }
 
-var file_api_proto_balancer_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_api_proto_balancer_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_api_proto_balancer_proto_goTypes = []interface{}{
-	(*BalancerSetRequest)(nil),  // 0: api.BalancerSetRequest
-	(*BalancerGetRequest)(nil),  // 1: api.BalancerGetRequest
-	(*ConnectRequest)(nil),      // 2: api.ConnectRequest
-	(*DisconnectRequest)(nil),   // 3: api.DisconnectRequest
-	(*ServersRequest)(nil),      // 4: api.ServersRequest
-	(*BalancerGetResponse)(nil), // 5: api.BalancerGetResponse
-	(*BalancerSetResponse)(nil), // 6: api.BalancerSetResponse
-	(*ConnectResponse)(nil),     // 7: api.ConnectResponse
-	(*DisconnectResponse)(nil),  // 8: api.DisconnectResponse
-	(*ServersResponse)(nil),     // 9: api.ServersResponse
+	(*BalancerSetRequest)(nil),           // 0: api.BalancerSetRequest
+	(*BalancerIndexSizeRequest)(nil),     // 1: api.BalancerIndexSizeRequest
+	(*BalancerGetIndexRequest)(nil),      // 2: api.BalancerGetIndexRequest
+	(*BalancerGetToIndexRequest)(nil),    // 3: api.BalancerGetToIndexRequest
+	(*BalancerSetToIndexRequest)(nil),    // 4: api.BalancerSetToIndexRequest
+	(*BalancerGetRequest)(nil),           // 5: api.BalancerGetRequest
+	(*BalancerGetFromIndexRequest)(nil),  // 6: api.BalancerGetFromIndexRequest
+	(*BalancerConnectRequest)(nil),       // 7: api.BalancerConnectRequest
+	(*BalancerIndexRequest)(nil),         // 8: api.BalancerIndexRequest
+	(*BalancerIsIndexRequest)(nil),       // 9: api.BalancerIsIndexRequest
+	(*BalancerDisconnectRequest)(nil),    // 10: api.BalancerDisconnectRequest
+	(*BalancerServersRequest)(nil),       // 11: api.BalancerServersRequest
+	(*BalancerGetResponse)(nil),          // 12: api.BalancerGetResponse
+	(*BalancerIsIndexResponse)(nil),      // 13: api.BalancerIsIndexResponse
+	(*BalancerGetIndexResponse)(nil),     // 14: api.BalancerGetIndexResponse
+	(*BalancerSetResponse)(nil),          // 15: api.BalancerSetResponse
+	(*BalancerConnectResponse)(nil),      // 16: api.BalancerConnectResponse
+	(*BalancerDisconnectResponse)(nil),   // 17: api.BalancerDisconnectResponse
+	(*BalancerSetToIndexResponse)(nil),   // 18: api.BalancerSetToIndexResponse
+	(*BalancerIndexSizeResponse)(nil),    // 19: api.BalancerIndexSizeResponse
+	(*BalancerGetFromIndexResponse)(nil), // 20: api.BalancerGetFromIndexResponse
+	(*BalancerIndexResponse)(nil),        // 21: api.BalancerIndexResponse
+	(*BalancerServersResponse)(nil),      // 22: api.BalancerServersResponse
+	nil,                                  // 23: api.BalancerGetIndexResponse.IndexEntry
 }
 var file_api_proto_balancer_proto_depIdxs = []int32{
-	0, // 0: api.Balancer.Set:input_type -> api.BalancerSetRequest
-	1, // 1: api.Balancer.Get:input_type -> api.BalancerGetRequest
-	2, // 2: api.Balancer.Connect:input_type -> api.ConnectRequest
-	3, // 3: api.Balancer.Disconnect:input_type -> api.DisconnectRequest
-	4, // 4: api.Balancer.Servers:input_type -> api.ServersRequest
-	6, // 5: api.Balancer.Set:output_type -> api.BalancerSetResponse
-	5, // 6: api.Balancer.Get:output_type -> api.BalancerGetResponse
-	7, // 7: api.Balancer.Connect:output_type -> api.ConnectResponse
-	8, // 8: api.Balancer.Disconnect:output_type -> api.DisconnectResponse
-	9, // 9: api.Balancer.Servers:output_type -> api.ServersResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	23, // 0: api.BalancerGetIndexResponse.index:type_name -> api.BalancerGetIndexResponse.IndexEntry
+	8,  // 1: api.Balancer.Index:input_type -> api.BalancerIndexRequest
+	0,  // 2: api.Balancer.Set:input_type -> api.BalancerSetRequest
+	4,  // 3: api.Balancer.SetToIndex:input_type -> api.BalancerSetToIndexRequest
+	5,  // 4: api.Balancer.Get:input_type -> api.BalancerGetRequest
+	6,  // 5: api.Balancer.GetFromIndex:input_type -> api.BalancerGetFromIndexRequest
+	7,  // 6: api.Balancer.Connect:input_type -> api.BalancerConnectRequest
+	10, // 7: api.Balancer.Disconnect:input_type -> api.BalancerDisconnectRequest
+	11, // 8: api.Balancer.Servers:input_type -> api.BalancerServersRequest
+	2,  // 9: api.Balancer.GetIndex:input_type -> api.BalancerGetIndexRequest
+	9,  // 10: api.Balancer.IsIndex:input_type -> api.BalancerIsIndexRequest
+	1,  // 11: api.Balancer.Size:input_type -> api.BalancerIndexSizeRequest
+	21, // 12: api.Balancer.Index:output_type -> api.BalancerIndexResponse
+	15, // 13: api.Balancer.Set:output_type -> api.BalancerSetResponse
+	18, // 14: api.Balancer.SetToIndex:output_type -> api.BalancerSetToIndexResponse
+	12, // 15: api.Balancer.Get:output_type -> api.BalancerGetResponse
+	20, // 16: api.Balancer.GetFromIndex:output_type -> api.BalancerGetFromIndexResponse
+	16, // 17: api.Balancer.Connect:output_type -> api.BalancerConnectResponse
+	17, // 18: api.Balancer.Disconnect:output_type -> api.BalancerDisconnectResponse
+	22, // 19: api.Balancer.Servers:output_type -> api.BalancerServersResponse
+	14, // 20: api.Balancer.GetIndex:output_type -> api.BalancerGetIndexResponse
+	13, // 21: api.Balancer.IsIndex:output_type -> api.BalancerIsIndexResponse
+	19, // 22: api.Balancer.Size:output_type -> api.BalancerIndexSizeResponse
+	12, // [12:23] is the sub-list for method output_type
+	1,  // [1:12] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_balancer_proto_init() }
@@ -664,7 +1428,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BalancerGetRequest); i {
+			switch v := v.(*BalancerIndexSizeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -676,7 +1440,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ConnectRequest); i {
+			switch v := v.(*BalancerGetIndexRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -688,7 +1452,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisconnectRequest); i {
+			switch v := v.(*BalancerGetToIndexRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -700,7 +1464,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServersRequest); i {
+			switch v := v.(*BalancerSetToIndexRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -712,7 +1476,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BalancerGetResponse); i {
+			switch v := v.(*BalancerGetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -724,7 +1488,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BalancerSetResponse); i {
+			switch v := v.(*BalancerGetFromIndexRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -736,7 +1500,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ConnectResponse); i {
+			switch v := v.(*BalancerConnectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -748,7 +1512,7 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisconnectResponse); i {
+			switch v := v.(*BalancerIndexRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -760,7 +1524,163 @@ func file_api_proto_balancer_proto_init() {
 			}
 		}
 		file_api_proto_balancer_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServersResponse); i {
+			switch v := v.(*BalancerIsIndexRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerDisconnectRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerServersRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerGetResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerIsIndexResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerGetIndexResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerSetResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerConnectResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerDisconnectResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerSetToIndexResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerIndexSizeResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerGetFromIndexResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerIndexResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_proto_balancer_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalancerServersResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -778,7 +1698,7 @@ func file_api_proto_balancer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_proto_balancer_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
