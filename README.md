@@ -66,18 +66,34 @@ https://grpc-web.egorpoletaikin.repl.co
 ![изображение](https://user-images.githubusercontent.com/102957432/234688999-76a4e627-5a6b-41d1-9220-9d27db1d312f.png)
 
 ## Usage
+
+### Set
+```php
 set key value server(optional) - Sets the value to the storage.  
 server > 0 - Save to exact server.  
 server = 0 (default) - Automatic saving to a less loaded server.  
 server = -1 - Direct saving to the database.  
 server = -2 - Saving in all instances.  
 server = -3 - Saving in all instances and DB.  
-  
+```
+
+### Get
+```php
 get key server(optional) - Gets the value from the storage.  
 server > 0 - Search on a specific server (speed: fast).  
 server = 0 (default) - Deep search (speed: slow). 
 server = -1 - DB search (speed: medium). 
+```
 
+### Index
+```js
+new_index name - Creates an index with the specified name.
+index name set attr value - Sets the value of the index attribute.
+show_index name - Displays the index as a map.
+```
 
+### Other
+```php
 history - History of user actions.  
 servers - List of active servers with stats.  
+```
