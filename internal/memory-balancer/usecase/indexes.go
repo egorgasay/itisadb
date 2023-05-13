@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"itisadb/internal/memory-balancer/servers"
 )
 
 var ErrNoActiveClients = fmt.Errorf("error while creating area: no clients")
@@ -15,11 +16,16 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
 
-	if a, ok := uc.indexes[name]; ok {
-		return a, nil
+	var ok bool
+	var cl *servers.Server
+	var num int32
+
+	if num, ok = uc.indexes[name]; ok {
+		cl, ok = uc.servers.GetClientByID(num)
+	} else {
+		cl, ok = uc.servers.GetClient()
 	}
 
-	cl, ok := uc.servers.GetClient()
 	if !ok || cl == nil {
 		return 0, ErrNoActiveClients
 	}
@@ -29,8 +35,9 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 		return 0, fmt.Errorf("error while creating index: %w", err)
 	}
 
-	uc.indexes[name] = cl.Number
-	return cl.Number, nil
+	num = cl.GetNumber()
+	uc.indexes[name] = num
+	return num, nil
 }
 
 func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNumber int32) (string, error) {
@@ -56,8 +63,6 @@ func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNu
 		return "", err
 	}
 
-	cl.Total = resp.Total
-	cl.Available = resp.Available
 	return resp.Value, nil
 }
 
@@ -80,13 +85,11 @@ func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniqu
 		return 0, fmt.Errorf("no such server for index %s", index)
 	}
 
-	resp, err := cl.SetToIndex(ctx, index, key, val, uniques)
+	err := cl.SetToIndex(ctx, index, key, val, uniques)
 	if err != nil {
 		return 0, err
 	}
 
-	cl.Total = resp.Total
-	cl.Available = resp.Available
 	return serverNumber, nil
 }
 
@@ -113,8 +116,6 @@ func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string
 		return nil, err
 	}
 
-	cl.Total = res.Total
-	cl.Available = res.Available
 	return res.Index, nil
 }
 
@@ -131,7 +132,6 @@ func (uc *UseCase) IsIndex(ctx context.Context, name string) (bool, error) {
 
 func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
 	uc.mu.RLock()
-	defer uc.mu.RUnlock()
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -141,6 +141,7 @@ func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
 	if num, ok = uc.indexes[name]; !ok {
 		return 0, fmt.Errorf("index %s does not exist", name)
 	}
+	uc.mu.RUnlock()
 
 	cl, ok := uc.servers.GetClientByID(num)
 	if !ok || cl == nil {
@@ -152,8 +153,55 @@ func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
 		return 0, err
 	}
 
-	cl.Total = res.Total
-	cl.Available = res.Available
-
 	return res.Size, nil
+}
+
+func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
+	uc.mu.Lock()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	num, ok := uc.indexes[name]
+	if !ok {
+		return fmt.Errorf("index %s does not exist", name)
+	}
+	uc.mu.Unlock()
+
+	cl, ok := uc.servers.GetClientByID(num)
+	if !ok || cl == nil {
+		return fmt.Errorf("no such server for index %s", name)
+	}
+
+	err := cl.DeleteIndex(ctx, name)
+	if err != nil {
+		return fmt.Errorf("error while deleting index: %w", err)
+	}
+	uc.mu.Lock()
+	delete(uc.indexes, name)
+	uc.mu.Unlock()
+	return nil
+}
+
+func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) error {
+	uc.mu.Lock()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	num, ok := uc.indexes[dst]
+	if !ok {
+		return fmt.Errorf("index %s does not exist", dst)
+	}
+	uc.mu.Unlock()
+
+	cl, ok := uc.servers.GetClientByID(num)
+	if !ok || cl == nil {
+		return fmt.Errorf("no such server for index %s", dst)
+	}
+
+	err := cl.AttachToIndex(ctx, dst, src)
+	if err != nil {
+		return fmt.Errorf("error while attaching index: %w", err)
+	}
+	return nil
 }

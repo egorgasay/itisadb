@@ -60,7 +60,8 @@ func (s *Servers) GetClient() (*Server, bool) {
 	var serverNumber int32 = 0
 
 	for num, cl := range s.servers {
-		if float64(cl.Available)/float64(cl.Total)*100 > max {
+		r := cl.GetRAM()
+		if float64(r.available)/float64(r.total)*100 > max {
 			serverNumber = num
 		}
 	}
@@ -87,13 +88,13 @@ func (s *Servers) AddClient(address string, available, total uint64, server int3
 	cl := storage.NewStorageClient(conn)
 
 	var stClient = &Server{
-		storage:   cl,
-		Available: available,
-		Total:     total,
+		storage: cl,
+		ram:     RAM{available: available, total: total},
+		mu:      &sync.RWMutex{},
 	}
 
 	if server != 0 {
-		stClient.Number = server
+		stClient.number = server
 		if server > s.freeID {
 			s.freeID = server + 1
 		}
@@ -104,7 +105,7 @@ func (s *Servers) AddClient(address string, available, total uint64, server int3
 		}
 		defer f.Close()
 
-		stClient.Number = s.freeID
+		stClient.number = s.freeID
 		s.freeID++
 		_, err = f.WriteString(fmt.Sprintf("%d", s.freeID))
 		if err != nil {
@@ -112,9 +113,9 @@ func (s *Servers) AddClient(address string, available, total uint64, server int3
 		}
 	}
 
-	s.servers[stClient.Number] = stClient
+	s.servers[stClient.number] = stClient
 
-	return stClient.Number, nil
+	return stClient.number, nil
 }
 
 func (s *Servers) Disconnect(number int32) {
@@ -129,7 +130,8 @@ func (s *Servers) GetServers() []string {
 
 	var servers = make([]string, 0, 5)
 	for _, cl := range s.servers {
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number, cl.Available, cl.Total))
+		r := cl.GetRAM()
+		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.GetNumber(), r.total, r.available))
 	}
 
 	return servers
@@ -212,21 +214,19 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 	for n, serv := range s.servers {
 		go func(server *Server, number int32) {
 			defer wg.Done()
-			set, err := server.Set(ctx, key, val, uniques)
+			err := server.Set(ctx, key, val, uniques)
 			if err != nil {
-				if server.Tries > 2 {
+				if server.GetTries() > 2 {
 					delete(s.servers, number)
 				}
-				server.Tries++
+				server.IncTries()
 				mu.Lock()
 				failedServers = append(failedServers, number)
 				mu.Unlock()
 				return
 			}
 
-			server.Tries = 0
-			server.Available = set.Available
-			server.Total = set.Total
+			server.ResetTries()
 		}(serv, n)
 	}
 	wg.Wait()

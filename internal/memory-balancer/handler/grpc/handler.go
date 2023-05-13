@@ -93,6 +93,33 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexR
 	}, nil
 }
 
+func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*api.BalancerDeleteResponse, error) {
+	err := h.logic.Delete(ctx, r.Key, r.Server)
+	if err != nil {
+		// TODO: handle error
+		return &api.BalancerDeleteResponse{}, err
+	}
+	return &api.BalancerDeleteResponse{}, nil
+}
+
+func (h *Handler) AttachToIndex(ctx context.Context, r *api.BalancerAttachToIndexRequest) (*api.BalancerAttachToIndexResponse, error) {
+	err := h.logic.AttachToIndex(ctx, r.Dst, r.Src)
+	if err != nil {
+		// TODO: handle error
+		return &api.BalancerAttachToIndexResponse{}, err
+	}
+	return &api.BalancerAttachToIndexResponse{}, nil
+}
+
+func (h *Handler) DeleteIndex(ctx context.Context, r *api.BalancerDeleteIndexRequest) (*api.BalancerDeleteIndexResponse, error) {
+	err := h.logic.DeleteIndex(ctx, r.Index)
+	if err != nil {
+		// TODO: handle error
+		return &api.BalancerDeleteIndexResponse{}, err
+	}
+	return &api.BalancerDeleteIndexResponse{}, nil
+}
+
 func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectRequest) (*api.BalancerConnectResponse, error) {
 	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal(), request.Server)
 	if err != nil {

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "./";
+option go_package = "./balancer";
 
 package api;
 
@@ -8,6 +8,7 @@ service Balancer {
   rpc Index(BalancerIndexRequest) returns (BalancerIndexResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
   rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetToIndexResponse) {}
+  rpc AttachToIndex(BalancerAttachToIndexRequest) returns (BalancerAttachToIndexResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
   rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetFromIndexResponse) {}
   rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
@@ -16,6 +17,8 @@ service Balancer {
   rpc GetIndex(BalancerGetIndexRequest) returns (BalancerGetIndexResponse) {}
   rpc IsIndex(BalancerIsIndexRequest) returns (BalancerIsIndexResponse) {}
   rpc Size(BalancerIndexSizeRequest) returns (BalancerIndexSizeResponse) {}
+  rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+  rpc DeleteIndex(BalancerDeleteIndexRequest) returns (BalancerDeleteIndexResponse) {}
 }
 
 message BalancerSetRequest {
@@ -33,6 +36,14 @@ message BalancerGetIndexRequest {
   string name = 1;
 }
 
+message BalancerDeleteRequest {
+  string key = 1;
+  int32 server = 2;
+}
+
+message BalancerDeleteIndexRequest {
+  string index = 1;
+}
 
 message BalancerGetToIndexRequest {
   string key = 1;
@@ -44,6 +55,11 @@ message BalancerSetToIndexRequest {
   string value = 2;
   bool uniques = 3;
   string index = 4;
+}
+
+message BalancerAttachToIndexRequest {
+  string dst = 1;
+  string src = 2;
 }
 
 message BalancerGetRequest {
@@ -68,6 +84,7 @@ message BalancerIndexRequest {
   string name = 1;
 //  string defaultAttributes = 2;
 }
+
 
 message BalancerIsIndexRequest {
   string name = 1;
@@ -100,6 +117,10 @@ message BalancerConnectResponse {
   int32 serverNumber = 2;
 }
 
+message BalancerAttachToIndexResponse {}
+
+message BalancerDeleteResponse {}
+
 message BalancerDisconnectResponse{ }
 
 message BalancerSetToIndexResponse {
@@ -115,6 +136,8 @@ message BalancerGetFromIndexResponse {
 }
 
 message BalancerIndexResponse{ }
+
+message BalancerDeleteIndexResponse{ }
 
 message BalancerServersResponse {
   string serversInfo = 1;

@@ -71,3 +71,16 @@ func (uc *UseCase) Size(name string) (RAM, uint64, error) {
 	size, err := uc.storage.Size(name)
 	return RAMUsage(), size, err
 }
+
+func (uc *UseCase) DeleteIndex(name string) (RAM, error) {
+	return RAMUsage(), uc.storage.DeleteIndex(name)
+}
+
+func (uc *UseCase) AttachToIndex(dst, src string) (RAM, error) {
+	return RAMUsage(), uc.storage.AttachToIndex(dst, src)
+}
+
+func (uc *UseCase) Delete(key string) RAM {
+	uc.storage.Delete(key)
+	return RAMUsage()
+}
