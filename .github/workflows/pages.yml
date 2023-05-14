@@ -7,10 +7,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
-env:
-  # Setting an environment variable with the value of a configuration variable
-  mongo: ${{ web.MONGO }}  
+    branches: [ "main" ] 
 
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -55,10 +52,10 @@ jobs:
       run: go build -o wa cmd/grpc-storage-cli/main.go
       
     - name: Run memory balancer
-      run: ./mb -d=$mongo &
+      run: ./mb -d=${{secrets.MONGO}} &
       
     - name: Run storage instance
-      run: ./si -a=':1000' -connect=':800' -d=$mongo &
+      run: ./si -a=':1000' -connect=':800' -d=${{secrets.MONGO}} &
 
     - name: Run web app
       run: ./wa -a=':80' &
