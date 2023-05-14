@@ -52,13 +52,16 @@ jobs:
       run: go build -o wa cmd/grpc-storage-cli/main.go
       
     - name: Run memory balancer
-      run: ./mb -d=${{secrets.MONGO}} &
+      run: ./mb -d=${{secrets.MONGO}} -a=':8000' &
       
     - name: Run storage instance
-      run: ./si -a=':1000' -connect=':800' -d=${{secrets.MONGO}} &
+      run: ./si -a=':9000' -connect=':8000' -d=${{secrets.MONGO}} &
 
     - name: Run web app
-      run: ./wa -a=':80' &
+      run: ./wa -a=':8000' &
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
       
     - name: Deploy to GitHub Pages
       id: deployment
