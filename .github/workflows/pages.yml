@@ -25,9 +25,13 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+
 jobs:
 
-  build:
+  build_and_deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -50,28 +54,11 @@ jobs:
     - name: Build web app
       run: go build -o wa cmd/grpc-storage-cli/main.go
       
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
-
     - name: Run memory balancer
-      run: ./mb -d="$MONGO" &
+      run: ./mb -d=${{ web.MONGO }} &
       
     - name: Run storage instance
-      run: ./si -a=':1000' -connect=':800' -d="$MONGO" &
+      run: ./si -a=':1000' -connect=':800' -d=${{ web.MONGO }} &
 
     - name: Run web app
       run: ./wa -a=':80' &
