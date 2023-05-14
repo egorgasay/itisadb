@@ -21,8 +21,8 @@ var ErrUnknownServer = errors.New("unknown server")
 const (
 	_ = iota * -1
 	dbOnly
-	setToAll
-	AllAndDB
+	all
+	allAndDB
 )
 
 type UseCase struct {
@@ -68,20 +68,20 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	case dbOnly:
 		uc.logger.Info("setting k:val to db")
 		return dbOnly, setDB(key, val)
-	case setToAll:
+	case all:
 		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
-			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return all, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
-		return setToAll, nil
-	case AllAndDB:
+		return all, nil
+	case allAndDB:
 		uc.logger.Info("setting key:val to all instance")
 		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
-			return AllAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return allAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
 		uc.logger.Info("setting key:val to db")
-		return AllAndDB, setDB(key, val)
+		return allAndDB, setDB(key, val)
 	}
 
 	var cl *servers.Server
@@ -104,15 +104,12 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 		}
 	}
 
-	resp, err := cl.Set(context.Background(), key, val, uniques)
+	err := cl.Set(context.Background(), key, val, uniques)
 	if err != nil {
 		return 0, err
 	}
 
-	cl.Total = resp.Total
-	cl.Available = resp.Available
-
-	return cl.Number, nil
+	return cl.GetNumber(), nil
 }
 
 func (uc *UseCase) FindInDB(key string) (string, error) {
@@ -151,8 +148,6 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 
 	res, err := cl.Get(context.Background(), key)
 	if err == nil {
-		cl.Total = res.Total
-		cl.Available = res.Available
 		return res.Value, nil
 	}
 
@@ -165,10 +160,10 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 		return uc.FindInDB(key)
 	}
 
-	if cl.Tries > 2 {
-		uc.Disconnect(cl.Number)
+	if cl.GetTries() > 2 {
+		uc.Disconnect(cl.GetNumber())
 	}
-	cl.Tries = 0
+	cl.ResetTries()
 
 	return uc.FindInDB(key)
 }
@@ -190,4 +185,37 @@ func (uc *UseCase) Disconnect(number int32) {
 
 func (uc *UseCase) Servers() []string {
 	return uc.servers.GetServers()
+}
+
+func (uc *UseCase) Delete(ctx context.Context, key string, num int32) error {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	if num == 0 {
+		num = all
+	}
+
+	switch num {
+	case dbOnly:
+		//  TODO: delete from db
+	case all:
+		// TODO: delete from all servers
+	case allAndDB:
+		// TODO: delete from all servers
+		// TODO: delete from db
+	}
+
+	cl, ok := uc.servers.GetClientByID(num)
+	if !ok || cl == nil {
+		return fmt.Errorf("no such server")
+	}
+
+	err := cl.Delete(ctx, key)
+	if err != nil {
+		return fmt.Errorf("error while deleting value: %w", err)
+	}
+	return nil
 }

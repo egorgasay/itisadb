@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/pkg/api/storage"
+	"sync"
 )
 
 // =============== server ====================== //
@@ -13,80 +14,106 @@ import (
 var ErrAlreadyExists = errors.New("already exists")
 
 type Server struct {
-	Tries     uint
-	storage   storage.StorageClient
-	Available uint64
-	Total     uint64
-	Number    int32
+	tries   uint
+	storage storage.StorageClient
+	ram     RAM
+	number  int32
+	mu      *sync.RWMutex
 }
 
-func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) (*storage.SetResponse, error) {
-	res, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value, Unique: unique})
+type RAM struct {
+	available uint64
+	total     uint64
+}
+
+func (s *Server) GetRAM() RAM {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ram
+}
+
+func (s *Server) setRAM(ram *storage.Ram) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if ram == nil || ram.Total == 0 {
+		return
+	}
+	s.ram = RAM{total: ram.Total, available: ram.Available}
+}
+
+func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) error {
+	r, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value, Unique: unique})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.AlreadyExists {
-			return nil, ErrAlreadyExists
+			return ErrAlreadyExists
 		}
-		return nil, err
+		return err
 	}
 
-	return res, err
+	return err
 }
 
 func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, error) {
-	gr, err := s.storage.Get(ctx, &storage.GetRequest{Key: Key})
+	r, err := s.storage.Get(ctx, &storage.GetRequest{Key: Key})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		return nil, err
 	}
 
-	return gr, err
+	return r, err
 
 }
 
 func (s *Server) GetIndex(ctx context.Context, name string) (*storage.GetIndexResponse, error) {
-	gir, err := s.storage.GetIndex(ctx, &storage.GetIndexRequest{
+	r, err := s.storage.GetIndex(ctx, &storage.GetIndexRequest{
 		Name: name,
 	})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		return nil, err
 	}
 
-	return gir, err
+	return r, err
 
 }
 
 func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.GetResponse, error) {
-	gfir, err := s.storage.GetFromIndex(ctx, &storage.GetFromIndexRequest{
+	r, err := s.storage.GetFromIndex(ctx, &storage.GetFromIndexRequest{
 		Key:  Key,
 		Name: name,
 	})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		return nil, err
 	}
 
-	return gfir, err
+	return r, err
 
 }
 
-func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique bool) (*storage.SetResponse, error) {
-	stir, err := s.storage.SetToIndex(ctx, &storage.SetToIndexRequest{
+func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique bool) error {
+	r, err := s.storage.SetToIndex(ctx, &storage.SetToIndexRequest{
 		Key:    Key,
 		Value:  Value,
 		Name:   name,
 		Unique: unique,
 	})
+	s.setRAM(r.GetRam())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return stir, err
+	return err
 
 }
 
 func (s *Server) NewIndex(ctx context.Context, name string) error {
-	_, err := s.storage.NewIndex(ctx, &storage.NewIndexRequest{
+	r, err := s.storage.NewIndex(ctx, &storage.NewIndexRequest{
 		Name: name,
 	})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		return err
 	}
@@ -97,8 +124,63 @@ func (s *Server) Size(ctx context.Context, name string) (*storage.IndexSizeRespo
 	r, err := s.storage.Size(ctx, &storage.IndexSizeRequest{
 		Name: name,
 	})
+	s.setRAM(r.GetRam())
 	if err != nil {
 		return nil, err
 	}
 	return r, nil
+}
+
+func (s *Server) DeleteIndex(ctx context.Context, name string) error {
+	r, err := s.storage.DeleteIndex(ctx, &storage.DeleteIndexRequest{
+		Index: name,
+	})
+	s.setRAM(r.GetRam())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) Delete(ctx context.Context, Key string) error {
+	r, err := s.storage.Delete(ctx, &storage.DeleteRequest{
+		Key: Key,
+	})
+	s.setRAM(r.GetRam())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) AttachToIndex(ctx context.Context, dst string, src string) error {
+	r, err := s.storage.AttachToIndex(ctx, &storage.AttachToIndexRequest{
+		Dst: dst,
+		Src: src,
+	})
+	s.setRAM(r.GetRam())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) GetNumber() int32 {
+	return s.number
+}
+
+func (s *Server) GetTries() uint {
+	return s.tries
+}
+
+func (s *Server) IncTries() {
+	s.mu.Lock()
+	s.tries++
+	s.mu.Unlock()
+}
+
+func (s *Server) ResetTries() {
+	s.mu.Lock()
+	s.tries = 0
+	s.mu.Unlock()
 }

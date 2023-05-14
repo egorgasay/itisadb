@@ -25,11 +25,14 @@ type StorageClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	SetToIndex(ctx context.Context, in *SetToIndexRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	AttachToIndex(ctx context.Context, in *AttachToIndexRequest, opts ...grpc.CallOption) (*AttachToIndexResponse, error)
 	GetFromIndex(ctx context.Context, in *GetFromIndexRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
 	IsIndex(ctx context.Context, in *IsIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
 	NewIndex(ctx context.Context, in *NewIndexRequest, opts ...grpc.CallOption) (*NewIndexResponse, error)
 	Size(ctx context.Context, in *IndexSizeRequest, opts ...grpc.CallOption) (*IndexSizeResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*DeleteIndexResponse, error)
 }
 
 type storageClient struct {
@@ -61,6 +64,15 @@ func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.Ca
 func (c *storageClient) SetToIndex(ctx context.Context, in *SetToIndexRequest, opts ...grpc.CallOption) (*SetResponse, error) {
 	out := new(SetResponse)
 	err := c.cc.Invoke(ctx, "/api.Storage/SetToIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) AttachToIndex(ctx context.Context, in *AttachToIndexRequest, opts ...grpc.CallOption) (*AttachToIndexResponse, error) {
+	out := new(AttachToIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/AttachToIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +124,24 @@ func (c *storageClient) Size(ctx context.Context, in *IndexSizeRequest, opts ...
 	return out, nil
 }
 
+func (c *storageClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*DeleteIndexResponse, error) {
+	out := new(DeleteIndexResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/DeleteIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility
@@ -119,11 +149,14 @@ type StorageServer interface {
 	Set(context.Context, *SetRequest) (*SetResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	SetToIndex(context.Context, *SetToIndexRequest) (*SetResponse, error)
+	AttachToIndex(context.Context, *AttachToIndexRequest) (*AttachToIndexResponse, error)
 	GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error)
 	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
 	IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error)
 	NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error)
 	Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DeleteIndex(context.Context, *DeleteIndexRequest) (*DeleteIndexResponse, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -140,6 +173,9 @@ func (UnimplementedStorageServer) Get(context.Context, *GetRequest) (*GetRespons
 func (UnimplementedStorageServer) SetToIndex(context.Context, *SetToIndexRequest) (*SetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetToIndex not implemented")
 }
+func (UnimplementedStorageServer) AttachToIndex(context.Context, *AttachToIndexRequest) (*AttachToIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AttachToIndex not implemented")
+}
 func (UnimplementedStorageServer) GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFromIndex not implemented")
 }
@@ -154,6 +190,12 @@ func (UnimplementedStorageServer) NewIndex(context.Context, *NewIndexRequest) (*
 }
 func (UnimplementedStorageServer) Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Size not implemented")
+}
+func (UnimplementedStorageServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedStorageServer) DeleteIndex(context.Context, *DeleteIndexRequest) (*DeleteIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteIndex not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
@@ -218,6 +260,24 @@ func _Storage_SetToIndex_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StorageServer).SetToIndex(ctx, req.(*SetToIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_AttachToIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AttachToIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).AttachToIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/AttachToIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).AttachToIndex(ctx, req.(*AttachToIndexRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,6 +372,42 @@ func _Storage_Size_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Storage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_DeleteIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).DeleteIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/DeleteIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).DeleteIndex(ctx, req.(*DeleteIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -332,6 +428,10 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Storage_SetToIndex_Handler,
 		},
 		{
+			MethodName: "AttachToIndex",
+			Handler:    _Storage_AttachToIndex_Handler,
+		},
+		{
 			MethodName: "GetFromIndex",
 			Handler:    _Storage_GetFromIndex_Handler,
 		},
@@ -350,6 +450,14 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Size",
 			Handler:    _Storage_Size_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Storage_Delete_Handler,
+		},
+		{
+			MethodName: "DeleteIndex",
+			Handler:    _Storage_DeleteIndex_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -26,12 +26,21 @@ var ErrSomethingExists = errors.New("something with this name already exists")
 var ErrEmptyIndexName = errors.New("index name is empty")
 
 type Storage struct {
-	dbStore *mongo.Database
-	sync.RWMutex
-	ramStorage *swiss.Map[string, any]
-	indexes    sync.Map
+	dbStore    *mongo.Database
+	ramStorage ramStorage
+	indexes    indexes
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
+}
+
+type ramStorage struct {
+	*swiss.Map[string, string]
+	*sync.RWMutex
+}
+
+type indexes struct {
+	*swiss.Map[string, ivalue]
+	*sync.RWMutex
 }
 
 func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
@@ -46,7 +55,8 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	}
 	st := &Storage{
 		dbStore:    client.Database("grpc-server"),
-		ramStorage: swiss.NewMap[string, any](100000),
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
+		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
 		logger:     logger,
 	}
 
@@ -84,7 +94,7 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 }
 
 func (s *Storage) Set(key, val string, unique bool) error {
-	s.Lock()
+	s.ramStorage.Lock()
 	if unique {
 		if _, ok := s.ramStorage.Get(key); ok {
 			return ErrAlreadyExists
@@ -92,7 +102,7 @@ func (s *Storage) Set(key, val string, unique bool) error {
 	}
 	s.ramStorage.Put(key, val)
 
-	s.Unlock()
+	s.ramStorage.Unlock()
 	return nil
 }
 
@@ -101,40 +111,24 @@ func (s *Storage) WriteSet(key, val string) {
 }
 
 func (s *Storage) Get(key string) (string, error) {
-	s.RLock()
+	s.ramStorage.RLock()
 
 	val, ok := s.ramStorage.Get(key)
-	if !ok {
-		return "", ErrNotFound
-	}
-
-	s.RUnlock()
-
-	switch val.(type) {
-	case string:
-		return val.(string), nil
-	default:
-		return "", errors.New("wrong type")
-	}
-}
-
-func (s *Storage) GetFromIndex(name, key string) (string, error) {
-	index, err := s.findIndex(name)
-	if err != nil {
-		return "", err
-	}
-
-	value, ok := index.Get(key)
-	if !ok {
-		return "", ErrNotFound
-	}
-
-	val, ok := value.(string)
+	s.ramStorage.RUnlock()
 	if !ok {
 		return "", ErrNotFound
 	}
 
 	return val, nil
+}
+
+func (s *Storage) GetFromIndex(name, key string) (string, error) {
+	v, err := s.findIndex(name)
+	if err != nil {
+		return "", err
+	}
+
+	return v.GetValue(key)
 }
 
 func (s *Storage) SetToIndex(name, key, value string) error {
@@ -143,42 +137,60 @@ func (s *Storage) SetToIndex(name, key, value string) error {
 		return err
 	}
 
-	index.Put(key, value)
+	index.Set(key, value)
 	return nil
 }
 
-func (s *Storage) CreateIndex(name string) error {
+func (s *Storage) AttachToIndex(dst, src string) error {
+	index1, err := s.findIndex(dst)
+	if err != nil {
+		return err
+	}
+
+	index2, err := s.findIndex(src)
+	if err != nil {
+		return err
+	}
+
+	err = index1.AttachIndex(src, index2)
+	return err
+}
+
+func (s *Storage) DeleteIndex(name string) error {
+	val, err := s.findIndex(name)
+	if err != nil {
+		return err
+	}
+
+	val.DeleteIndex()
+
+	return nil
+}
+
+func (s *Storage) CreateIndex(name string) (err error) {
 	path := strings.Split(name, "/")
 	if len(path) == 0 {
 		return ErrEmptyIndexName
 	}
-	var index any
-	var ok bool
-	index, ok = s.indexes.Load(path[0])
-	if !ok {
-		index = swiss.NewMap[string, any](100000)
-		s.indexes.Store(path[0], index)
+
+	val, ok := s.indexes.Get(path[0])
+	if !ok || val.IsEmpty() {
+		s.indexes.Lock()
+		s.indexes.Put(name, NewIndex())
+		s.indexes.Unlock()
 		return nil
 	}
 
 	path = path[1:]
 
-	for i, indexName := range path {
-		switch index.(type) {
-		case *swiss.Map[string, any]:
-			ind := index.(*swiss.Map[string, any])
-			index, ok = ind.Get(indexName)
-			if !ok {
-				index = swiss.NewMap[string, any](100000)
-				ind.Put(indexName, index)
-				return nil
-			} else if ok && i == len(path)-1 {
-				return nil
-			}
-			index = ind
-		default:
+	for _, indexName := range path {
+		val = val.NextOrCreate(indexName)
+		if !val.IsIndex() {
 			return ErrSomethingExists
+		} else if val.IsEmpty() {
+			val.RecreateIndex()
 		}
+		val.CreateIndex(indexName)
 	}
 	return nil
 }
@@ -190,10 +202,12 @@ func (s *Storage) GetIndex(name string) (map[string]string, error) {
 	}
 
 	result := make(map[string]string)
-	index.Iter(func(key string, value any) bool {
-		k, ok := value.(string)
-		if !ok {
+	index.Iter(func(key string, value ivalue) bool {
+		k := ""
+		if value.IsIndex() {
 			k = "index"
+		} else {
+			k = value.Get()
 		}
 		result[key] = k
 		return false
@@ -201,28 +215,24 @@ func (s *Storage) GetIndex(name string) (map[string]string, error) {
 	return result, nil
 }
 
-func (s *Storage) findIndex(name string) (*swiss.Map[string, any], error) {
+func (s *Storage) findIndex(name string) (ivalue, error) {
 	path := strings.Split(name, "/")
 
 	if len(path) == 0 {
 		return nil, ErrNotFound
 	}
 
-	var index any
-	var ok bool
-
-	index, ok = s.indexes.Load(path[0])
+	val, ok := s.indexes.Get(path[0])
 	if !ok {
-		return nil, ErrNotFound
+		return nil, ErrIndexNotFound
 	}
 
 	path = path[1:]
 
 	for _, indexName := range path {
-		switch index.(type) {
-		case *swiss.Map[string, any]:
-			ind := index.(*swiss.Map[string, any])
-			index, ok = ind.Get(indexName)
+		switch val.IsIndex() {
+		case true:
+			val, ok = val.Next(indexName)
 			if !ok {
 				return nil, ErrIndexNotFound
 			}
@@ -231,12 +241,11 @@ func (s *Storage) findIndex(name string) (*swiss.Map[string, any], error) {
 		}
 	}
 
-	final, ok := index.(*swiss.Map[string, any])
-	if !ok {
-		return nil, ErrSomethingExists
+	if !val.IsIndex() {
+		return nil, ErrIndexNotFound
 	}
 
-	return final, nil
+	return val, nil
 }
 
 // Size returns the size of the index
@@ -245,26 +254,27 @@ func (s *Storage) Size(name string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(index.Count()), nil
+	return uint64(index.Size()), nil
 }
 
 func (s *Storage) IsIndex(name string) (ok bool, err error) {
-	if _, err = s.findIndex(name); err != nil {
+	var val ivalue
+	if val, err = s.findIndex(name); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return false, nil
 		}
 		return false, err
 	}
-	return ok, nil
+	return val.IsIndex(), nil
 }
 
 func (s *Storage) Save() error {
 	c := s.dbStore.Collection("map")
-	s.Lock()
+	s.ramStorage.Lock()
 
 	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
-	s.ramStorage.Iter(func(key string, value any) bool {
+	s.ramStorage.Iter(func(key string, value string) bool {
 		filter := bson.D{{"Key", key}}
 		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
 		_, err := c.UpdateOne(ctx, filter, update, opts)
@@ -274,6 +284,12 @@ func (s *Storage) Save() error {
 		return true
 	})
 
-	s.Unlock()
+	s.ramStorage.Unlock()
 	return s.tLogger.Clear()
+}
+
+func (s *Storage) Delete(key string) {
+	s.ramStorage.Lock()
+	s.ramStorage.Delete(key)
+	s.ramStorage.Unlock()
 }

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "./";
+option go_package = "./storage";
 
 package api;
 
@@ -8,12 +8,17 @@ service Storage {
   rpc Set(SetRequest) returns (SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc SetToIndex(SetToIndexRequest) returns (SetResponse) {}
+  rpc AttachToIndex(AttachToIndexRequest) returns (AttachToIndexResponse) {}
   rpc GetFromIndex(GetFromIndexRequest) returns (GetResponse) {}
   rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
   rpc IsIndex(IsIndexRequest) returns (IsIndexResponse) {}
   rpc NewIndex(NewIndexRequest) returns (NewIndexResponse) {}
   rpc Size(IndexSizeRequest) returns (IndexSizeResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse) {}
+
 }
+
 
 message SetRequest {
   string key = 1;
@@ -23,6 +28,14 @@ message SetRequest {
 
 message GetRequest {
   string key = 1;
+}
+
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteIndexRequest {
+  string index = 1;
 }
 
 message GetIndexRequest {
@@ -49,37 +62,59 @@ message SetToIndexRequest {
   string name = 4;
 }
 
+message AttachToIndexRequest {
+  string dst = 1;
+  string src = 2;
+}
+
 message GetFromIndexRequest {
   string key = 1;
   string name = 2;
 }
 
-message GetResponse {
-  string value = 1;
+// =============
+
+message Ram {
   uint64 Total = 2;
   uint64 Available = 3;
+}
+
+message GetResponse {
+  Ram ram = 1;
+  string value = 2;
 }
 
 message IsIndexResponse {
   bool ok = 1;
+  Ram ram = 2;
 }
 
 message GetIndexResponse {
   map<string, string> index = 1;
-  uint64 Total = 2;
-  uint64 Available = 3;
+  Ram ram = 2;
 }
 
-
-message NewIndexResponse{ }
+message NewIndexResponse{
+  Ram ram = 1;
+}
 
 message SetResponse {
-  uint64 Total = 1;
-  uint64 Available = 2;
+  Ram ram = 1;
+}
+
+message DeleteResponse {
+  Ram ram = 1;
+}
+
+message DeleteIndexResponse {
+  Ram ram = 1;
+}
+
+message AttachToIndexResponse {
+  Ram ram = 1;
 }
 
 message IndexSizeResponse {
   uint64 Size = 1;
-  uint64 Total = 2;
-  uint64 Available = 3;
+  Ram ram = 2;
 }
