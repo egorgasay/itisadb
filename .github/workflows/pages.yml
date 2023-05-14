@@ -21,11 +21,30 @@ jobs:
       with:
         go-version: 1.19
 
+    - name: Build memory balancer
+      run: go build -o mb cmd/balancer/main.go
+      
+    - name: Build storage instance
+      run: go build -o si cmd/grpc-storage/main.go
+
+    - name: Build web app
+      run: go build -o wa cmd/grpc-storage-cli/main.go
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
     - name: Run memory balancer
-      run: go run cmd/balancer/main.go -d="$MONGO" &
+      run: ./mb -d="$MONGO" &
       
     - name: Run storage instance
-      run: go run cmd/grpc-storage/main.go -a=':1000' -connect=':800' -d="$MONGO" &
+      run: ./si -a=':1000' -connect=':800' -d="$MONGO" &
 
     - name: Run web app
-      run: go run cmd/grpc-storage-cli/main.go -a=':80'
+      run: ./wa -a=':80' &
