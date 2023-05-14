@@ -33,7 +33,6 @@ type UseCase struct {
 	// TODO: add copy to disk
 	indexes map[string]int32
 	mu      sync.RWMutex
-	//queue   *queue.Queue[int32]
 }
 
 func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {

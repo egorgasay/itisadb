@@ -29,7 +29,7 @@ func main() {
 		Concise: true,
 	})
 
-	store, err := storage.New(cfg, logger.New(lg))
+	store, err := storage.NewWithTLogger(cfg, logger.New(lg))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}

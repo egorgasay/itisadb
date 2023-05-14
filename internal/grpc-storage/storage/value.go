@@ -30,7 +30,7 @@ type ivalue interface {
 }
 
 func NewIndex() *value {
-	return &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](10000), isIndex: true}
+	return &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100), isIndex: true}
 }
 
 func (v *value) Get() (val string) {
@@ -72,7 +72,7 @@ func (v *value) IsIndex() bool {
 func (v *value) AttachIndex(name string, val ivalue) error {
 	v.mutex.Lock()
 	if v.next == nil {
-		v.next = swiss.NewMap[string, ivalue](10000)
+		v.next = swiss.NewMap[string, ivalue](100)
 		v.next.Put(name, val)
 		v.mutex.Unlock()
 		return nil
@@ -147,7 +147,7 @@ func (v *value) CreateIndex(name string) {
 		return
 	}
 
-	v.next.Put(name, &value{next: swiss.NewMap[string, ivalue](10000), mutex: &sync.RWMutex{}})
+	v.next.Put(name, &value{next: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
 }
 
 func (v *value) RecreateIndex() {

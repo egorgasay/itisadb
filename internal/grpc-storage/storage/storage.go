@@ -43,6 +43,20 @@ type indexes struct {
 	*sync.RWMutex
 }
 
+func NewWithTLogger(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
+	st, err := New(cfg, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return st, nil
+}
+
 func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
@@ -58,11 +72,6 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
 		logger:     logger,
-	}
-
-	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
-	if err != nil {
-		return nil, err
 	}
 
 	return st, nil
@@ -141,6 +150,8 @@ func (s *Storage) SetToIndex(name, key, value string) error {
 	return nil
 }
 
+var ErrWrongIndexName = errors.New("wrong index name provided")
+
 func (s *Storage) AttachToIndex(dst, src string) error {
 	index1, err := s.findIndex(dst)
 	if err != nil {
@@ -152,7 +163,12 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 		return err
 	}
 
-	err = index1.AttachIndex(src, index2)
+	source := strings.Split(src, "/")
+	if len(source) == 0 {
+		return ErrWrongIndexName
+	}
+
+	err = index1.AttachIndex(source[len(source)-1], index2)
 	return err
 }
 
@@ -169,16 +185,16 @@ func (s *Storage) DeleteIndex(name string) error {
 
 func (s *Storage) CreateIndex(name string) (err error) {
 	path := strings.Split(name, "/")
-	if len(path) == 0 {
+	if name == "" || len(path) == 0 {
 		return ErrEmptyIndexName
 	}
 
 	val, ok := s.indexes.Get(path[0])
 	if !ok || val.IsEmpty() {
 		s.indexes.Lock()
-		s.indexes.Put(name, NewIndex())
+		val = NewIndex()
+		s.indexes.Put(path[0], val)
 		s.indexes.Unlock()
-		return nil
 	}
 
 	path = path[1:]
@@ -241,7 +257,7 @@ func (s *Storage) findIndex(name string) (ivalue, error) {
 		}
 	}
 
-	if !val.IsIndex() {
+	if !val.IsIndex() || val.IsEmpty() {
 		return nil, ErrIndexNotFound
 	}
 
