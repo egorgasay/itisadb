@@ -235,7 +235,7 @@ func (s *Storage) findIndex(name string) (ivalue, error) {
 	path := strings.Split(name, "/")
 
 	if len(path) == 0 {
-		return nil, ErrNotFound
+		return nil, ErrIndexNotFound
 	}
 
 	val, ok := s.indexes.Get(path[0])
@@ -273,15 +273,12 @@ func (s *Storage) Size(name string) (uint64, error) {
 	return uint64(index.Size()), nil
 }
 
-func (s *Storage) IsIndex(name string) (ok bool, err error) {
-	var val ivalue
-	if val, err = s.findIndex(name); err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return false, nil
-		}
-		return false, err
+func (s *Storage) IsIndex(name string) bool {
+	if val, err := s.findIndex(name); err != nil {
+		return false
+	} else {
+		return val.IsIndex()
 	}
-	return val.IsIndex(), nil
 }
 
 func (s *Storage) Save() error {

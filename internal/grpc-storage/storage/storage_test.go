@@ -668,10 +668,9 @@ func TestStorage_IsIndex(t *testing.T) {
 		name string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantOk  bool
-		wantErr bool
+		name   string
+		args   args
+		wantOk bool
 	}{
 		{
 			name: "ok",
@@ -699,42 +698,75 @@ func TestStorage_IsIndex(t *testing.T) {
 			args: args{
 				name: "ind4x678",
 			},
-			wantOk:  false,
-			wantErr: true,
+			wantOk: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.wantErr {
-				if !tt.wantOk {
-					split := strings.Split(tt.args.name, "/")
-					path := strings.Join(split[:len(split)-1], "/")
-					err := s.CreateIndex(path)
-					if err != nil {
-						t.Fatalf("CreateIndex() error = %v", err)
-					}
+			split := strings.Split(tt.args.name, "/")
+			if !tt.wantOk && len(split) > 1 {
+				path := strings.Join(split[:len(split)-1], "/")
+				err := s.CreateIndex(path)
+				if err != nil {
+					t.Fatalf("CreateIndex() error = %v", err)
+				}
 
-					index, err := s.findIndex(path)
-					if err != nil {
-						t.Fatalf("findIndex() error = %v", err)
-					}
+				index, err := s.findIndex(path)
+				if err != nil {
+					t.Fatalf("findIndex() error = %v", err)
+				}
 
-					index.Set(split[len(split)-1], "")
-				} else {
-					err := s.CreateIndex(tt.args.name)
-					if err != nil {
-						t.Fatalf("CreateIndex() error = %v", err)
-					}
+				index.Set(split[len(split)-1], "")
+			} else if tt.wantOk {
+				err := s.CreateIndex(tt.args.name)
+				if err != nil {
+					t.Fatalf("CreateIndex() error = %v", err)
 				}
 			}
 
-			gotOk, err := s.IsIndex(tt.args.name)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("IsIndex() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			gotOk := s.IsIndex(tt.args.name)
 
 			if gotOk != tt.wantOk {
 				t.Errorf("IsIndex() gotOk = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestStorage_Delete(t *testing.T) {
+	s := Storage{
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10), RWMutex: &sync.RWMutex{}},
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "ok",
+			args: args{
+				key: "key",
+			},
+		},
+		{
+			name: "ok2",
+			args: args{
+				key: "key2",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := s.Set(tt.args.key, "value", false)
+			if err != nil {
+				t.Fatalf("Set() error = %v", err)
+			}
+			s.Delete(tt.args.key)
+			_, err = s.Get(tt.args.key)
+			if err == nil {
+				t.Fatalf("Get() error = %v", err)
 			}
 		})
 	}
