@@ -13,10 +13,10 @@ type value struct {
 }
 
 type ivalue interface {
-	Get() (val string)
-	GetValue(name string) (val string, err error)
+	GetValue() (val string)
+	Get(name string) (val string, err error)
 	Set(key, val string)
-	SetUnique(val string) error
+	SetValueUnique(val string) error
 	CreateIndex(name string)
 	RecreateIndex()
 	IsIndex() bool
@@ -33,7 +33,7 @@ func NewIndex() *value {
 	return &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100), isIndex: true}
 }
 
-func (v *value) Get() (val string) {
+func (v *value) GetValue() (val string) {
 	v.mutex.RLock()
 	val = v.value
 	v.mutex.RUnlock()
@@ -47,7 +47,7 @@ func (v *value) IsEmpty() bool {
 	return v.next == nil
 }
 
-func (v *value) GetValue(name string) (string, error) {
+func (v *value) Get(name string) (string, error) {
 	v.mutex.RLock()
 	val, ok := v.next.Get(name)
 	v.mutex.RUnlock()
@@ -55,7 +55,7 @@ func (v *value) GetValue(name string) (string, error) {
 		return "", ErrNotFound
 	}
 
-	return val.Get(), nil
+	return val.GetValue(), nil
 }
 
 func (v *value) Size() int {
@@ -129,7 +129,7 @@ func (v *value) Set(key, val string) {
 	v.mutex.Unlock()
 }
 
-func (v *value) SetUnique(val string) error {
+func (v *value) SetValueUnique(val string) error {
 	v.mutex.Lock()
 	if v.next.Has(val) {
 		v.mutex.Unlock()

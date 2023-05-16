@@ -243,7 +243,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 				if err != nil {
 					t.Errorf("findIndex() error = %v", err)
 				}
-				getValue, err := index.GetValue(tt.args.key)
+				getValue, err := index.Get(tt.args.key)
 				if err != nil {
 					t.Errorf("GetValue() error = %v", err)
 				}
@@ -337,14 +337,14 @@ func TestStorage_AttachToIndex(t *testing.T) {
 				originalMap := make(map[string]string, 10)
 
 				original.Iter(func(k string, v ivalue) bool {
-					originalMap[k] = v.Get()
+					originalMap[k] = v.GetValue()
 					return false
 				})
 
 				attachedMap := make(map[string]string, 10)
 
 				attached.Iter(func(k string, v ivalue) bool {
-					attachedMap[k] = v.Get()
+					attachedMap[k] = v.GetValue()
 					return false
 				})
 

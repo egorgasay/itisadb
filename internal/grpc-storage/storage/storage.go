@@ -137,7 +137,7 @@ func (s *Storage) GetFromIndex(name, key string) (string, error) {
 		return "", err
 	}
 
-	return v.GetValue(key)
+	return v.Get(key)
 }
 
 func (s *Storage) SetToIndex(name, key, value string) error {
@@ -223,7 +223,7 @@ func (s *Storage) GetIndex(name string) (map[string]string, error) {
 		if value.IsIndex() {
 			k = "index"
 		} else {
-			k = value.Get()
+			k = value.GetValue()
 		}
 		result[key] = k
 		return false
