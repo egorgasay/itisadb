@@ -212,6 +212,7 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 
 	wg.Add(len(s.servers))
 	for n, serv := range s.servers {
+		// TODO: Add pull of goroutines
 		go func(server *Server, number int32) {
 			defer wg.Done()
 			err := server.Set(ctx, key, val, uniques)

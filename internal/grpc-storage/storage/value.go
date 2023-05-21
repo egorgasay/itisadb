@@ -27,6 +27,8 @@ type ivalue interface {
 	Iter(func(k string, v ivalue) bool)
 	AttachIndex(name string, val ivalue) error
 	DeleteIndex()
+	Delete(key string) error
+	Has(key string) bool
 }
 
 func NewIndex() *value {
@@ -154,4 +156,24 @@ func (v *value) RecreateIndex() {
 	v.mutex.Lock()
 	v.next = swiss.NewMap[string, ivalue](10000)
 	v.mutex.Unlock()
+}
+
+func (v *value) Delete(key string) error {
+	v.mutex.Lock()
+	ok := v.next.Has(key)
+	v.mutex.Unlock()
+
+	if !ok {
+		return ErrNotFound
+	}
+
+	v.next.Delete(key)
+	return nil
+}
+
+func (v *value) Has(key string) bool {
+	v.mutex.RLock()
+	ok := v.next.Has(key)
+	v.mutex.RUnlock()
+	return ok
 }

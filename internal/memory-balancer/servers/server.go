@@ -12,6 +12,7 @@ import (
 // =============== server ====================== //
 
 var ErrAlreadyExists = errors.New("already exists")
+var ErrUnavailable = errors.New("server is unavailable")
 
 type Server struct {
 	tries   uint
@@ -175,12 +176,36 @@ func (s *Server) GetTries() uint {
 
 func (s *Server) IncTries() {
 	s.mu.Lock()
-	s.tries++
+	s.tries++ // TODO: atomic??
 	s.mu.Unlock()
 }
 
 func (s *Server) ResetTries() {
 	s.mu.Lock()
-	s.tries = 0
+	s.tries = 0 // TODO: atomic??
 	s.mu.Unlock()
+}
+
+func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) error {
+	r, err := s.storage.DeleteAttr(ctx, &storage.DeleteAttrRequest{
+		Name: index,
+		Key:  attr,
+	})
+	s.setRAM(r.GetRam())
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			return err
+		}
+
+		if st.Code() == codes.NotFound {
+			return ErrNotFound
+		}
+
+		if st.Code() == codes.Unavailable {
+			return ErrUnavailable
+		}
+		return err
+	}
+	return nil
 }

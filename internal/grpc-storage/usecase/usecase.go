@@ -21,9 +21,9 @@ func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
 	return RAMUsage(), err
 }
 
-func (uc *UseCase) SetToIndex(name, key, val string) (RAM, error) {
-	err := uc.storage.SetToIndex(name, key, val)
-	uc.storage.WriteSet(key, val)
+func (uc *UseCase) SetToIndex(name, key, val string, uniques bool) (RAM, error) {
+	err := uc.storage.SetToIndex(name, key, val, uniques)
+	// uc.storage.WriteSet(name+"/"+key, val) TODO: add to index
 	return RAMUsage(), err
 }
 
@@ -34,6 +34,7 @@ type RAM struct {
 
 // RAMUsage outputs the current, total and OS memory being used.
 func RAMUsage() RAM {
+	// TODO: do not call it every time
 	return RAM{
 		Total:     memory.TotalMemory() / 1024 / 1024,
 		Available: memory.FreeMemory() / 1024 / 1024,
@@ -80,7 +81,15 @@ func (uc *UseCase) AttachToIndex(dst, src string) (RAM, error) {
 	return RAMUsage(), uc.storage.AttachToIndex(dst, src)
 }
 
-func (uc *UseCase) Delete(key string) RAM {
-	uc.storage.Delete(key)
+func (uc *UseCase) DeleteIfExists(key string) RAM {
+	uc.storage.DeleteIfExists(key)
 	return RAMUsage()
+}
+
+func (uc *UseCase) Delete(key string) (RAM, error) {
+	return RAMUsage(), uc.storage.Delete(key)
+}
+
+func (uc *UseCase) DeleteAttr(name, key string) (RAM, error) {
+	return RAMUsage(), uc.storage.DeleteAttr(name, key)
 }

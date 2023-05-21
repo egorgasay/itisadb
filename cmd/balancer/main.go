@@ -38,14 +38,15 @@ func main() {
 	grpcServer := grpc.NewServer()
 
 	log.Println("Starting Balancer ...")
-	lis, err := net.Listen("tcp", cfg.Host)
+	lis, err := net.Listen("tcp", cfg.GRPC)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	balancer.RegisterBalancerServer(grpcServer, h)
 
+	// gRPC by default
 	go func() {
-		log.Println("Starting GRPC", cfg.Host)
+		log.Println("Starting GRPC", cfg.GRPC)
 		err = grpcServer.Serve(lis)
 		if err != nil {
 			log.Fatalf("grpcServer Serve: %v", err)
@@ -55,12 +56,14 @@ func main() {
 
 	handler := resthandler.New(logic)
 
-	go func() {
-		log.Println("Starting FastHTTP 127.0.0.1:890")
-		if err := fasthttp.ListenAndServe("127.0.0.1:890", handler.ServeHTTP); err != nil {
-			log.Fatalf("Error in ListenAndServe: %v", err)
-		}
-	}()
+	if cfg.REST != "" {
+		go func() {
+			log.Printf("Starting FastHTTP %s", cfg.REST)
+			if err := fasthttp.ListenAndServe(cfg.REST, handler.ServeHTTP); err != nil {
+				log.Fatalf("Error in ListenAndServe: %v", err)
+			}
+		}()
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

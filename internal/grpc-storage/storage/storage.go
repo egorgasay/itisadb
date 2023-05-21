@@ -140,10 +140,14 @@ func (s *Storage) GetFromIndex(name, key string) (string, error) {
 	return v.Get(key)
 }
 
-func (s *Storage) SetToIndex(name, key, value string) error {
+func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
 	index, err := s.findIndex(name)
 	if err != nil {
 		return err
+	}
+
+	if uniques && index.Has(key) {
+		return ErrAlreadyExists
 	}
 
 	index.Set(key, value)
@@ -165,7 +169,7 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 
 	source := strings.Split(src, "/")
 	if len(source) == 0 {
-		return ErrWrongIndexName
+		return ErrWrongIndexName // TODO: catch
 	}
 
 	err = index1.AttachIndex(source[len(source)-1], index2)
@@ -301,8 +305,30 @@ func (s *Storage) Save() error {
 	return s.tLogger.Clear()
 }
 
-func (s *Storage) Delete(key string) {
+func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Lock()
 	s.ramStorage.Delete(key)
 	s.ramStorage.Unlock()
+}
+
+func (s *Storage) Delete(key string) error {
+	s.ramStorage.Lock()
+	if _, ok := s.ramStorage.Get(key); !ok {
+		s.ramStorage.Unlock()
+		return ErrNotFound
+	}
+
+	s.ramStorage.Delete(key)
+	s.ramStorage.Unlock()
+
+	return nil
+}
+
+func (s *Storage) DeleteAttr(name, key string) error {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return err
+	}
+
+	return index.Delete(key)
 }

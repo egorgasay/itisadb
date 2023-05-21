@@ -6,24 +6,27 @@ import (
 )
 
 type Config struct {
-	Host string
+	GRPC string
+	REST string
 	URI  string
 	Key  []byte
 }
 
 const (
-	defaultHost = "127.0.0.1:8080"
+	defaultGRPC = "127.0.0.1:8080"
 )
 
 type Flag struct {
-	host *string
+	grpc *string
+	rest *string
 	dsn  *string
 }
 
 var f Flag
 
 func init() {
-	f.host = flag.String("a", defaultHost, "-a=host")
+	f.grpc = flag.String("grpc", defaultGRPC, "-grpc=host")
+	f.rest = flag.String("rest", "", "-rest=host")
 	f.dsn = flag.String("d", "", "-d=dsn")
 }
 
@@ -31,11 +34,12 @@ func New() *Config {
 	flag.Parse()
 
 	if addr, ok := os.LookupEnv("SERVER_ADDRESS"); ok {
-		f.host = &addr
+		f.grpc = &addr
 	}
 
 	return &Config{
-		Host: *f.host,
+		GRPC: *f.grpc,
+		REST: *f.rest,
 		URI:  *f.dsn,
 		Key:  []byte("CHANGE ME"),
 	}

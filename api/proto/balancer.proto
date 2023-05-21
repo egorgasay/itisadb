@@ -18,7 +18,9 @@ service Balancer {
   rpc IsIndex(BalancerIsIndexRequest) returns (BalancerIsIndexResponse) {}
   rpc Size(BalancerIndexSizeRequest) returns (BalancerIndexSizeResponse) {}
   rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+  rpc DeleteIfExists(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
   rpc DeleteIndex(BalancerDeleteIndexRequest) returns (BalancerDeleteIndexResponse) {}
+  rpc DeleteAttr(BalancerDeleteAttrRequest) returns (BalancerDeleteAttrResponse) {}
 }
 
 message BalancerSetRequest {
@@ -65,6 +67,11 @@ message BalancerAttachToIndexRequest {
 message BalancerGetRequest {
   string key = 1;
   int32 server = 2;
+}
+
+message BalancerDeleteAttrRequest {
+  string key = 1;
+  string index = 2;
 }
 
 message BalancerGetFromIndexRequest {
@@ -120,6 +127,7 @@ message BalancerConnectResponse {
 message BalancerAttachToIndexResponse {}
 
 message BalancerDeleteResponse {}
+message BalancerDeleteAttrResponse {}
 
 message BalancerDisconnectResponse{ }
 

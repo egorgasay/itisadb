@@ -209,7 +209,7 @@ func (uc *UseCase) Delete(ctx context.Context, key string, num int32) error {
 
 	cl, ok := uc.servers.GetClientByID(num)
 	if !ok || cl == nil {
-		return fmt.Errorf("no such server")
+		return ErrUnknownServer
 	}
 
 	err := cl.Delete(ctx, key)

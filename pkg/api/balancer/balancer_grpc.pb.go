@@ -35,7 +35,9 @@ type BalancerClient interface {
 	IsIndex(ctx context.Context, in *BalancerIsIndexRequest, opts ...grpc.CallOption) (*BalancerIsIndexResponse, error)
 	Size(ctx context.Context, in *BalancerIndexSizeRequest, opts ...grpc.CallOption) (*BalancerIndexSizeResponse, error)
 	Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
+	DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
 	DeleteIndex(ctx context.Context, in *BalancerDeleteIndexRequest, opts ...grpc.CallOption) (*BalancerDeleteIndexResponse, error)
+	DeleteAttr(ctx context.Context, in *BalancerDeleteAttrRequest, opts ...grpc.CallOption) (*BalancerDeleteAttrResponse, error)
 }
 
 type balancerClient struct {
@@ -163,9 +165,27 @@ func (c *balancerClient) Delete(ctx context.Context, in *BalancerDeleteRequest, 
 	return out, nil
 }
 
+func (c *balancerClient) DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error) {
+	out := new(BalancerDeleteResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/DeleteIfExists", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *balancerClient) DeleteIndex(ctx context.Context, in *BalancerDeleteIndexRequest, opts ...grpc.CallOption) (*BalancerDeleteIndexResponse, error) {
 	out := new(BalancerDeleteIndexResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/DeleteIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) DeleteAttr(ctx context.Context, in *BalancerDeleteAttrRequest, opts ...grpc.CallOption) (*BalancerDeleteAttrResponse, error) {
+	out := new(BalancerDeleteAttrResponse)
+	err := c.cc.Invoke(ctx, "/api.Balancer/DeleteAttr", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +209,9 @@ type BalancerServer interface {
 	IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error)
 	Size(context.Context, *BalancerIndexSizeRequest) (*BalancerIndexSizeResponse, error)
 	Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
+	DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
 	DeleteIndex(context.Context, *BalancerDeleteIndexRequest) (*BalancerDeleteIndexResponse, error)
+	DeleteAttr(context.Context, *BalancerDeleteAttrRequest) (*BalancerDeleteAttrResponse, error)
 	mustEmbedUnimplementedBalancerServer()
 }
 
@@ -236,8 +258,14 @@ func (UnimplementedBalancerServer) Size(context.Context, *BalancerIndexSizeReque
 func (UnimplementedBalancerServer) Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
+func (UnimplementedBalancerServer) DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteIfExists not implemented")
+}
 func (UnimplementedBalancerServer) DeleteIndex(context.Context, *BalancerDeleteIndexRequest) (*BalancerDeleteIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteIndex not implemented")
+}
+func (UnimplementedBalancerServer) DeleteAttr(context.Context, *BalancerDeleteAttrRequest) (*BalancerDeleteAttrResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAttr not implemented")
 }
 func (UnimplementedBalancerServer) mustEmbedUnimplementedBalancerServer() {}
 
@@ -486,6 +514,24 @@ func _Balancer_Delete_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_DeleteIfExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).DeleteIfExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/DeleteIfExists",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).DeleteIfExists(ctx, req.(*BalancerDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Balancer_DeleteIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BalancerDeleteIndexRequest)
 	if err := dec(in); err != nil {
@@ -500,6 +546,24 @@ func _Balancer_DeleteIndex_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BalancerServer).DeleteIndex(ctx, req.(*BalancerDeleteIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_DeleteAttr_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerDeleteAttrRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).DeleteAttr(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Balancer/DeleteAttr",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).DeleteAttr(ctx, req.(*BalancerDeleteAttrRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -564,8 +628,16 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Balancer_Delete_Handler,
 		},
 		{
+			MethodName: "DeleteIfExists",
+			Handler:    _Balancer_DeleteIfExists_Handler,
+		},
+		{
 			MethodName: "DeleteIndex",
 			Handler:    _Balancer_DeleteIndex_Handler,
+		},
+		{
+			MethodName: "DeleteAttr",
+			Handler:    _Balancer_DeleteAttr_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

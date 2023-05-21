@@ -96,7 +96,9 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexR
 func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*api.BalancerDeleteResponse, error) {
 	err := h.logic.Delete(ctx, r.Key, r.Server)
 	if err != nil {
-		// TODO: handle error
+		if errors.Is(err, usecase.ErrNoData) {
+			return &api.BalancerDeleteResponse{}, status.Error(codes.NotFound, err.Error())
+		}
 		return &api.BalancerDeleteResponse{}, err
 	}
 	return &api.BalancerDeleteResponse{}, nil
@@ -161,6 +163,23 @@ func (h *Handler) IsIndex(ctx context.Context, request *api.BalancerIsIndexReque
 	return &api.BalancerIsIndexResponse{
 		Ok: ok,
 	}, nil
+}
+
+func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrRequest) (*api.BalancerDeleteAttrResponse, error) {
+	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetIndex())
+	if err != nil {
+		if errors.Is(err, servers.ErrNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, "")
+		}
+		if errors.Is(err, servers.ErrUnavailable) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.Unavailable, "")
+		}
+		if errors.Is(err, usecase.ErrIndexNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.NotFound, "")
+		}
+		return &api.BalancerDeleteAttrResponse{}, err
+	}
+	return &api.BalancerDeleteAttrResponse{}, nil
 }
 
 func (h *Handler) Size(ctx context.Context, request *api.BalancerIndexSizeRequest) (*api.BalancerIndexSizeResponse, error) {

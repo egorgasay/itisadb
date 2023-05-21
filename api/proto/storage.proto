@@ -16,6 +16,7 @@ service Storage {
   rpc Size(IndexSizeRequest) returns (IndexSizeResponse) {}
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
   rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse) {}
+  rpc DeleteAttr(DeleteAttrRequest) returns (DeleteAttrResponse) {}
 
 }
 
@@ -72,6 +73,11 @@ message GetFromIndexRequest {
   string name = 2;
 }
 
+message DeleteAttrRequest {
+  string key = 1;
+  string name = 2;
+}
+
 // =============
 
 message Ram {
@@ -82,6 +88,10 @@ message Ram {
 message GetResponse {
   Ram ram = 1;
   string value = 2;
+}
+
+message DeleteAttrResponse {
+  Ram ram = 1;
 }
 
 message IsIndexResponse {
