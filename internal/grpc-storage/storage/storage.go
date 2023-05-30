@@ -33,6 +33,25 @@ type Storage struct {
 	logger     logger.ILogger
 }
 
+type IStorage interface {
+	InitTLogger(Type string, dir string) error
+	Set(key string, val string, unique bool) error
+	WriteSet(key string, val string)
+	Get(key string) (string, error)
+	GetFromIndex(name string, key string) (string, error)
+	SetToIndex(name string, key string, value string, uniques bool) error
+	AttachToIndex(dst string, src string) error
+	DeleteIndex(name string) error
+	CreateIndex(name string) (err error)
+	GetIndex(name string) (map[string]string, error)
+	Size(name string) (uint64, error)
+	IsIndex(name string) bool
+	Save() error
+	DeleteIfExists(key string)
+	Delete(key string) error
+	DeleteAttr(name string, key string) error
+}
+
 type ramStorage struct {
 	*swiss.Map[string, string]
 	*sync.RWMutex

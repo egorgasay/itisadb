@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 // StorageClient is the client API for Storage service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+//go:generate mockgen -source storage_grpc.pb.go -destination gomocks/storagemock.go -package storagemock
 type StorageClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)

@@ -85,7 +85,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sc := bufio.NewScanner(os.Stdin)
 
-	fmt.Print("PRESS ENTER FOR RECONNECT")
+	fmt.Println("PRESS ENTER FOR RECONNECT")
 fl:
 	for sc.Scan() {
 		select {

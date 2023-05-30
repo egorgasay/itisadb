@@ -7,11 +7,11 @@ import (
 )
 
 type UseCase struct {
-	storage *storage.Storage
+	storage storage.IStorage
 	logger  logger.ILogger
 }
 
-func New(storage *storage.Storage, logger logger.ILogger) *UseCase {
+func New(storage storage.IStorage, logger logger.ILogger) *UseCase {
 	return &UseCase{storage: storage, logger: logger}
 }
 

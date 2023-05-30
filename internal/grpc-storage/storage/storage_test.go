@@ -235,7 +235,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 					t.Errorf("CreateIndex() error = %v", err)
 				}
 			}
-			if err := s.SetToIndex(tt.args.name, tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+			if err := s.SetToIndex(tt.args.name, tt.args.key, tt.args.value, false); (err != nil) != tt.wantErr {
 				t.Errorf("SetToIndex() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr {

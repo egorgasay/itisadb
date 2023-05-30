@@ -177,3 +177,11 @@ func (v *value) Has(key string) bool {
 	v.mutex.RUnlock()
 	return ok
 }
+
+//func (v *value) Lock() {
+//	v.mutex.Lock()
+//}
+//
+//func (v *value) Unlock() {
+//	v.mutex.Unlock()
+//}
