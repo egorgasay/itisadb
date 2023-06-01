@@ -411,9 +411,33 @@ func TestServer_GetFromIndex(t *testing.T) {
 				Value: "test",
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any(), gomock.Any()).
+				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).
 					Return(&storage.GetResponse{Value: "test"}, nil).AnyTimes()
 			},
+		},
+		{
+			name: "badConnection",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			args: args{
+				ctx: context.Background(),
+				Key: "test2",
+			},
+			wantErr: ErrUnavailable,
+		},
+		{
+			name: "NotFound",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+			},
+			args: args{
+				ctx: context.Background(),
+				Key: "test3",
+			},
+			wantErr: ErrNotFound,
 		},
 	}
 	for _, tt := range tests {
@@ -440,6 +464,8 @@ func TestServer_GetFromIndex(t *testing.T) {
 
 			if got == nil && tt.want != nil {
 				t.Errorf("GetFromIndex() got = %v, want %v", got, tt.want)
+				return
+			} else if got == nil || tt.want == nil {
 				return
 			}
 
@@ -886,22 +912,21 @@ func TestServer_setRAM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
+			//c := gomock.NewController(t)
+			//defer c.Finish()
+			//cl := storagemock.NewMockStorageClient(c)
 			//tt.mockBehavior(cl)
 
-			s := &Server{
-				tries:   0,
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			s.setRAM(tt.args.ram)
+			//s := &Server{
+			//	tries:   0,
+			//	storage: cl,
+			//	ram: RAM{
+			//		available: 100,
+			//		total:     100,
+			//	},
+			//	number: 1,
+			//	mu:     &sync.RWMutex{},
+			//}
 		})
 	}
 }

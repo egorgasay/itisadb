@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/pkg/api/storage"
+	"reflect"
 	"sync"
 )
 
@@ -33,7 +34,16 @@ func (s *Server) GetRAM() RAM {
 	return s.ram
 }
 
-func (s *Server) setRAM(ram *storage.Ram) {
+type getRAM interface {
+	GetRam() *storage.Ram
+}
+
+func (s *Server) setRAM(r getRAM) {
+	if reflect.ValueOf(r).IsNil() {
+		return
+	}
+
+	ram := r.GetRam()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if ram == nil || ram.Total == 0 {
@@ -44,7 +54,7 @@ func (s *Server) setRAM(ram *storage.Ram) {
 
 func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) error {
 	r, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value, Unique: unique})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 
@@ -68,7 +78,7 @@ func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) error 
 
 func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, error) {
 	r, err := s.storage.Get(ctx, &storage.GetRequest{Key: Key})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -93,7 +103,7 @@ func (s *Server) GetIndex(ctx context.Context, name string) (*storage.GetIndexRe
 	r, err := s.storage.GetIndex(ctx, &storage.GetIndexRequest{
 		Name: name,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -119,7 +129,7 @@ func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.G
 		Key:  Key,
 		Name: name,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -147,7 +157,7 @@ func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique
 		Name:   name,
 		Unique: unique,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -172,7 +182,7 @@ func (s *Server) NewIndex(ctx context.Context, name string) error {
 	r, err := s.storage.NewIndex(ctx, &storage.NewIndexRequest{
 		Name: name,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -195,7 +205,7 @@ func (s *Server) Size(ctx context.Context, name string) (*storage.IndexSizeRespo
 	r, err := s.storage.Size(ctx, &storage.IndexSizeRequest{
 		Name: name,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -218,7 +228,7 @@ func (s *Server) DeleteIndex(ctx context.Context, name string) error {
 	r, err := s.storage.DeleteIndex(ctx, &storage.DeleteIndexRequest{
 		Index: name,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -241,7 +251,7 @@ func (s *Server) Delete(ctx context.Context, Key string) error {
 	r, err := s.storage.Delete(ctx, &storage.DeleteRequest{
 		Key: Key,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -265,7 +275,7 @@ func (s *Server) AttachToIndex(ctx context.Context, dst string, src string) erro
 		Dst: dst,
 		Src: src,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
@@ -310,7 +320,7 @@ func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) erro
 		Name: index,
 		Key:  attr,
 	})
-	s.setRAM(r.GetRam())
+	s.setRAM(r)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
