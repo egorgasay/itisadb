@@ -69,7 +69,6 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 
 func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexRequest) (*api.BalancerGetFromIndexResponse, error) {
 	value, err := h.logic.GetFromIndex(ctx, r.GetIndex(), r.GetKey(), r.GetServer())
-
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
 			return &api.BalancerGetFromIndexResponse{

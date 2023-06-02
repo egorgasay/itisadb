@@ -440,10 +440,10 @@ func TestServer_GetFromIndex(t *testing.T) {
 			wantErr: ErrNotFound,
 		},
 	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+	cl := storagemock.NewMockStorageClient(c)
 	for _, tt := range tests {
-		c := gomock.NewController(t)
-		defer c.Finish()
-		cl := storagemock.NewMockStorageClient(c)
 		tt.mockBehavior(cl)
 		s := &Server{
 			tries:   0,
@@ -477,31 +477,76 @@ func TestServer_GetFromIndex(t *testing.T) {
 }
 
 func TestServer_GetIndex(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
 		ctx  context.Context
 		name string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *storage.GetIndexResponse
-		wantErr error
+		name         string
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		args         args
+		want         *storage.GetIndexResponse
+		wantErr      error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_GetIndex1",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
+					&storage.GetIndexResponse{
+						Index: map[string]string{
+							"Key_GetIndex1": "test",
+							"Key_GetIndex2": "test",
+							"Key_GetIndex3": "test",
+						},
+					}, nil,
+				).AnyTimes()
+			},
+			want: &storage.GetIndexResponse{
+				Index: map[string]string{
+					"Key_GetIndex1": "test",
+					"Key_GetIndex2": "test",
+					"Key_GetIndex3": "test",
+				},
+			},
+		},
+		{
+			name: "badConnection",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_GetIndex2",
+			},
+			wantErr: ErrUnavailable,
+		},
+		{
+			name: "NotFound",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+			},
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_GetIndex3",
+			},
+			wantErr: ErrNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+			cl := storagemock.NewMockStorageClient(c)
+			tt.mockBehavior(cl)
 			s := &Server{
-				tries: 0,
-				//storage: cl,
+				tries:   0,
+				storage: cl,
 				ram: RAM{
 					available: 100,
 					total:     100,
@@ -514,187 +559,63 @@ func TestServer_GetIndex(t *testing.T) {
 				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if tt.wantErr != nil {
+				return
+			}
+
+			if got != nil && tt.want != nil {
+				if !reflect.DeepEqual(*got, *tt.want) {
+					t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				}
+			} else {
 				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
 			}
-		})
-	}
-}
 
-func TestServer_GetNumber(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   int32
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				tries: 0,
-				//storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			if got := s.GetNumber(); got != tt.want {
-				t.Errorf("GetNumber() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServer_GetRAM(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   RAM
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
-
-			s := &Server{
-				tries:   0,
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			if got := s.GetRAM(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetRAM() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServer_GetTries(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   uint
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
-
-			s := &Server{
-				tries:   0,
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			if got := s.GetTries(); got != tt.want {
-				t.Errorf("GetTries() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServer_IncTries(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
-
-			s := &Server{
-				tries:   0,
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			s.IncTries()
 		})
 	}
 }
 
 func TestServer_NewIndex(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
 		ctx  context.Context
 		name string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr error
+		name         string
+		args         args
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		wantErr      error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_NewIndex1",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+		},
+		{
+			name: "badConnection",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection"))
+			},
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_NewIndex2",
+			},
+			wantErr: ErrUnavailable,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
+			tt.mockBehavior(cl)
 
 			s := &Server{
 				tries:   0,
@@ -713,50 +634,7 @@ func TestServer_NewIndex(t *testing.T) {
 	}
 }
 
-func TestServer_ResetTries(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
-
-			s := &Server{
-				tries:   0,
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-			s.ResetTries()
-		})
-	}
-}
-
 func TestServer_Set(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
 		ctx    context.Context
 		Key    string
@@ -764,19 +642,59 @@ func TestServer_Set(t *testing.T) {
 		unique bool
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr error
+		name         string
+		args         args
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		wantErr      error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:    context.Background(),
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: false,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+		},
+		{
+			name: "badConnection",
+			args: args{
+				ctx:    context.Background(),
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: false,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection"))
+			},
+			wantErr: ErrUnavailable,
+		},
+		{
+			name: "AlreadyExists",
+			args: args{
+				ctx:    context.Background(),
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: true,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.AlreadyExists, "already exists"))
+			},
+			wantErr: ErrAlreadyExists,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
+			tt.mockBehavior(cl)
 
 			s := &Server{
 				tries:   0,
@@ -796,13 +714,6 @@ func TestServer_Set(t *testing.T) {
 }
 
 func TestServer_SetToIndex(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
 		ctx    context.Context
 		name   string
@@ -811,19 +722,62 @@ func TestServer_SetToIndex(t *testing.T) {
 		unique bool
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr error
+		name         string
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		args         args
+		wantErr      error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:    context.Background(),
+				name:   "TestServer_SetToIndex",
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: false,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
+					nil, nil).AnyTimes()
+			},
+		},
+		{
+			name: "badConnection",
+			args: args{
+				ctx:    context.Background(),
+				name:   "TestServer_SetToIndex",
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: false,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			wantErr: ErrUnavailable,
+		},
+		{
+			name: "AlreadyExists",
+			args: args{
+				ctx:    context.Background(),
+				name:   "TestServer_SetToIndex",
+				Key:    "Key_Set",
+				Value:  "test",
+				unique: true,
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.AlreadyExists, "already exists")).AnyTimes()
+			},
+			wantErr: ErrAlreadyExists,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
+			tt.mockBehavior(cl)
 
 			s := &Server{
 				tries:   0,
@@ -843,32 +797,64 @@ func TestServer_SetToIndex(t *testing.T) {
 }
 
 func TestServer_Size(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
 		ctx  context.Context
 		name string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *storage.IndexSizeResponse
-		wantErr error
+		name         string
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		args         args
+		want         *storage.IndexSizeResponse
+		wantErr      error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_Size",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexSizeResponse{
+						Size: 100,
+					}, nil).AnyTimes()
+			},
+			want: &storage.IndexSizeResponse{
+				Size: 100,
+			},
+		},
+		{
+			name: "badConnection",
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_Size",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			wantErr: ErrUnavailable,
+		},
+		{
+			name: "NotFound",
+			args: args{
+				ctx:  context.Background(),
+				name: "TestServer_Size",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+			},
+			wantErr: ErrNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 			cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
+			tt.mockBehavior(cl)
 
 			s := &Server{
 				tries:   0,
@@ -893,40 +879,53 @@ func TestServer_Size(t *testing.T) {
 }
 
 func TestServer_setRAM(t *testing.T) {
-	type fields struct {
-		tries   uint
-		storage storage.StorageClient
-		ram     RAM
-		number  int32
-		mu      *sync.RWMutex
-	}
 	type args struct {
-		ram *storage.Ram
+		ram *storage.AttachToIndexResponse
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		args args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ram: &storage.AttachToIndexResponse{
+					Ram: &storage.Ram{
+						Available: 100,
+						Total:     100,
+					},
+				},
+			},
+		},
+		{
+			name: "nil",
+			args: args{
+				ram: nil,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//c := gomock.NewController(t)
-			//defer c.Finish()
-			//cl := storagemock.NewMockStorageClient(c)
-			//tt.mockBehavior(cl)
+			s := &Server{
+				tries: 0,
+				ram: RAM{
+					available: 100,
+					total:     100,
+				},
+				number: 1,
+				mu:     &sync.RWMutex{},
+			}
+			s.setRAM(tt.args.ram)
 
-			//s := &Server{
-			//	tries:   0,
-			//	storage: cl,
-			//	ram: RAM{
-			//		available: 100,
-			//		total:     100,
-			//	},
-			//	number: 1,
-			//	mu:     &sync.RWMutex{},
-			//}
+			if tt.args.ram == nil {
+				return
+			}
+			if s.ram.available != tt.args.ram.Ram.Available {
+				t.Errorf("setRAM() = %v, want %v", s.ram.available, tt.args.ram.Ram.Available)
+			}
+			if s.ram.total != tt.args.ram.Ram.Total {
+				t.Errorf("setRAM() = %v, want %v", s.ram.total, tt.args.ram.Ram.Total)
+			}
 		})
 	}
 }

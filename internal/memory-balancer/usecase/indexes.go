@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"itisadb/internal/memory-balancer/servers"
 )
 
@@ -57,11 +58,14 @@ func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNu
 
 	cl, ok := uc.servers.GetClientByID(num)
 	if !ok || cl == nil {
-		return "", fmt.Errorf("no such server for index %s", index)
+		return "", ErrIndexNotFound
 	}
 
 	resp, err := cl.GetFromIndex(ctx, index, key)
 	if err != nil {
+		if errors.Is(err, servers.ErrNotFound) {
+			return "", ErrNoData
+		}
 		return "", err
 	}
 

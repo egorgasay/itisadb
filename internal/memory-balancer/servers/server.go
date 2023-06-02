@@ -164,8 +164,8 @@ func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique
 			return err
 		}
 
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
+		if st.Code() == codes.AlreadyExists {
+			return ErrAlreadyExists
 		}
 
 		if st.Code() == codes.Unavailable {
@@ -187,10 +187,6 @@ func (s *Server) NewIndex(ctx context.Context, name string) error {
 		st, ok := status.FromError(err)
 		if !ok {
 			return err
-		}
-
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
 		}
 
 		if st.Code() == codes.Unavailable {
