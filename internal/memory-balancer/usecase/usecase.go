@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	//"github.com/tomakado/containers/queue"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -55,7 +56,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	}
 
 	if uc.servers.Len() == 0 && serverNumber != -1 {
-		err := setDB(key, val)
+		err := setDB(ctx, key, val)
 		if err != nil {
 			uc.logger.Warn(err.Error())
 			return 0, fmt.Errorf("error while setting new pair to dbstorage with no active grpc-storages: %w", err)
@@ -66,7 +67,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	switch serverNumber {
 	case dbOnly:
 		uc.logger.Info("setting k:val to db")
-		return dbOnly, setDB(key, val)
+		return dbOnly, setDB(ctx, key, val)
 	case all:
 		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
@@ -80,7 +81,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 			return allAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
 		uc.logger.Info("setting key:val to db")
-		return allAndDB, setDB(key, val)
+		return allAndDB, setDB(ctx, key, val)
 	}
 
 	var cl *servers.Server
@@ -94,7 +95,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	} else {
 		cl, ok = uc.servers.GetClient()
 		if !ok || cl == nil {
-			err := setDB(key, val)
+			err := setDB(ctx, key, val)
 			if err != nil {
 				uc.logger.Warn(err.Error())
 				return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
@@ -111,8 +112,13 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	return cl.GetNumber(), nil
 }
 
-func (uc *UseCase) FindInDB(key string) (string, error) {
-	value, err := uc.storage.Get(key)
+var timeout = 4 * time.Second
+
+func (uc *UseCase) FindInDB(ctx context.Context, key string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	value, err := uc.storage.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return "", fmt.Errorf("error while getting new pair from dbstorage: %w", ErrNoData)
@@ -125,24 +131,24 @@ func (uc *UseCase) FindInDB(key string) (string, error) {
 
 func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
-		return uc.FindInDB(key)
+		return uc.FindInDB(ctx, key)
 	}
 
 	if serverNumber == 0 {
 		value, err := uc.servers.DeepSearch(ctx, key)
 		if errors.Is(err, servers.ErrNotFound) {
-			return uc.FindInDB(key)
+			return uc.FindInDB(ctx, key)
 		}
 		return value, err
 	} else if serverNumber == -1 {
-		return uc.FindInDB(key)
+		return uc.FindInDB(ctx, key)
 	} else if !uc.servers.Exists(serverNumber) {
 		return "", ErrUnknownServer
 	}
 
 	cl, ok := uc.servers.GetClientByID(serverNumber)
 	if !ok || cl == nil {
-		return uc.FindInDB(key)
+		return uc.FindInDB(ctx, key)
 	}
 
 	res, err := cl.Get(context.Background(), key)
@@ -156,7 +162,7 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 		return "", err
 	}
 	if st.Code().String() == codes.NotFound.String() || st.Code().String() != codes.Unavailable.String() {
-		return uc.FindInDB(key)
+		return uc.FindInDB(ctx, key)
 	}
 
 	if cl.GetTries() > 2 {
@@ -164,7 +170,7 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 	}
 	cl.ResetTries()
 
-	return uc.FindInDB(key)
+	return uc.FindInDB(ctx, key)
 }
 
 func (uc *UseCase) Connect(address string, available, total uint64, server int32) (int32, error) {

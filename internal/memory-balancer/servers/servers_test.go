@@ -8,7 +8,6 @@ import (
 	"itisadb/pkg"
 	"itisadb/pkg/api/storage"
 	storagemock "itisadb/pkg/api/storage/gomocks"
-	"reflect"
 	"runtime"
 	"sync"
 	"testing"
@@ -312,7 +311,7 @@ func TestServers_Disconnect(t *testing.T) {
 		{
 			name: "ok",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 			},
 			args: args{
 				number: 1,
@@ -343,7 +342,7 @@ func TestServers_Disconnect(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
 			},
 			args: args{
 				number: 1,
@@ -374,7 +373,7 @@ func TestServers_Disconnect(t *testing.T) {
 			name: "notFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
 			},
 			args: args{
 				number: 333,
@@ -404,6 +403,14 @@ func TestServers_Disconnect(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+			cl := storagemock.NewMockStorageClient(c)
+			tt.mockBehavior(cl)
+			for _, s := range tt.servers {
+				s.storage = cl
+			}
+
 			s := &Servers{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
@@ -818,6 +825,86 @@ func TestServers_SetToAll(t *testing.T) {
 	}{
 		{
 			name: "ok",
+			args: args{
+				ctx: context.Background(),
+				key: "key",
+				val: "val",
+			},
+			mockBehavior: func(r *storagemock.MockStorageClient) {
+				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 33,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: []int32{},
+		},
+		{
+			name: "badConnection",
+			args: args{
+				ctx: context.Background(),
+				key: "key",
+				val: "val",
+			},
+			mockBehavior: func(r *storagemock.MockStorageClient) {
+				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 33,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: []int32{1, 2, 3},
 		},
 	}
 
@@ -826,13 +913,23 @@ func TestServers_SetToAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+			cl := storagemock.NewMockStorageClient(c)
+			tt.mockBehavior(cl)
+			for _, s := range tt.servers {
+				s.storage = cl
+			}
+
 			s := &Servers{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
 				poolCh:  pool,
 			}
-			if got := s.SetToAll(tt.args.ctx, tt.args.key, tt.args.val, tt.args.uniques); !reflect.DeepEqual(got, tt.want) {
+
+			got := s.SetToAll(tt.args.ctx, tt.args.key, tt.args.val, tt.args.uniques)
+			if !pkg.IsTheSameArray(got, tt.want) {
 				t.Errorf("SetToAll() = %v, want %v", got, tt.want)
 			}
 		})

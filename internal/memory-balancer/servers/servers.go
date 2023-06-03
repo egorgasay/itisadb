@@ -169,7 +169,7 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 		}()
 	}
 
-	allIsDone := make(chan struct{}, 1)
+	allIsDone := make(chan struct{})
 
 	go func() {
 		wg.Wait()
