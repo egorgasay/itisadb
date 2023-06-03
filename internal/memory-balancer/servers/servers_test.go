@@ -5,9 +5,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"itisadb/pkg"
 	"itisadb/pkg/api/storage"
 	storagemock "itisadb/pkg/api/storage/gomocks"
 	"reflect"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -108,27 +110,26 @@ func TestServers_AddClient(t *testing.T) {
 		want         int32
 		mockBehavior func(cl *storagemock.MockStorageClient)
 		wantErr      bool
-	}{}
+	}{
+		{
+			name: "ok",
+			args: args{
+				address:   "test",
+				available: 100,
+				total:     100,
+				server:    1,
+			},
+			want:    1,
+			wantErr: false,
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			tt.mockBehavior(cl)
 
 			s := &Servers{
-				servers: map[int32]*Server{
-					1: {
-						tries:   0,
-						storage: cl,
-						ram: RAM{
-							available: 100,
-							total:     100,
-						},
-						number: 1,
-						mu:     &sync.RWMutex{},
-					},
-				},
+				servers: map[int32]*Server{},
 				freeID:  2,
 				RWMutex: sync.RWMutex{},
 			}
@@ -146,45 +147,145 @@ func TestServers_AddClient(t *testing.T) {
 }
 
 func TestServers_DeepSearch(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	type args struct {
 		ctx context.Context
 		key string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
-		wantErr bool
+		name         string
+		args         args
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		servers      map[int32]*Server
+		want         string
+		wantErr      bool
 	}{
 		{
 			name: "ok",
+			args: args{
+				ctx: context.Background(),
+				key: "test",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{
+					Value: "value"}, nil).AnyTimes()
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 44,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 43,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: "value",
+		},
+		{
+			name: "notFound",
+			args: args{
+				ctx: context.Background(),
+				key: "test",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 23,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "badConnection",
+			args: args{
+				ctx: context.Background(),
+				key: "test",
+			},
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 23,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			wantErr: true,
 		},
 	}
+	pool := make(chan struct{}, runtime.GOMAXPROCS(0))
+	defer close(pool)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+			cl := storagemock.NewMockStorageClient(c)
+			tt.mockBehavior(cl)
+
+			for _, serv := range tt.servers {
+				serv.storage = cl
+			}
 
 			s := &Servers{
-				servers: map[int32]*Server{
-					1: {
-						tries: 0,
-						//storage: cl,
-						ram: RAM{
-							available: 100,
-							total:     100,
-						},
-						number: 1,
-						mu:     &sync.RWMutex{},
-					},
-				},
-				freeID:  2,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
+				poolCh:  pool,
 			}
+
 			got, err := s.DeepSearch(tt.args.ctx, tt.args.key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeepSearch() error = %v, wantErr %v", err, tt.wantErr)
@@ -198,56 +299,197 @@ func TestServers_DeepSearch(t *testing.T) {
 }
 
 func TestServers_Disconnect(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	type args struct {
 		number int32
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		servers      map[int32]*Server
+		want         bool
+		args         args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			},
+			args: args{
+				number: 1,
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 32,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "badConnection",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
+					status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			},
+			args: args{
+				number: 1,
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 34,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "notFound",
+			mockBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
+					status.Error(codes.NotFound, "not found")).AnyTimes()
+			},
+			args: args{
+				number: 333,
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 13,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
 			s.Disconnect(tt.args.number)
+
+			if tt.want && s.Exists(tt.args.number) {
+				t.Errorf("Disconnect() error = %v, wantErr %v", s.Exists(tt.args.number), false)
+			}
 		})
 	}
 }
 
 func TestServers_Exists(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	type args struct {
 		number int32
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
+		name         string
+		mockBehavior func(cl *storagemock.MockStorageClient)
+		servers      map[int32]*Server
+		args         args
+		want         bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			args: args{
+				number: 1,
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 55,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "notFound",
+			args: args{
+				number: 3,
+			},
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 11,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
 			if got := s.Exists(tt.args.number); got != tt.want {
 				t.Errorf("Exists() = %v, want %v", got, tt.want)
@@ -257,119 +499,301 @@ func TestServers_Exists(t *testing.T) {
 }
 
 func TestServers_GetClient(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   *Server
-		want1  bool
+		name    string
+		servers map[int32]*Server
+		want    int32
+		wantRes bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 100,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want:    1,
+			wantRes: true,
+		},
+		{
+			name: "ok2",
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 33,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want:    3,
+			wantRes: true,
+		},
+		{
+			name:    "noClients",
+			servers: map[int32]*Server{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
-			got, got1 := s.GetClient()
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetClient() got = %v, want %v", got, tt.want)
+			got, ok := s.GetClient()
+			if ok != tt.wantRes {
+				t.Errorf("GetClient() got1 = %v, want %v", ok, tt.wantRes)
+				return
 			}
-			if got1 != tt.want1 {
-				t.Errorf("GetClient() got1 = %v, want %v", got1, tt.want1)
+
+			if !ok {
+				return
+			}
+
+			if got.number != tt.want {
+				t.Errorf("GetClient() got = %v, want %v", got.number, tt.want)
 			}
 		})
 	}
 }
 
 func TestServers_GetClientByID(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	type args struct {
 		number int32
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   *Server
-		want1  bool
+		name    string
+		servers map[int32]*Server
+		args    args
+		want    int32
+		ok      bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			servers: map[int32]*Server{
+				1: {
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			args: args{
+				number: 1,
+			},
+			want: 1,
+			ok:   true,
+		},
+		{
+			name: "notFound",
+			servers: map[int32]*Server{
+				1: {
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			args: args{
+				number: 33,
+			},
+			ok: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
-			got, got1 := s.GetClientByID(tt.args.number)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetClientByID() got = %v, want %v", got, tt.want)
+			got, ok := s.GetClientByID(tt.args.number)
+			if ok != tt.ok {
+				t.Errorf("GetClientByID() got1 = %v, want %v", ok, tt.ok)
+				return
+			} else if !ok {
+				return
 			}
-			if got1 != tt.want1 {
-				t.Errorf("GetClientByID() got1 = %v, want %v", got1, tt.want1)
+
+			if got.number != tt.want {
+				t.Errorf("GetClientByID() got = %v, want %v", got.number, tt.want)
 			}
+
 		})
 	}
 }
 
 func TestServers_GetServers(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   []string
+		name    string
+		servers map[int32]*Server
+		want    []string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 33,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: []string{
+				"s#1 Avaliable: 33 MB, Total: 100 MB",
+				"s#2 Avaliable: 66 MB, Total: 100 MB",
+				"s#3 Avaliable: 77 MB, Total: 100 MB",
+			},
+		},
+		{
+			name:    "noServers",
+			servers: map[int32]*Server{},
+			want:    []string{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
-			if got := s.GetServers(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetServers() = %v, want %v", got, tt.want)
+			if got := s.GetServers(); !pkg.IsTheSameArray(got, tt.want) {
+				t.Errorf("GetServers() = \n%v,\nwant \n%v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestServers_Len(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   int32
+		name    string
+		servers map[int32]*Server
+		want    int32
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			servers: map[int32]*Server{
+				1: {
+					tries: 0,
+					ram: RAM{
+						available: 33,
+						total:     100,
+					},
+					number: 1,
+					mu:     &sync.RWMutex{},
+				},
+				2: {
+					tries: 0,
+					ram: RAM{
+						available: 66,
+						total:     100,
+					},
+					number: 2,
+					mu:     &sync.RWMutex{},
+				},
+				3: {
+					tries: 0,
+					ram: RAM{
+						available: 77,
+						total:     100,
+					},
+					number: 3,
+					mu:     &sync.RWMutex{},
+				},
+			},
+			want: 3,
+		},
+		{
+			name:    "noServers",
+			servers: map[int32]*Server{},
+			want:    0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
 			}
 			if got := s.Len(); got != tt.want {
 				t.Errorf("Len() = %v, want %v", got, tt.want)
@@ -379,11 +803,6 @@ func TestServers_Len(t *testing.T) {
 }
 
 func TestServers_SetToAll(t *testing.T) {
-	type fields struct {
-		servers map[int32]*Server
-		freeID  int32
-		RWMutex sync.RWMutex
-	}
 	type args struct {
 		ctx     context.Context
 		key     string
@@ -391,19 +810,27 @@ func TestServers_SetToAll(t *testing.T) {
 		uniques bool
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   []int32
+		name         string
+		mockBehavior func(r *storagemock.MockStorageClient)
+		args         args
+		servers      map[int32]*Server
+		want         []int32
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+		},
 	}
+
+	pool := make(chan struct{}, runtime.GOMAXPROCS(0))
+	defer close(pool)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Servers{
-				servers: tt.fields.servers,
-				freeID:  tt.fields.freeID,
-				RWMutex: tt.fields.RWMutex,
+				servers: tt.servers,
+				freeID:  int32(len(tt.servers) + 1),
+				RWMutex: sync.RWMutex{},
+				poolCh:  pool,
 			}
 			if got := s.SetToAll(tt.args.ctx, tt.args.key, tt.args.val, tt.args.uniques); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SetToAll() = %v, want %v", got, tt.want)

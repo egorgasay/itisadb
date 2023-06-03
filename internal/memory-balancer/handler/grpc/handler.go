@@ -49,7 +49,6 @@ func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexReque
 
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
 	value, err := h.logic.Get(ctx, r.Key, r.Server)
-
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())

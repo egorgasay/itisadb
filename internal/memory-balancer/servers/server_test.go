@@ -13,13 +13,6 @@ import (
 	"testing"
 )
 
-/*
-	ALL TEST ARE SIMPLE NOW,
-	TODO: ADD EDGE CASES
-*/
-
-type mockBehavior func(r *storagemock.MockStorageClient)
-
 func TestServer_AttachToIndex(t *testing.T) {
 	type args struct {
 		ctx context.Context
@@ -28,7 +21,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name         string
-		mockBehavior mockBehavior
+		mockBehavior func(r *storagemock.MockStorageClient)
 		args         args
 		wantErr      error
 	}{

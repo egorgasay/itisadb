@@ -123,10 +123,8 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Lock()
-	if unique {
-		if _, ok := s.ramStorage.Get(key); ok {
-			return ErrAlreadyExists
-		}
+	if unique && s.ramStorage.Has(key) {
+		return ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
 
