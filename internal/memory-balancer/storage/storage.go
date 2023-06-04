@@ -62,3 +62,11 @@ func (s *Storage) Get(ctx context.Context, key string) (string, error) {
 	var kv schema.KeyValue
 	return kv.Value, c.FindOne(ctx, filter).Decode(&kv)
 }
+
+func (s *Storage) Delete(ctx context.Context, key string) error {
+	c := s.dbStore.Collection("map")
+	filter := bson.D{{"Key", key}}
+
+	_, err := c.DeleteOne(ctx, filter)
+	return err
+}

@@ -43,7 +43,7 @@ type IStorage interface {
 	AttachToIndex(dst string, src string) error
 	DeleteIndex(name string) error
 	CreateIndex(name string) (err error)
-	GetIndex(name string) (map[string]string, error)
+	GetIndex(name string, prefix string) (map[string]string, error)
 	Size(name string) (uint64, error)
 	IsIndex(name string) bool
 	Save() error
@@ -227,29 +227,58 @@ func (s *Storage) CreateIndex(name string) (err error) {
 		} else if val.IsEmpty() {
 			val.RecreateIndex()
 		}
-		val.CreateIndex(indexName)
 	}
 	return nil
 }
 
-func (s *Storage) GetIndex(name string) (map[string]string, error) {
+func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error) {
 	index, err := s.findIndex(name)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make(map[string]string)
+
+	// prevent infinite loop
+	if index.IsAttached() {
+		index.Iter(func(key string, value ivalue) bool {
+			if value.IsIndex() {
+				result[key] = "index"
+			} else {
+				result[key] = value.GetValue()
+			}
+			return false
+		})
+		return result, nil
+	}
+
 	index.Iter(func(key string, value ivalue) bool {
-		k := ""
 		if value.IsIndex() {
-			k = "index"
+			prefix = prefix + "\t"
+			m, err := s.GetIndex(name+"/"+key, prefix)
+			if err != nil {
+				result[key] = err.Error()
+			} else {
+				result[key] = mapToString(m, prefix)
+			}
 		} else {
-			k = value.GetValue()
+			result[key] = value.GetValue()
 		}
-		result[key] = k
 		return false
 	})
 	return result, nil
+}
+
+func mapToString(m map[string]string, prefix string) string {
+	b := strings.Builder{}
+	for k, v := range m {
+		b.WriteString("\n")
+		b.WriteString(prefix)
+		b.WriteString(k)
+		b.WriteString(": ")
+		b.WriteString(v)
+	}
+	return b.String()
 }
 
 func (s *Storage) findIndex(name string) (ivalue, error) {

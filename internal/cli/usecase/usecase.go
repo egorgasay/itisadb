@@ -32,7 +32,12 @@ func (uc *UseCase) ProcessQuery(cookie string, line string) (string, error) {
 	cmds := commands.New(balancer.NewBalancerClient(uc.conn))
 	split := strings.Split(line, " ")
 
-	return cmds.Do(commands.Action(strings.ToLower(split[0])), split[1:]...)
+	res, err := cmds.Do(commands.Action(strings.ToLower(split[0])), split[1:]...)
+	if err != nil {
+		return res, err
+	}
+
+	return strings.Replace(strings.Replace(res, "\n", "<br/>", -1), "\t", "&emsp;", -1), nil
 }
 
 func (uc *UseCase) History(cookie string) (string, error) {

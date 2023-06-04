@@ -483,7 +483,7 @@ func TestStorage_GetIndex(t *testing.T) {
 			},
 		},
 		{
-			name: "ok",
+			name: "ok#2",
 			args: args{
 				name: "index66",
 			},
@@ -493,6 +493,17 @@ func TestStorage_GetIndex(t *testing.T) {
 				"key2": "value2",
 				"key3": "value3",
 				"key4": "value4",
+			},
+		},
+		{
+			name: "ok#3",
+			args: args{
+				name: "index6/inner",
+			},
+			want: map[string]string{
+				"key":  "value",
+				"key1": "value1",
+				"key2": "value2",
 			},
 		},
 		{
@@ -527,7 +538,7 @@ func TestStorage_GetIndex(t *testing.T) {
 					index.Set(k, v)
 				}
 			}
-			got, err := s.GetIndex(tt.args.name)
+			got, err := s.GetIndex(tt.args.name, "")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
 				return

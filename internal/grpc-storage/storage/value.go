@@ -6,10 +6,11 @@ import (
 )
 
 type value struct {
-	value   string
-	next    *swiss.Map[string, ivalue]
-	mutex   *sync.RWMutex
-	isIndex bool
+	value      string
+	next       *swiss.Map[string, ivalue]
+	mutex      *sync.RWMutex
+	isIndex    bool
+	isAttached bool
 }
 
 type ivalue interface {
@@ -29,6 +30,8 @@ type ivalue interface {
 	DeleteIndex()
 	Delete(key string) error
 	Has(key string) bool
+	IsAttached() bool
+	setAttached()
 }
 
 func NewIndex() *value {
@@ -71,28 +74,37 @@ func (v *value) IsIndex() bool {
 	return v.isIndex
 }
 
-func (v *value) AttachIndex(name string, val ivalue) error {
+func (v *value) IsAttached() bool {
+	return v.isAttached
+}
+
+func (v *value) setAttached() {
+	v.isAttached = true
+}
+
+func (v *value) AttachIndex(name string, val ivalue) (err error) {
 	v.mutex.Lock()
+	defer func() {
+		v.mutex.Unlock()
+		if err == nil {
+			val.setAttached()
+		}
+	}()
 	if v.next == nil {
 		v.next = swiss.NewMap[string, ivalue](100)
 		v.next.Put(name, val)
-		v.mutex.Unlock()
 		return nil
 	}
 	if v.next.Has(name) {
-		v.mutex.Unlock()
 		return nil
 	}
 	v.isIndex = true
 	v.next.Put(name, val)
-	v.mutex.Unlock()
 	return nil
 }
 
 func (v *value) Iter(f func(k string, v ivalue) bool) {
-	v.mutex.Lock()
 	v.next.Iter(f)
-	v.mutex.Unlock()
 }
 
 func (v *value) DeleteIndex() {
@@ -145,7 +157,7 @@ func (v *value) SetValueUnique(val string) error {
 func (v *value) CreateIndex(name string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	if _, ok := v.next.Get(name); ok {
+	if v.next.Has(name) {
 		return
 	}
 

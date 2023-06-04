@@ -10,6 +10,7 @@ import (
 	"itisadb/internal/memory-balancer/storage"
 	"itisadb/internal/memory-balancer/usecase"
 	balancer "itisadb/pkg/api/balancer"
+	"itisadb/pkg/logger"
 	"log"
 	"net"
 	"os"
@@ -18,7 +19,7 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewProduction()
+	loggerInstance, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
@@ -29,7 +30,7 @@ func main() {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
 
-	logic, err := usecase.New(store, logger)
+	logic, err := usecase.New(store, logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}

@@ -12,6 +12,14 @@ import (
 
 // =============== server ====================== //
 
+func NewServer(storage storage.StorageClient, number int32) *Server {
+	return &Server{
+		storage: storage,
+		number:  number,
+		mu:      &sync.RWMutex{},
+	}
+}
+
 var ErrAlreadyExists = errors.New("already exists")
 var ErrUnavailable = errors.New("server is unavailable")
 

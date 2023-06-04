@@ -4,50 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	//"github.com/tomakado/containers/queue"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/memory-balancer/servers"
-	repo "itisadb/internal/memory-balancer/storage"
 )
-
-var ErrNoData = errors.New("the value is not found")
-var ErrUnknownServer = errors.New("unknown server")
-
-const (
-	_ = iota * -1
-	dbOnly
-	all
-	allAndDB
-)
-
-type UseCase struct {
-	servers *servers.Servers
-	logger  *zap.Logger
-	storage *repo.Storage
-
-	// TODO: add copy to disk
-	indexes map[string]int32
-	mu      sync.RWMutex
-}
-
-func New(repository *repo.Storage, logger *zap.Logger) (*UseCase, error) {
-	s, err := servers.New()
-	if err != nil {
-		return nil, err
-	}
-	return &UseCase{
-		servers: s,
-		storage: repository,
-		logger:  logger,
-		indexes: make(map[string]int32, 10000),
-	}, nil
-}
 
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
 	setDB := uc.storage.Set
@@ -88,12 +52,12 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	var ok bool
 
 	if serverNumber > 0 {
-		cl, ok = uc.servers.GetClientByID(serverNumber)
+		cl, ok = uc.servers.GetServerByID(serverNumber)
 		if !ok || cl == nil {
 			return 0, ErrUnknownServer
 		}
 	} else {
-		cl, ok = uc.servers.GetClient()
+		cl, ok = uc.servers.GetServer()
 		if !ok || cl == nil {
 			err := setDB(ctx, key, val)
 			if err != nil {
@@ -146,7 +110,7 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 		return "", ErrUnknownServer
 	}
 
-	cl, ok := uc.servers.GetClientByID(serverNumber)
+	cl, ok := uc.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
 		return uc.FindInDB(ctx, key)
 	}
@@ -175,7 +139,7 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 
 func (uc *UseCase) Connect(address string, available, total uint64, server int32) (int32, error) {
 	uc.logger.Info("New request for connect from " + address)
-	number, err := uc.servers.AddClient(address, available, total, server)
+	number, err := uc.servers.AddServer(address, available, total, server)
 	if err != nil {
 		uc.logger.Warn(err.Error())
 		return 0, err
@@ -213,7 +177,7 @@ func (uc *UseCase) Delete(ctx context.Context, key string, num int32) error {
 		// TODO: delete from db
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return ErrUnknownServer
 	}

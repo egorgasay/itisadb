@@ -52,7 +52,7 @@ func (uc *UseCase) GetFromIndex(name, key string) (RAM, string, error) {
 }
 
 func (uc *UseCase) GetIndex(name string) (RAM, map[string]string, error) {
-	index, err := uc.storage.GetIndex(name)
+	index, err := uc.storage.GetIndex(name, "")
 	return RAMUsage(), index, err
 }
 

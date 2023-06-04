@@ -58,7 +58,7 @@ func New() (*Servers, error) {
 	return servers, nil
 }
 
-func (s *Servers) GetClient() (*Server, bool) {
+func (s *Servers) GetServer() (*Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -83,7 +83,7 @@ func (s *Servers) Len() int32 {
 	return int32(len(s.servers))
 }
 
-func (s *Servers) AddClient(address string, available, total uint64, server int32) (int32, error) {
+func (s *Servers) AddServer(address string, available, total uint64, server int32) (int32, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -196,7 +196,7 @@ func (s *Server) find(ctx context.Context, key string, out chan<- string, once *
 	})
 }
 
-func (s *Servers) GetClientByID(number int32) (*Server, bool) {
+func (s *Servers) GetServerByID(number int32) (*Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 	srv, ok := s.servers[number]

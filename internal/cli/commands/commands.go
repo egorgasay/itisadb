@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"itisadb/pkg/api/balancer"
 	"strconv"
 	"strings"
@@ -33,6 +35,7 @@ const (
 	new_index  = "new_index"
 	index      = "index"
 	show_index = "show_index"
+	attach     = "attach"
 )
 
 const (
@@ -97,6 +100,16 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 		name := args[0]
 		return c.showIndex(name)
+	case attach:
+		if len(args) < 2 {
+			return "", ErrWrongInput
+		}
+		dst := args[0]
+		src := args[1]
+		if err := c.attach(dst, src); err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("status: ok, attached %s to %s", src, dst), nil
 	}
 
 	return "", ErrUnknownCMD
@@ -175,6 +188,30 @@ func (c *Commands) get(key string, server int32) (string, error) {
 		return "", ErrEmpty
 	}
 	return resp.Value, nil
+}
+
+func (c *Commands) attach(dst string, src string) error {
+	_, err := c.cl.AttachToIndex(context.Background(), &balancer.BalancerAttachToIndexRequest{
+		Dst: dst,
+		Src: src,
+	})
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			return err
+		}
+
+		if st.Code() == codes.NotFound {
+			return fmt.Errorf("index not found")
+		}
+
+		if st.Code() == codes.Unavailable {
+			return fmt.Errorf("server not available")
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (c *Commands) set(key, value string, server int32, uniques bool) (string, error) {

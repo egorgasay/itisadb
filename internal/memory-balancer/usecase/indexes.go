@@ -23,9 +23,9 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 	var num int32
 
 	if num, ok = uc.indexes[name]; ok {
-		cl, ok = uc.servers.GetClientByID(num)
+		cl, ok = uc.servers.GetServerByID(num)
 	} else {
-		cl, ok = uc.servers.GetClient()
+		cl, ok = uc.servers.GetServer()
 	}
 
 	if !ok || cl == nil {
@@ -42,7 +42,6 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 	return num, nil
 }
 
-// TODO: handle serverNumber
 func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNumber int32) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
@@ -52,11 +51,13 @@ func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNu
 	num, ok := uc.indexes[index]
 	uc.mu.RUnlock()
 
-	if !ok {
+	if !ok && serverNumber == 0 {
 		return "", ErrIndexNotFound
+	} else if serverNumber != 0 {
+		num = serverNumber
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return "", ErrIndexNotFound
 	}
@@ -85,7 +86,7 @@ func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniqu
 		return 0, ErrIndexNotFound
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return 0, fmt.Errorf("no such server for index %s", index)
 	}
@@ -111,7 +112,7 @@ func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string
 		return nil, fmt.Errorf("index %s does not exist", name)
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return nil, fmt.Errorf("no such server for index %s", name)
 	}
@@ -149,7 +150,7 @@ func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
 		return 0, ErrIndexNotFound
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return 0, fmt.Errorf("no such server for index %s", name)
 	}
@@ -175,7 +176,7 @@ func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
 		return ErrIndexNotFound
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return fmt.Errorf("no such server for index %s", name)
 	}
@@ -204,7 +205,7 @@ func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) er
 		return ErrIndexNotFound
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return fmt.Errorf("no such server for index %s", dst)
 	}
@@ -229,7 +230,7 @@ func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, index string) er
 		return ErrIndexNotFound
 	}
 
-	cl, ok := uc.servers.GetClientByID(num)
+	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return ErrIndexNotFound
 	}

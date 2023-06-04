@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-chi/httplog"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,15 +25,16 @@ import (
 func main() {
 	cfg := config.New()
 
-	lg := httplog.NewLogger("grpc-storage", httplog.Options{
-		Concise: true,
-	})
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to inizialise logger: %v", err)
+	}
 
-	store, err := storage.NewWithTLogger(cfg, logger.New(lg))
+	store, err := storage.NewWithTLogger(cfg, logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
-	logic := usecase.New(store, logger.New(lg))
+	logic := usecase.New(store, logger.New(loggerInstance))
 	h := handler.New(logic)
 
 	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))

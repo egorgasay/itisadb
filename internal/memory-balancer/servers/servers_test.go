@@ -133,13 +133,13 @@ func TestServers_AddClient(t *testing.T) {
 				RWMutex: sync.RWMutex{},
 			}
 
-			got, err := s.AddClient(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
+			got, err := s.AddServer(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddClient() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddServer() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("AddClient() got = %v, want %v", got, tt.want)
+				t.Errorf("AddServer() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -592,9 +592,9 @@ func TestServers_GetClient(t *testing.T) {
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
 			}
-			got, ok := s.GetClient()
+			got, ok := s.GetServer()
 			if ok != tt.wantRes {
-				t.Errorf("GetClient() got1 = %v, want %v", ok, tt.wantRes)
+				t.Errorf("GetServer() got1 = %v, want %v", ok, tt.wantRes)
 				return
 			}
 
@@ -603,7 +603,7 @@ func TestServers_GetClient(t *testing.T) {
 			}
 
 			if got.number != tt.want {
-				t.Errorf("GetClient() got = %v, want %v", got.number, tt.want)
+				t.Errorf("GetServer() got = %v, want %v", got.number, tt.want)
 			}
 		})
 	}
@@ -671,16 +671,16 @@ func TestServers_GetClientByID(t *testing.T) {
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
 			}
-			got, ok := s.GetClientByID(tt.args.number)
+			got, ok := s.GetServerByID(tt.args.number)
 			if ok != tt.ok {
-				t.Errorf("GetClientByID() got1 = %v, want %v", ok, tt.ok)
+				t.Errorf("GetServerByID() got1 = %v, want %v", ok, tt.ok)
 				return
 			} else if !ok {
 				return
 			}
 
 			if got.number != tt.want {
-				t.Errorf("GetClientByID() got = %v, want %v", got.number, tt.want)
+				t.Errorf("GetServerByID() got = %v, want %v", got.number, tt.want)
 			}
 
 		})
