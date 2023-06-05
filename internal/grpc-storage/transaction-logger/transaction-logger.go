@@ -22,17 +22,20 @@ const File = "file"
 const DB = "db"
 const VDB = "docker_db"
 
-func NewTransactionLogger(Type string, dir string) (ITransactionLogger, error) {
-	err := os.MkdirAll(dir, 0644)
-	if err != nil {
-		return nil, err
-	}
+// NewTransactionLogger creates new transaction logger
+// can return nil, nil
+func NewTransactionLogger(Type string, creds string) (ITransactionLogger, error) {
 	switch Type {
 	case DB:
-		return db.NewLogger(dir, false)
+		return db.NewLogger(creds, false)
 	case VDB:
-		return db.NewLogger(dir, true)
-	default: // File logger by default
-		return file.NewLogger(dir)
+		return db.NewLogger(creds, true)
+	case File:
+		err := os.MkdirAll(creds, 0644)
+		if err != nil {
+			return nil, err
+		}
+		return file.NewLogger(creds)
 	}
+	return nil, nil
 }

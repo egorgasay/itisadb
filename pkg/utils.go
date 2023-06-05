@@ -5,9 +5,9 @@ func IsTheSameArray[T comparable](a, b []T) bool {
 		return false
 	}
 
-	tmp := make(map[T]T)
+	tmp := make(map[T]struct{})
 	for _, el := range a {
-		tmp[el] = el
+		tmp[el] = struct{}{}
 	}
 	for _, el := range b {
 		if _, ok := tmp[el]; !ok {

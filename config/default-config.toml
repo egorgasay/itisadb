@@ -1,0 +1,32 @@
+[Storage]
+
+# DNS to External Storage.
+# The External Storage is used to save all values before shutdown.
+DSN = ""
+
+# Storage will save all transactions to disk in case of a failure.
+# off - no TransactionLogger
+# file - file
+# db - MySQL db
+# docker_db - will start docker container with mysql database.
+TransactionLogger = "off"
+
+# Directory to store TransactionLogger journal if TransactionLogger = file.
+TransactionLoggerDir = ""
+
+# MySQL credentials for TransactionLogger journal if TransactionLogger = db.
+TransactionLoggerDSN = ""
+
+# Balancer IP:PORT
+Balancer = "127.0.0.1:800"
+
+[Balancer]
+
+# Balancer IP:PORT
+Address = "127.0.0.1:800"
+
+# DNS to External Storage.
+# The External Storage is used to search for values if they are not found in the storage.
+DSN = ""
+
+MaxRPS = 35000

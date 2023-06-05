@@ -31,6 +31,7 @@ type Storage struct {
 	indexes    indexes
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
+	noTLogger  bool
 }
 
 type IStorage interface {
@@ -50,6 +51,8 @@ type IStorage interface {
 	DeleteIfExists(key string)
 	Delete(key string) error
 	DeleteAttr(name string, key string) error
+	WriteDelete(key string)
+	NoTLogger() bool
 }
 
 type ramStorage struct {
@@ -82,12 +85,18 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	}
 
 	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DBConfig.DataSourceCred))
-	if err != nil {
-		return nil, err
+
+	var db *mongo.Database
+	if cfg.DSN != "" {
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DSN))
+		if err != nil {
+			return nil, err
+		}
+		db = client.Database("grpc-server")
 	}
+
 	st := &Storage{
-		dbStore:    client.Database("grpc-server"),
+		dbStore:    db,
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
 		logger:     logger,
@@ -96,7 +105,16 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	return st, nil
 }
 
+func (s *Storage) NoTLogger() bool {
+	return s.noTLogger
+}
+
 func (s *Storage) InitTLogger(Type string, dir string) error {
+	if Type == "off" {
+		s.noTLogger = true
+		return nil
+	}
+
 	var err error
 	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {
@@ -114,6 +132,7 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 			case service.Set:
 				s.Set(e.Key, e.Value, false)
 			case service.Delete:
+				s.Delete(e.Key)
 			}
 		}
 	}
@@ -134,6 +153,10 @@ func (s *Storage) Set(key, val string, unique bool) error {
 
 func (s *Storage) WriteSet(key, val string) {
 	s.tLogger.WriteSet(key, val)
+}
+
+func (s *Storage) WriteDelete(key string) {
+	s.tLogger.WriteDelete(key)
 }
 
 func (s *Storage) Get(key string) (string, error) {
@@ -332,6 +355,10 @@ func (s *Storage) IsIndex(name string) bool {
 }
 
 func (s *Storage) Save() error {
+	if s.dbStore == nil {
+		return nil
+	}
+
 	c := s.dbStore.Collection("map")
 	s.ramStorage.Lock()
 

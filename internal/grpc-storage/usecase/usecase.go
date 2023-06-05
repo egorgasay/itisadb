@@ -17,7 +17,10 @@ func New(storage storage.IStorage, logger logger.ILogger) *UseCase {
 
 func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
 	err := uc.storage.Set(key, val, uniques)
-	uc.storage.WriteSet(key, val)
+
+	if !uc.storage.NoTLogger() {
+		uc.storage.WriteSet(key, val)
+	}
 	return RAMUsage(), err
 }
 
@@ -83,11 +86,19 @@ func (uc *UseCase) AttachToIndex(dst, src string) (RAM, error) {
 
 func (uc *UseCase) DeleteIfExists(key string) RAM {
 	uc.storage.DeleteIfExists(key)
+
+	if uc.logger != nil {
+		uc.storage.WriteDelete(key)
+	}
 	return RAMUsage()
 }
 
 func (uc *UseCase) Delete(key string) (RAM, error) {
-	return RAMUsage(), uc.storage.Delete(key)
+	err := uc.storage.Delete(key)
+	if err == nil && uc.logger != nil {
+		uc.storage.WriteDelete(key)
+	}
+	return RAMUsage(), err
 }
 
 func (uc *UseCase) DeleteAttr(name, key string) (RAM, error) {

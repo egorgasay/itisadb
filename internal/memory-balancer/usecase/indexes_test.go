@@ -644,34 +644,60 @@ func TestUseCase_Index(t *testing.T) {
 }
 
 func TestUseCase_IsIndex(t *testing.T) {
-	type fields struct {
-		servers iServers
-		logger  logger.ILogger
-		storage iStorage
-		indexes map[string]int32
-		mu      sync.RWMutex
-	}
+	srv := struct {
+		serv *servers.Server
+	}{}
+
 	type args struct {
 		ctx  context.Context
 		name string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    bool
-		wantErr bool
+		name                string
+		storageBehavior     storageBehavior
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		args                args
+		want                bool
+		wantErr             bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index",
+			},
+			want: true,
+		},
+		{
+			name: "notFound",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index1",
+			},
+			want: false,
+		},
 	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			sc := storagemock.NewMockStorageClient(c)
+			srv.serv = servers.NewServer(sc, 1)
+			s := serversmock.NewMockIServers(c)
+
 			uc := &UseCase{
-				servers: tt.fields.servers,
-				logger:  tt.fields.logger,
-				storage: tt.fields.storage,
-				indexes: tt.fields.indexes,
-				mu:      tt.fields.mu,
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				indexes: map[string]int32{
+					"test_index": 1,
+				},
+				mu: sync.RWMutex{},
 			}
 			got, err := uc.IsIndex(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -686,13 +712,10 @@ func TestUseCase_IsIndex(t *testing.T) {
 }
 
 func TestUseCase_SetToIndex(t *testing.T) {
-	type fields struct {
-		servers iServers
-		logger  logger.ILogger
-		storage iStorage
-		indexes map[string]int32
-		mu      sync.RWMutex
-	}
+	srv := struct {
+		serv *servers.Server
+	}{}
+
 	type args struct {
 		ctx     context.Context
 		index   string
@@ -702,22 +725,35 @@ func TestUseCase_SetToIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    int32
 		wantErr bool
 	}{
 		// TODO: Add test cases.
 	}
+
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			sc := storagemock.NewMockStorageClient(c)
+			srv.serv = servers.NewServer(sc, 1)
+			s := serversmock.NewMockIServers(c)
+
 			uc := &UseCase{
-				servers: tt.fields.servers,
-				logger:  tt.fields.logger,
-				storage: tt.fields.storage,
-				indexes: tt.fields.indexes,
-				mu:      tt.fields.mu,
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				indexes: map[string]int32{
+					"test_index": 1,
+				},
+				mu: sync.RWMutex{},
 			}
+
 			got, err := uc.SetToIndex(tt.args.ctx, tt.args.index, tt.args.key, tt.args.val, tt.args.uniques)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SetToIndex() error = %v, wantErr %v", err, tt.wantErr)

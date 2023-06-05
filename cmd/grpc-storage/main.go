@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	globconfig "itisadb/config"
 	"itisadb/internal/grpc-storage/config"
 	"itisadb/internal/grpc-storage/handler"
 	"itisadb/internal/grpc-storage/servernumber"
@@ -23,7 +24,13 @@ import (
 )
 
 func main() {
-	cfg := config.New()
+	gc := globconfig.New()
+	err := gc.FromTOML(globconfig.DefaultConfigPath)
+	if err != nil {
+		log.Fatalf("failed to read config: %v", err)
+	}
+
+	cfg := config.New(gc.Storage)
 
 	loggerInstance, err := zap.NewProduction()
 	if err != nil {
@@ -45,11 +52,19 @@ func main() {
 
 	ram := usecase.RAMUsage()
 
+	dir := cfg.TLoggerDir
+	if dir == "" {
+		dir, err = os.Getwd()
+		if err != nil {
+			log.Fatalf("Unable to get current directory: %v", err)
+		}
+	}
+
 	cr := &balancer.BalancerConnectRequest{
 		Address:   cfg.Host,
 		Total:     ram.Total,
 		Available: ram.Available,
-		Server:    servernumber.Get(cfg.TLoggerDir),
+		Server:    servernumber.Get(dir),
 	}
 
 	cl := balancer.NewBalancerClient(conn)
