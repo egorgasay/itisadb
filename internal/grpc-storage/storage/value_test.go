@@ -173,12 +173,14 @@ func Test_value_AttachIndex(t *testing.T) {
 			name: "ok",
 			args: args{
 				name: "foo",
+				val:  v,
 			},
 		},
 		{
 			name: "ok",
 			args: args{
 				name: "fefwefwegw",
+				val:  v,
 			},
 		},
 	}

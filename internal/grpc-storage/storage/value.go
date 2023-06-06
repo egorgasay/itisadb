@@ -173,13 +173,13 @@ func (v *value) RecreateIndex() {
 func (v *value) Delete(key string) error {
 	v.mutex.Lock()
 	ok := v.next.Has(key)
-	v.mutex.Unlock()
 
 	if !ok {
 		return ErrNotFound
 	}
 
 	v.next.Delete(key)
+	v.mutex.Unlock()
 	return nil
 }
 

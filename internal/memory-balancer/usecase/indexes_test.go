@@ -600,11 +600,35 @@ func TestUseCase_Index(t *testing.T) {
 			serversBehavior: func(cl *serversmock.MockIServers) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+			want:                1,
+		},
+		{
+			name: "create",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index2",
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServer().Return(srv.serv, true)
+			},
 			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
 					&storage.NewIndexResponse{}, nil)
 			},
 			want: 1,
+		}, {
+			name: "noActiveClients",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index2",
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServer().Return(nil, false)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+			},
+			wantErr: true,
 		},
 	}
 	c := gomock.NewController(t)
@@ -724,12 +748,79 @@ func TestUseCase_SetToIndex(t *testing.T) {
 		uniques bool
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    int32
-		wantErr bool
+		name                string
+		args                args
+		want                int32
+		storageBehavior     storageBehavior
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		wantErr             bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:     context.Background(),
+				index:   "test_index",
+				key:     "test_key",
+				val:     "test_val",
+				uniques: true,
+			},
+			want: 1,
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
+					&storage.SetResponse{}, nil)
+			},
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx:     context.Background(),
+				index:   "test_index1",
+				key:     "test_key",
+				val:     "test_val",
+				uniques: true,
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+			serversBehavior:     func(cl *serversmock.MockIServers) {},
+			wantErr:             true,
+		},
+		{
+			name: "serverNotFound",
+			args: args{
+				ctx:     context.Background(),
+				index:   "test_index",
+				key:     "test_key",
+				val:     "test_val",
+				uniques: true,
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(nil, false)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+			},
+			wantErr: true,
+		},
+		{
+			name: "storageError",
+			args: args{
+				ctx:     context.Background(),
+				index:   "test_index",
+				key:     "test_key",
+				val:     "test_val",
+				uniques: true,
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
+					nil, servers.ErrNotFound)
+			},
+			wantErr: true,
+		},
 	}
 
 	c := gomock.NewController(t)
@@ -742,8 +833,11 @@ func TestUseCase_SetToIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
+			tt.grpcStorageBehavior(sc)
 			srv.serv = servers.NewServer(sc, 1)
+
 			s := serversmock.NewMockIServers(c)
+			tt.serversBehavior(s)
 
 			uc := &UseCase{
 				servers: s,
@@ -767,35 +861,103 @@ func TestUseCase_SetToIndex(t *testing.T) {
 }
 
 func TestUseCase_Size(t *testing.T) {
-	type fields struct {
-		servers iServers
-		logger  logger.ILogger
-		storage iStorage
-		indexes map[string]int32
-		mu      sync.RWMutex
-	}
+	srv := struct {
+		serv *servers.Server
+	}{}
+
 	type args struct {
 		ctx  context.Context
 		name string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    uint64
-		wantErr bool
+		name                string
+		storageBehavior     storageBehavior
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		args                args
+		want                uint64
+		wantErr             bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index",
+			},
+			want: 6,
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexSizeResponse{Size: 6}, nil)
+			},
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index1",
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+			serversBehavior:     func(cl *serversmock.MockIServers) {},
+			wantErr:             true,
+		},
+		{
+			name: "serverNotFound",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index",
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(nil, false)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+			},
+			wantErr: true,
+		},
+		{
+			name: "storageError",
+			args: args{
+				ctx:  context.Background(),
+				name: "test_index",
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
+					nil, servers.ErrNotFound)
+			},
+			wantErr: true,
+		},
 	}
+
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			sc := storagemock.NewMockStorageClient(c)
+			tt.grpcStorageBehavior(sc)
+			srv.serv = servers.NewServer(sc, 1)
+
+			s := serversmock.NewMockIServers(c)
+			tt.serversBehavior(s)
+
 			uc := &UseCase{
-				servers: tt.fields.servers,
-				logger:  tt.fields.logger,
-				storage: tt.fields.storage,
-				indexes: tt.fields.indexes,
-				mu:      tt.fields.mu,
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				indexes: map[string]int32{
+					"test_index": 1,
+				},
+				mu: sync.RWMutex{},
 			}
+
 			got, err := uc.Size(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Size() error = %v, wantErr %v", err, tt.wantErr)
