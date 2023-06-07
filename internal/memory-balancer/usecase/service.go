@@ -47,6 +47,8 @@ type UseCase struct {
 	// TODO: add copy to disk
 	indexes map[string]int32
 	mu      sync.RWMutex
+
+	pool chan struct{} // TODO: ADD TO CONFIG
 }
 
 func New(repository iStorage, logger logger.ILogger) (*UseCase, error) {
@@ -59,5 +61,6 @@ func New(repository iStorage, logger logger.ILogger) (*UseCase, error) {
 		storage: repository,
 		logger:  logger,
 		indexes: make(map[string]int32, 10000),
+		pool:    make(chan struct{}, 30000),
 	}, nil
 }

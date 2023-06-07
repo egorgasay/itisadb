@@ -8,8 +8,6 @@ import (
 
 	//"github.com/tomakado/containers/queue"
 	"go.mongodb.org/mongo-driver/mongo"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"itisadb/internal/memory-balancer/servers"
 )
 
@@ -107,7 +105,7 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 	} else if serverNumber == -1 {
 		return uc.FindInDB(ctx, key)
 	} else if !uc.servers.Exists(serverNumber) {
-		return "", ErrUnknownServer
+		return uc.FindInDB(ctx, key)
 	}
 
 	cl, ok := uc.servers.GetServerByID(serverNumber)
@@ -121,16 +119,12 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 	}
 
 	uc.logger.Warn(err.Error())
-	st, ok := status.FromError(err)
-	if !ok {
-		return "", err
-	}
-	if st.Code().String() == codes.NotFound.String() || st.Code().String() != codes.Unavailable.String() {
-		return uc.FindInDB(ctx, key)
-	}
 
 	if cl.GetTries() > 2 {
-		uc.Disconnect(cl.GetNumber())
+		err = uc.Disconnect(ctx, cl.GetNumber())
+		if err != nil {
+			uc.logger.Warn(err.Error())
+		}
 	}
 	cl.ResetTries()
 
@@ -148,15 +142,46 @@ func (uc *UseCase) Connect(address string, available, total uint64, server int32
 	return number, nil
 }
 
-func (uc *UseCase) Disconnect(number int32) {
-	uc.servers.Disconnect(number)
+func (uc *UseCase) Disconnect(ctx context.Context, number int32) error {
+	ch := make(chan struct{})
+	uc.pool <- struct{}{}
+	go func() { // TODO: add pool
+		uc.servers.Disconnect(number)
+		close(ch)
+		<-uc.pool
+	}()
+
+	select {
+	case <-ch:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (uc *UseCase) Servers() []string {
 	return uc.servers.GetServers()
 }
 
-func (uc *UseCase) Delete(ctx context.Context, key string, num int32) error {
+func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
+	ch := make(chan struct{})
+
+	uc.pool <- struct{}{}
+	go func() {
+		err = uc.delete(ctx, key, num)
+		close(ch)
+		<-uc.pool
+	}()
+
+	select {
+	case <-ch:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
 	if ctx.Err() != nil {

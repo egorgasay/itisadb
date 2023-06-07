@@ -13,10 +13,29 @@ import (
 
 type Handler struct {
 	api.UnimplementedBalancerServer
-	logic *usecase.UseCase
+	logic iUseCase
 }
 
-func New(logic *usecase.UseCase) *Handler {
+type iUseCase interface {
+	Index(ctx context.Context, name string) (int32, error)
+	GetFromIndex(ctx context.Context, index string, key string, serverNumber int32) (string, error)
+	SetToIndex(ctx context.Context, index string, key string, val string, uniques bool) (int32, error)
+	GetIndex(ctx context.Context, name string) (map[string]string, error)
+	IsIndex(ctx context.Context, name string) (bool, error)
+	Size(ctx context.Context, name string) (uint64, error)
+	DeleteIndex(ctx context.Context, name string) error
+	AttachToIndex(ctx context.Context, dst string, src string) error
+	DeleteAttr(ctx context.Context, attr string, index string) error
+	Set(ctx context.Context, key string, val string, serverNumber int32, uniques bool) (int32, error)
+	FindInDB(ctx context.Context, key string) (string, error)
+	Get(ctx context.Context, key string, serverNumber int32) (string, error)
+	Connect(address string, available uint64, total uint64, server int32) (int32, error)
+	Disconnect(number int32)
+	Servers() []string
+	Delete(ctx context.Context, key string, num int32) error
+}
+
+func New(logic iUseCase) *Handler {
 	return &Handler{logic: logic}
 }
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {

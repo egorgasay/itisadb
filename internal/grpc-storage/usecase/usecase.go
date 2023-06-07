@@ -11,6 +11,22 @@ type UseCase struct {
 	logger  logger.ILogger
 }
 
+type IUseCase interface {
+	Set(key string, val string, uniques bool) (RAM, error)
+	SetToIndex(name string, key string, val string, uniques bool) (RAM, error)
+	Get(key string) (RAM, string, error)
+	GetFromIndex(name string, key string) (RAM, string, error)
+	GetIndex(name string) (RAM, map[string]string, error)
+	Save()
+	NewIndex(name string) (RAM, error)
+	Size(name string) (RAM, uint64, error)
+	DeleteIndex(name string) (RAM, error)
+	AttachToIndex(dst string, src string) (RAM, error)
+	DeleteIfExists(key string) RAM
+	Delete(key string) (RAM, error)
+	DeleteAttr(name string, key string) (RAM, error)
+}
+
 func New(storage storage.IStorage, logger logger.ILogger) *UseCase {
 	return &UseCase{storage: storage, logger: logger}
 }

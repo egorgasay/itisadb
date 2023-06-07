@@ -12,10 +12,10 @@ import (
 
 type Handler struct {
 	api.UnimplementedStorageServer
-	logic *usecase.UseCase
+	logic usecase.IUseCase
 }
 
-func New(logic *usecase.UseCase) *Handler {
+func New(logic usecase.IUseCase) *Handler {
 	return &Handler{logic: logic}
 }
 

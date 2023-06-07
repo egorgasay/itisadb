@@ -54,13 +54,21 @@ func (s *Storage) SetUnique(ctx context.Context, key string, val string) error {
 	return err
 }
 
+var ErrNotFound = errors.New("not found")
+
 // Get gets value by key from db.
 func (s *Storage) Get(ctx context.Context, key string) (string, error) {
 	c := s.dbStore.Collection("map")
 	filter := bson.D{{"Key", key}}
 
 	var kv schema.KeyValue
-	return kv.Value, c.FindOne(ctx, filter).Decode(&kv)
+	err := c.FindOne(ctx, filter).Decode(&kv)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return "", ErrNotFound
+		}
+	}
+	return kv.Value, err
 }
 
 func (s *Storage) Delete(ctx context.Context, key string) error {
