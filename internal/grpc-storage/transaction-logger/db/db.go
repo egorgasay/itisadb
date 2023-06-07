@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/egorgasay/dockerdb/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
@@ -11,12 +12,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"log"
-	"strings"
 )
 
 type TransactionLogger struct {
-	db   *sql.DB
-	path string
+	db *sql.DB
 
 	events chan service.Event
 	errors chan error
@@ -31,10 +30,10 @@ const insertQuery = "INSERT INTO transactions (`event_type`, `wrench`, `value`) 
 
 var insertEvent *sql.Stmt
 
-func NewLogger(path string, vdb bool) (*TransactionLogger, error) {
-	path = strings.TrimRight(path, "/") + "/transactionLoggerDB"
-
+func NewLogger(creds string, vdb bool) (*TransactionLogger, error) {
 	var db *sql.DB
+	var err error
+
 	if vdb {
 		cfg := dockerdb.CustomDB{
 			DB: dockerdb.DB{
@@ -52,6 +51,11 @@ func NewLogger(path string, vdb bool) (*TransactionLogger, error) {
 		}
 
 		db = dockerDB.DB
+	} else {
+		db, err = sql.Open("mysql", creds)
+		if err != nil {
+			return nil, fmt.Errorf("can't connect to mysql: %w", err)
+		}
 	}
 
 	driver, err := mysql.WithInstance(db, &mysql.Config{})
@@ -82,8 +86,7 @@ func NewLogger(path string, vdb bool) (*TransactionLogger, error) {
 	}
 
 	return &TransactionLogger{
-		db:   db,
-		path: path,
+		db: db,
 	}, nil
 }
 

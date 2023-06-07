@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/httplog"
 	"github.com/labstack/echo"
+	"go.uber.org/zap"
 	"html/template"
 	"io"
 	"itisadb/internal/cli/config"
@@ -11,6 +12,7 @@ import (
 	"itisadb/internal/cli/storage"
 	"itisadb/internal/cli/usecase"
 	"itisadb/pkg/logger"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -40,9 +42,14 @@ func main() {
 		Concise: true,
 	})
 
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	e.Use(echo.WrapMiddleware(httplog.RequestLogger(lg)))
 	e.Use(echo.WrapMiddleware(middleware.Recoverer))
-	h := handler.New(cfg, logic, logger.New(lg))
+	h := handler.New(cfg, logic, logger.New(loggerInstance))
 	t := &Template{
 		templates: template.Must(template.ParseGlob("templates/html/*.html")),
 	}

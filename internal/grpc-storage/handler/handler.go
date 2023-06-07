@@ -12,10 +12,10 @@ import (
 
 type Handler struct {
 	api.UnimplementedStorageServer
-	logic *usecase.UseCase
+	logic usecase.IUseCase
 }
 
-func New(logic *usecase.UseCase) *Handler {
+func New(logic usecase.IUseCase) *Handler {
 	return &Handler{logic: logic}
 }
 
@@ -54,11 +54,13 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 }
 
 func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*api.SetResponse, error) {
-	ram, err := h.logic.SetToIndex(r.Name, r.Key, r.Value)
-	if errors.Is(err, storage.ErrAlreadyExists) {
-		return &api.SetResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, status.Error(codes.AlreadyExists, err.Error())
+	ram, err := h.logic.SetToIndex(r.Name, r.Key, r.Value, r.Unique)
+	if err != nil {
+		if errors.Is(err, storage.ErrAlreadyExists) {
+			return &api.SetResponse{
+				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
+			}, status.Error(codes.AlreadyExists, err.Error())
+		}
 	}
 
 	return &api.SetResponse{
@@ -105,19 +107,17 @@ func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.Ge
 }
 
 func (h *Handler) NewIndex(ctx context.Context, r *api.NewIndexRequest) (*api.NewIndexResponse, error) {
-	_, err := h.logic.NewIndex(r.Name)
+	ram, err := h.logic.NewIndex(r.Name)
 
-	// TODO: handle ram
 	if err != nil {
 		return &api.NewIndexResponse{}, err
 	}
-	return &api.NewIndexResponse{}, nil
+	return &api.NewIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
 }
 
 func (h *Handler) AttachToIndex(ctx context.Context, r *api.AttachToIndexRequest) (*api.AttachToIndexResponse, error) {
 	ram, err := h.logic.AttachToIndex(r.Dst, r.Src)
 	if err != nil {
-		// TODO: handle error
 		return &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
 	}
 	return &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
@@ -127,13 +127,20 @@ func (h *Handler) DeleteIndex(ctx context.Context, r *api.DeleteIndexRequest) (*
 	ram, err := h.logic.DeleteIndex(r.Index)
 	if err != nil {
 		// TODO: handle error
+		// TODO: useless &api.Ram{Total: ram.Total, Available: ram.Available} ??
 		return &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
 	}
 	return &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
 }
 
 func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
-	ram := h.logic.Delete(r.Key)
+	ram, err := h.logic.Delete(r.Key)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, status.Error(codes.NotFound, storage.ErrNotFound.Error())
+		}
+		return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+	}
 	return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
 }
 
@@ -151,4 +158,15 @@ func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.Index
 		Ram:  &api.Ram{Total: ram.Total, Available: ram.Available},
 		Size: size,
 	}, nil
+}
+
+func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
+	ram, err := h.logic.DeleteAttr(r.Name, r.Key)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, status.Error(codes.NotFound, storage.ErrNotFound.Error())
+		}
+		return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+	}
+	return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
 }

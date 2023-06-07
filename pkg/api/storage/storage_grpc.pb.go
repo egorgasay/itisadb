@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 // StorageClient is the client API for Storage service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+//go:generate mockgen -source storage_grpc.pb.go -destination gomocks/storagemock.go -package storagemock
 type StorageClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
@@ -33,6 +35,7 @@ type StorageClient interface {
 	Size(ctx context.Context, in *IndexSizeRequest, opts ...grpc.CallOption) (*IndexSizeResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	DeleteIndex(ctx context.Context, in *DeleteIndexRequest, opts ...grpc.CallOption) (*DeleteIndexResponse, error)
+	DeleteAttr(ctx context.Context, in *DeleteAttrRequest, opts ...grpc.CallOption) (*DeleteAttrResponse, error)
 }
 
 type storageClient struct {
@@ -142,6 +145,15 @@ func (c *storageClient) DeleteIndex(ctx context.Context, in *DeleteIndexRequest,
 	return out, nil
 }
 
+func (c *storageClient) DeleteAttr(ctx context.Context, in *DeleteAttrRequest, opts ...grpc.CallOption) (*DeleteAttrResponse, error) {
+	out := new(DeleteAttrResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/DeleteAttr", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServer is the server API for Storage service.
 // All implementations must embed UnimplementedStorageServer
 // for forward compatibility
@@ -157,6 +169,7 @@ type StorageServer interface {
 	Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	DeleteIndex(context.Context, *DeleteIndexRequest) (*DeleteIndexResponse, error)
+	DeleteAttr(context.Context, *DeleteAttrRequest) (*DeleteAttrResponse, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -196,6 +209,9 @@ func (UnimplementedStorageServer) Delete(context.Context, *DeleteRequest) (*Dele
 }
 func (UnimplementedStorageServer) DeleteIndex(context.Context, *DeleteIndexRequest) (*DeleteIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteIndex not implemented")
+}
+func (UnimplementedStorageServer) DeleteAttr(context.Context, *DeleteAttrRequest) (*DeleteAttrResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAttr not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
 
@@ -408,6 +424,24 @@ func _Storage_DeleteIndex_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Storage_DeleteAttr_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAttrRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).DeleteAttr(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Storage/DeleteAttr",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).DeleteAttr(ctx, req.(*DeleteAttrRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Storage_ServiceDesc is the grpc.ServiceDesc for Storage service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -458,6 +492,10 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteIndex",
 			Handler:    _Storage_DeleteIndex_Handler,
+		},
+		{
+			MethodName: "DeleteAttr",
+			Handler:    _Storage_DeleteAttr_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

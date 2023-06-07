@@ -31,6 +31,28 @@ type Storage struct {
 	indexes    indexes
 	tLogger    tlogger.ITransactionLogger
 	logger     logger.ILogger
+	noTLogger  bool
+}
+
+type IStorage interface {
+	InitTLogger(Type string, dir string) error
+	Set(key string, val string, unique bool) error
+	WriteSet(key string, val string)
+	Get(key string) (string, error)
+	GetFromIndex(name string, key string) (string, error)
+	SetToIndex(name string, key string, value string, uniques bool) error
+	AttachToIndex(dst string, src string) error
+	DeleteIndex(name string) error
+	CreateIndex(name string) (err error)
+	GetIndex(name string, prefix string) (map[string]string, error)
+	Size(name string) (uint64, error)
+	IsIndex(name string) bool
+	Save() error
+	DeleteIfExists(key string)
+	Delete(key string) error
+	DeleteAttr(name string, key string) error
+	WriteDelete(key string)
+	NoTLogger() bool
 }
 
 type ramStorage struct {
@@ -43,21 +65,10 @@ type indexes struct {
 	*sync.RWMutex
 }
 
-func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
-	if cfg == nil {
-		return nil, errors.New("empty configuration")
-	}
-
-	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DBConfig.DataSourceCred))
+func NewWithTLogger(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
+	st, err := New(cfg, logger)
 	if err != nil {
 		return nil, err
-	}
-	st := &Storage{
-		dbStore:    client.Database("grpc-server"),
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
-		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
-		logger:     logger,
 	}
 
 	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
@@ -68,7 +79,42 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	return st, nil
 }
 
+func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
+	if cfg == nil {
+		return nil, errors.New("empty configuration")
+	}
+
+	ctx := context.Background()
+
+	var db *mongo.Database
+	if cfg.DSN != "" {
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DSN))
+		if err != nil {
+			return nil, err
+		}
+		db = client.Database("grpc-server")
+	}
+
+	st := &Storage{
+		dbStore:    db,
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
+		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
+		logger:     logger,
+	}
+
+	return st, nil
+}
+
+func (s *Storage) NoTLogger() bool {
+	return s.noTLogger
+}
+
 func (s *Storage) InitTLogger(Type string, dir string) error {
+	if Type == "off" {
+		s.noTLogger = true
+		return nil
+	}
+
 	var err error
 	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
 	if err != nil {
@@ -86,6 +132,7 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 			case service.Set:
 				s.Set(e.Key, e.Value, false)
 			case service.Delete:
+				s.Delete(e.Key)
 			}
 		}
 	}
@@ -95,10 +142,8 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Lock()
-	if unique {
-		if _, ok := s.ramStorage.Get(key); ok {
-			return ErrAlreadyExists
-		}
+	if unique && s.ramStorage.Has(key) {
+		return ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
 
@@ -108,6 +153,10 @@ func (s *Storage) Set(key, val string, unique bool) error {
 
 func (s *Storage) WriteSet(key, val string) {
 	s.tLogger.WriteSet(key, val)
+}
+
+func (s *Storage) WriteDelete(key string) {
+	s.tLogger.WriteDelete(key)
 }
 
 func (s *Storage) Get(key string) (string, error) {
@@ -128,18 +177,24 @@ func (s *Storage) GetFromIndex(name, key string) (string, error) {
 		return "", err
 	}
 
-	return v.GetValue(key)
+	return v.Get(key)
 }
 
-func (s *Storage) SetToIndex(name, key, value string) error {
+func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
 	index, err := s.findIndex(name)
 	if err != nil {
 		return err
 	}
 
+	if uniques && index.Has(key) {
+		return ErrAlreadyExists
+	}
+
 	index.Set(key, value)
 	return nil
 }
+
+var ErrWrongIndexName = errors.New("wrong index name provided")
 
 func (s *Storage) AttachToIndex(dst, src string) error {
 	index1, err := s.findIndex(dst)
@@ -152,7 +207,12 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 		return err
 	}
 
-	err = index1.AttachIndex(src, index2)
+	source := strings.Split(src, "/")
+	if len(source) == 0 {
+		return ErrWrongIndexName // TODO: catch
+	}
+
+	err = index1.AttachIndex(source[len(source)-1], index2)
 	return err
 }
 
@@ -169,16 +229,16 @@ func (s *Storage) DeleteIndex(name string) error {
 
 func (s *Storage) CreateIndex(name string) (err error) {
 	path := strings.Split(name, "/")
-	if len(path) == 0 {
+	if name == "" || len(path) == 0 {
 		return ErrEmptyIndexName
 	}
 
 	val, ok := s.indexes.Get(path[0])
 	if !ok || val.IsEmpty() {
 		s.indexes.Lock()
-		s.indexes.Put(name, NewIndex())
+		val = NewIndex()
+		s.indexes.Put(path[0], val)
 		s.indexes.Unlock()
-		return nil
 	}
 
 	path = path[1:]
@@ -190,36 +250,65 @@ func (s *Storage) CreateIndex(name string) (err error) {
 		} else if val.IsEmpty() {
 			val.RecreateIndex()
 		}
-		val.CreateIndex(indexName)
 	}
 	return nil
 }
 
-func (s *Storage) GetIndex(name string) (map[string]string, error) {
+func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error) {
 	index, err := s.findIndex(name)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make(map[string]string)
+
+	// prevent infinite loop
+	if index.IsAttached() {
+		index.Iter(func(key string, value ivalue) bool {
+			if value.IsIndex() {
+				result[key] = "index"
+			} else {
+				result[key] = value.GetValue()
+			}
+			return false
+		})
+		return result, nil
+	}
+
 	index.Iter(func(key string, value ivalue) bool {
-		k := ""
 		if value.IsIndex() {
-			k = "index"
+			prefix = prefix + "\t"
+			m, err := s.GetIndex(name+"/"+key, prefix)
+			if err != nil {
+				result[key] = err.Error()
+			} else {
+				result[key] = mapToString(m, prefix)
+			}
 		} else {
-			k = value.Get()
+			result[key] = value.GetValue()
 		}
-		result[key] = k
 		return false
 	})
 	return result, nil
+}
+
+func mapToString(m map[string]string, prefix string) string {
+	b := strings.Builder{}
+	for k, v := range m {
+		b.WriteString("\n")
+		b.WriteString(prefix)
+		b.WriteString(k)
+		b.WriteString(": ")
+		b.WriteString(v)
+	}
+	return b.String()
 }
 
 func (s *Storage) findIndex(name string) (ivalue, error) {
 	path := strings.Split(name, "/")
 
 	if len(path) == 0 {
-		return nil, ErrNotFound
+		return nil, ErrIndexNotFound
 	}
 
 	val, ok := s.indexes.Get(path[0])
@@ -241,7 +330,7 @@ func (s *Storage) findIndex(name string) (ivalue, error) {
 		}
 	}
 
-	if !val.IsIndex() {
+	if !val.IsIndex() || val.IsEmpty() {
 		return nil, ErrIndexNotFound
 	}
 
@@ -257,18 +346,19 @@ func (s *Storage) Size(name string) (uint64, error) {
 	return uint64(index.Size()), nil
 }
 
-func (s *Storage) IsIndex(name string) (ok bool, err error) {
-	var val ivalue
-	if val, err = s.findIndex(name); err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return false, nil
-		}
-		return false, err
+func (s *Storage) IsIndex(name string) bool {
+	if val, err := s.findIndex(name); err != nil {
+		return false
+	} else {
+		return val.IsIndex()
 	}
-	return val.IsIndex(), nil
 }
 
 func (s *Storage) Save() error {
+	if s.dbStore == nil {
+		return nil
+	}
+
 	c := s.dbStore.Collection("map")
 	s.ramStorage.Lock()
 
@@ -288,8 +378,30 @@ func (s *Storage) Save() error {
 	return s.tLogger.Clear()
 }
 
-func (s *Storage) Delete(key string) {
+func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Lock()
 	s.ramStorage.Delete(key)
 	s.ramStorage.Unlock()
+}
+
+func (s *Storage) Delete(key string) error {
+	s.ramStorage.Lock()
+	if _, ok := s.ramStorage.Get(key); !ok {
+		s.ramStorage.Unlock()
+		return ErrNotFound
+	}
+
+	s.ramStorage.Delete(key)
+	s.ramStorage.Unlock()
+
+	return nil
+}
+
+func (s *Storage) DeleteAttr(name, key string) error {
+	index, err := s.findIndex(name)
+	if err != nil {
+		return err
+	}
+
+	return index.Delete(key)
 }

@@ -9,12 +9,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/pkg/api/storage"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 )
 
 type Servers struct {
 	servers map[int32]*Server
+	poolCh  chan struct{}
 	freeID  int32
 	sync.RWMutex
 }
@@ -30,9 +32,13 @@ func New() (*Servers, error) {
 
 	var number uint32 = 0
 	s := make(map[int32]*Server, 10)
+
+	max := runtime.GOMAXPROCS(0) * 100
+
 	servers := &Servers{
 		servers: s,
 		freeID:  int32(number + 1),
+		poolCh:  make(chan struct{}, max),
 	}
 
 	scanner := bufio.NewScanner(f)
@@ -52,7 +58,7 @@ func New() (*Servers, error) {
 	return servers, nil
 }
 
-func (s *Servers) GetClient() (*Server, bool) {
+func (s *Servers) GetServer() (*Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -61,8 +67,9 @@ func (s *Servers) GetClient() (*Server, bool) {
 
 	for num, cl := range s.servers {
 		r := cl.GetRAM()
-		if float64(r.available)/float64(r.total)*100 > max {
+		if val := float64(r.available) / float64(r.total) * 100; val > max {
 			serverNumber = num
+			max = val
 		}
 	}
 
@@ -76,7 +83,7 @@ func (s *Servers) Len() int32 {
 	return int32(len(s.servers))
 }
 
-func (s *Servers) AddClient(address string, available, total uint64, server int32) (int32, error) {
+func (s *Servers) AddServer(address string, available, total uint64, server int32) (int32, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -131,7 +138,8 @@ func (s *Servers) GetServers() []string {
 	var servers = make([]string, 0, 5)
 	for _, cl := range s.servers {
 		r := cl.GetRAM()
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.GetNumber(), r.total, r.available))
+		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB",
+			cl.GetNumber(), r.available, r.total))
 	}
 
 	return servers
@@ -150,22 +158,22 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 	var wg sync.WaitGroup
 	wg.Add(len(s.servers))
 
-	// TODO: Add pull of goroutines
-	var once = sync.Once{}
+	var once sync.Once
 	for _, cl := range s.servers {
 		c := cl
+		s.poolCh <- struct{}{}
 		go func() {
-			defer wg.Done()
 			c.find(ctxCancel, key, out, &once)
+			<-s.poolCh
+			wg.Done()
 		}()
 	}
 
 	allIsDone := make(chan struct{})
 
 	go func() {
-		defer close(allIsDone)
 		wg.Wait()
-		allIsDone <- struct{}{}
+		close(allIsDone)
 	}()
 
 	select {
@@ -188,7 +196,7 @@ func (s *Server) find(ctx context.Context, key string, out chan<- string, once *
 	})
 }
 
-func (s *Servers) GetClientByID(number int32) (*Server, bool) {
+func (s *Servers) GetServerByID(number int32) (*Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 	srv, ok := s.servers[number]
@@ -211,22 +219,29 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 	defer s.RUnlock()
 
 	wg.Add(len(s.servers))
-	for n, serv := range s.servers {
-		go func(server *Server, number int32) {
-			defer wg.Done()
-			err := server.Set(ctx, key, val, uniques)
-			if err != nil {
-				if server.GetTries() > 2 {
-					delete(s.servers, number)
-				}
-				server.IncTries()
-				mu.Lock()
-				failedServers = append(failedServers, number)
-				mu.Unlock()
-				return
-			}
 
-			server.ResetTries()
+	set := func(server *Server, number int32) {
+		defer wg.Done()
+		err := server.Set(ctx, key, val, uniques)
+		if err != nil {
+			if server.GetTries() > 2 {
+				delete(s.servers, number)
+			}
+			server.IncTries()
+			mu.Lock()
+			failedServers = append(failedServers, number)
+			mu.Unlock()
+			return
+		}
+
+		server.ResetTries()
+	}
+
+	for n, serv := range s.servers {
+		s.poolCh <- struct{}{}
+		go func(serv *Server, n int32) {
+			set(serv, n)
+			<-s.poolCh
 		}(serv, n)
 	}
 	wg.Wait()

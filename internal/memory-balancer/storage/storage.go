@@ -33,9 +33,8 @@ func New(cfg *config.Config) (*Storage, error) {
 }
 
 // Set adds key:value pair to db.
-func (s *Storage) Set(key string, val string) error {
+func (s *Storage) Set(ctx context.Context, key string, val string) error {
 	c := s.dbStore.Collection("map")
-	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
 
 	filter := bson.D{{"Key", key}}
@@ -46,9 +45,8 @@ func (s *Storage) Set(key string, val string) error {
 }
 
 // SetUnique adds key:value pair to db and returns an error if it already exists.
-func (s *Storage) SetUnique(key string, val string) error {
+func (s *Storage) SetUnique(ctx context.Context, key string, val string) error {
 	c := s.dbStore.Collection("map")
-	ctx := context.Background()
 	opts := options.Update().SetUpsert(true)
 	filter := bson.D{{"Key", key}}
 	update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", val}}}}
@@ -56,11 +54,27 @@ func (s *Storage) SetUnique(key string, val string) error {
 	return err
 }
 
+var ErrNotFound = errors.New("not found")
+
 // Get gets value by key from db.
-func (s *Storage) Get(key string) (string, error) {
+func (s *Storage) Get(ctx context.Context, key string) (string, error) {
 	c := s.dbStore.Collection("map")
 	filter := bson.D{{"Key", key}}
 
 	var kv schema.KeyValue
-	return kv.Value, c.FindOne(context.Background(), filter).Decode(&kv)
+	err := c.FindOne(ctx, filter).Decode(&kv)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return "", ErrNotFound
+		}
+	}
+	return kv.Value, err
+}
+
+func (s *Storage) Delete(ctx context.Context, key string) error {
+	c := s.dbStore.Collection("map")
+	filter := bson.D{{"Key", key}}
+
+	_, err := c.DeleteOne(ctx, filter)
+	return err
 }

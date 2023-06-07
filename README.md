@@ -89,7 +89,9 @@ server = -1 - DB search (speed: medium).
 ```js
 new_index name - Creates an index with the specified name.
 index name set attr value - Sets the value of the index attribute.
+index name get attr - Gets the value of the index attribute.
 show_index name - Displays the index as a map.
+attach dst src - Attaches src index to dst.
 ```
 
 ### Other

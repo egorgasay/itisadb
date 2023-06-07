@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-chi/httplog"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	globconfig "itisadb/config"
 	"itisadb/internal/grpc-storage/config"
 	"itisadb/internal/grpc-storage/handler"
 	"itisadb/internal/grpc-storage/servernumber"
@@ -23,17 +24,24 @@ import (
 )
 
 func main() {
-	cfg := config.New()
+	gc := globconfig.New()
+	err := gc.FromTOML(globconfig.DefaultConfigPath)
+	if err != nil {
+		log.Fatalf("failed to read config: %v", err)
+	}
 
-	lg := httplog.NewLogger("grpc-storage", httplog.Options{
-		Concise: true,
-	})
+	cfg := config.New(gc.Storage)
 
-	store, err := storage.New(cfg, logger.New(lg))
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to inizialise logger: %v", err)
+	}
+
+	store, err := storage.NewWithTLogger(cfg, logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
-	logic := usecase.New(store, logger.New(lg))
+	logic := usecase.New(store, logger.New(loggerInstance))
 	h := handler.New(logic)
 
 	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -44,11 +52,19 @@ func main() {
 
 	ram := usecase.RAMUsage()
 
+	dir := cfg.TLoggerDir
+	if dir == "" {
+		dir, err = os.Getwd()
+		if err != nil {
+			log.Fatalf("Unable to get current directory: %v", err)
+		}
+	}
+
 	cr := &balancer.BalancerConnectRequest{
 		Address:   cfg.Host,
 		Total:     ram.Total,
 		Available: ram.Available,
-		Server:    servernumber.Get(cfg.TLoggerDir),
+		Server:    servernumber.Get(dir),
 	}
 
 	cl := balancer.NewBalancerClient(conn)
@@ -85,7 +101,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sc := bufio.NewScanner(os.Stdin)
 
-	fmt.Print("PRESS ENTER FOR RECONNECT")
+	fmt.Println("PRESS ENTER FOR RECONNECT")
 fl:
 	for sc.Scan() {
 		select {

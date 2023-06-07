@@ -13,10 +13,29 @@ import (
 
 type Handler struct {
 	api.UnimplementedBalancerServer
-	logic *usecase.UseCase
+	logic iUseCase
 }
 
-func New(logic *usecase.UseCase) *Handler {
+type iUseCase interface {
+	Index(ctx context.Context, name string) (int32, error)
+	GetFromIndex(ctx context.Context, index string, key string, serverNumber int32) (string, error)
+	SetToIndex(ctx context.Context, index string, key string, val string, uniques bool) (int32, error)
+	GetIndex(ctx context.Context, name string) (map[string]string, error)
+	IsIndex(ctx context.Context, name string) (bool, error)
+	Size(ctx context.Context, name string) (uint64, error)
+	DeleteIndex(ctx context.Context, name string) error
+	AttachToIndex(ctx context.Context, dst string, src string) error
+	DeleteAttr(ctx context.Context, attr string, index string) error
+	Set(ctx context.Context, key string, val string, serverNumber int32, uniques bool) (int32, error)
+	FindInDB(ctx context.Context, key string) (string, error)
+	Get(ctx context.Context, key string, serverNumber int32) (string, error)
+	Connect(address string, available uint64, total uint64, server int32) (int32, error)
+	Disconnect(number int32)
+	Servers() []string
+	Delete(ctx context.Context, key string, num int32) error
+}
+
+func New(logic iUseCase) *Handler {
 	return &Handler{logic: logic}
 }
 func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
@@ -49,7 +68,6 @@ func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexReque
 
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
 	value, err := h.logic.Get(ctx, r.Key, r.Server)
-
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -69,7 +87,6 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 
 func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexRequest) (*api.BalancerGetFromIndexResponse, error) {
 	value, err := h.logic.GetFromIndex(ctx, r.GetIndex(), r.GetKey(), r.GetServer())
-
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
 			return &api.BalancerGetFromIndexResponse{
@@ -96,7 +113,9 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexR
 func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*api.BalancerDeleteResponse, error) {
 	err := h.logic.Delete(ctx, r.Key, r.Server)
 	if err != nil {
-		// TODO: handle error
+		if errors.Is(err, usecase.ErrNoData) {
+			return &api.BalancerDeleteResponse{}, status.Error(codes.NotFound, err.Error())
+		}
 		return &api.BalancerDeleteResponse{}, err
 	}
 	return &api.BalancerDeleteResponse{}, nil
@@ -161,6 +180,23 @@ func (h *Handler) IsIndex(ctx context.Context, request *api.BalancerIsIndexReque
 	return &api.BalancerIsIndexResponse{
 		Ok: ok,
 	}, nil
+}
+
+func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrRequest) (*api.BalancerDeleteAttrResponse, error) {
+	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetIndex())
+	if err != nil {
+		if errors.Is(err, servers.ErrNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, "")
+		}
+		if errors.Is(err, servers.ErrUnavailable) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.Unavailable, "")
+		}
+		if errors.Is(err, usecase.ErrIndexNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.NotFound, "")
+		}
+		return &api.BalancerDeleteAttrResponse{}, err
+	}
+	return &api.BalancerDeleteAttrResponse{}, nil
 }
 
 func (h *Handler) Size(ctx context.Context, request *api.BalancerIndexSizeRequest) (*api.BalancerIndexSizeResponse, error) {

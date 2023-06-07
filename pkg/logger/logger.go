@@ -1,6 +1,8 @@
 package logger
 
-import "github.com/rs/zerolog"
+import (
+	"go.uber.org/zap"
+)
 
 // ILogger on case of changing Logger in the future
 type ILogger interface {
@@ -11,25 +13,25 @@ type ILogger interface {
 }
 
 type Logger struct {
-	l zerolog.Logger
+	l *zap.Logger
 }
 
-func New(logger zerolog.Logger) ILogger {
+func New(logger *zap.Logger) ILogger {
 	return &Logger{l: logger}
 }
 
 func (l Logger) Info(msg string) {
-	l.l.Info().Msg(msg)
+	l.l.Info(msg)
 }
 
 func (l Logger) Fatal(msg string) {
-	l.l.Fatal().Msg(msg)
+	l.l.Fatal(msg)
 }
 
 func (l Logger) Debug(msg string) {
-	l.l.Debug().Msg(msg)
+	l.l.Debug(msg)
 }
 
 func (l Logger) Warn(msg string) {
-	l.l.Warn().Msg(msg)
+	l.l.Warn(msg)
 }
