@@ -30,7 +30,7 @@ type iUseCase interface {
 	FindInDB(ctx context.Context, key string) (string, error)
 	Get(ctx context.Context, key string, serverNumber int32) (string, error)
 	Connect(address string, available uint64, total uint64, server int32) (int32, error)
-	Disconnect(number int32)
+	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
 	Delete(ctx context.Context, key string, num int32) error
 }
@@ -211,7 +211,7 @@ func (h *Handler) Size(ctx context.Context, request *api.BalancerIndexSizeReques
 }
 
 func (h *Handler) Disconnect(ctx context.Context, request *api.BalancerDisconnectRequest) (*api.BalancerDisconnectResponse, error) {
-	h.logic.Disconnect(request.GetServerNumber())
+	h.logic.Disconnect(ctx, request.GetServerNumber())
 
 	return &api.BalancerDisconnectResponse{}, nil
 }

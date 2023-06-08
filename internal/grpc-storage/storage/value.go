@@ -10,7 +10,7 @@ type value struct {
 	next       *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
 	isIndex    bool
-	isAttached bool
+	isAttached bool // TODO: handle it better. map[attached] = true
 }
 
 type ivalue interface {
@@ -32,6 +32,7 @@ type ivalue interface {
 	Has(key string) bool
 	IsAttached() bool
 	setAttached()
+	toJSON() map[string]any
 }
 
 func NewIndex() *value {
@@ -190,10 +191,14 @@ func (v *value) Has(key string) bool {
 	return ok
 }
 
-//func (v *value) Lock() {
-//	v.mutex.Lock()
-//}
-//
-//func (v *value) Unlock() {
-//	v.mutex.Unlock()
-//}
+func (v *value) toJSON() map[string]any {
+	var m = make(map[string]any, 1000)
+	v.next.Iter(func(key string, value ivalue) bool {
+		if value.IsIndex() {
+			m[key] = value.toJSON()
+		}
+		m[key] = value.GetValue()
+		return false
+	})
+	return m
+}

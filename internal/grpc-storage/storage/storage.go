@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"itisadb/internal/grpc-storage/config"
@@ -142,12 +142,12 @@ func (s *Storage) InitTLogger(Type string, dir string) error {
 
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Lock()
+	defer s.ramStorage.Unlock()
 	if unique && s.ramStorage.Has(key) {
 		return ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
 
-	s.ramStorage.Unlock()
 	return nil
 }
 
@@ -354,27 +354,49 @@ func (s *Storage) IsIndex(name string) bool {
 	}
 }
 
-func (s *Storage) Save() error {
-	if s.dbStore == nil {
-		return nil
-	}
-
-	c := s.dbStore.Collection("map")
-	s.ramStorage.Lock()
-
-	ctx := context.Background()
-	opts := options.Update().SetUpsert(true)
-	s.ramStorage.Iter(func(key string, value string) bool {
-		filter := bson.D{{"Key", key}}
-		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
-		_, err := c.UpdateOne(ctx, filter, update, opts)
-		if err != nil {
-			s.logger.Warn(err.Error())
-		}
-		return true
+func (rs *ramStorage) toJSON() ([]byte, error) {
+	rs.Lock()
+	var m = make(map[string]string, 1000)
+	rs.Iter(func(key string, value string) bool {
+		m[key] = value
+		return false
 	})
 
-	s.ramStorage.Unlock()
+	rs.Unlock()
+	return json.Marshal(m)
+}
+
+func (is *indexes) toJSON() ([]byte, error) {
+	var m = make(map[string]any, 1000)
+
+	// TODO: mutex?
+	is.Iter(func(key string, value ivalue) bool {
+		if value.IsIndex() {
+			m[key] = value.toJSON()
+		}
+		m[key] = value.GetValue()
+		return false
+	})
+
+	return json.Marshal(m)
+}
+
+func (s *Storage) Save() error {
+	bytes, err := s.ramStorage.toJSON()
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	bytes, err = s.indexes.toJSON()
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	if s.tLogger == nil {
+		return nil
+	}
 	return s.tLogger.Clear()
 }
 
