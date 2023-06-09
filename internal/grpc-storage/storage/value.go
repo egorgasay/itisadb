@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/dolthub/swiss"
+	"os"
 	"sync"
 )
 
@@ -32,7 +33,7 @@ type ivalue interface {
 	Has(key string) bool
 	IsAttached() bool
 	setAttached()
-	toJSON() map[string]any
+	save(path string) error
 }
 
 func NewIndex() *value {
@@ -191,14 +192,37 @@ func (v *value) Has(key string) bool {
 	return ok
 }
 
-func (v *value) toJSON() map[string]any {
-	var m = make(map[string]any, 1000)
-	v.next.Iter(func(key string, value ivalue) bool {
-		if value.IsIndex() {
-			m[key] = value.toJSON()
+func (v *value) save(path string) (err error) {
+
+	err = os.Mkdir(path, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	var f *os.File
+	v.next.Iter(func(key string, v ivalue) bool {
+		name := path + "/" + key
+		if v.IsIndex() {
+			err = v.save(name)
+			if err != nil {
+				return true
+			}
+			return false
 		}
-		m[key] = value.GetValue()
+
+		f, err = os.OpenFile(name, os.O_CREATE, os.ModePerm)
+		if err != nil {
+			return true
+		}
+
+		_, err = f.WriteString(v.GetValue())
+		if err != nil {
+			return true
+		}
+		f.Close()
+
 		return false
 	})
-	return m
+
+	return err
 }

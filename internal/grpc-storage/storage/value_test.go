@@ -194,3 +194,8 @@ func Test_value_AttachIndex(t *testing.T) {
 		})
 	}
 }
+
+func Test_value_save(t *testing.T) {
+	v := &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100)}
+
+}

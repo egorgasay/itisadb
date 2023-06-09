@@ -9,6 +9,7 @@ import (
 type UseCase struct {
 	storage storage.IStorage
 	logger  logger.ILogger
+	dirDB   bool
 }
 
 type IUseCase interface {
@@ -28,11 +29,14 @@ type IUseCase interface {
 }
 
 func New(storage storage.IStorage, logger logger.ILogger) *UseCase {
-	return &UseCase{storage: storage, logger: logger}
+	return &UseCase{storage: storage, logger: logger, dirDB: true}
 }
 
 func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
 	err := uc.storage.Set(key, val, uniques)
+	if err != nil {
+		return RAMUsage(), err
+	}
 
 	if !uc.storage.NoTLogger() {
 		uc.storage.WriteSet(key, val)
@@ -62,11 +66,17 @@ func RAMUsage() RAM {
 
 func (uc *UseCase) Get(key string) (RAM, string, error) {
 	s, err := uc.storage.Get(key)
+	if err != nil && uc.dirDB && err == storage.ErrNotFound {
+		s, err = uc.storage.GetFromDisk(key)
+	}
 	return RAMUsage(), s, err
 }
 
 func (uc *UseCase) GetFromIndex(name, key string) (RAM, string, error) {
 	s, err := uc.storage.GetFromIndex(name, key)
+	if err != nil && uc.dirDB && err == storage.ErrIndexNotFound {
+		s, err = uc.storage.GetFromDiskIndex(name, key)
+	}
 	return RAMUsage(), s, err
 }
 

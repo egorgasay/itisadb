@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
@@ -12,6 +11,7 @@ import (
 	tlogger "itisadb/internal/grpc-storage/transaction-logger"
 	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"itisadb/pkg/logger"
+	"os"
 	"strings"
 	"sync"
 
@@ -53,16 +53,20 @@ type IStorage interface {
 	DeleteAttr(name string, key string) error
 	WriteDelete(key string)
 	NoTLogger() bool
+	GetFromDisk(key string) (string, error)
+	GetFromDiskIndex(name, key string) (string, error)
 }
 
 type ramStorage struct {
 	*swiss.Map[string, string]
+	path string
 	*sync.RWMutex
 }
 
 type indexes struct {
 	*swiss.Map[string, ivalue]
 	*sync.RWMutex
+	path string
 }
 
 func NewWithTLogger(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
@@ -97,8 +101,8 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 
 	st := &Storage{
 		dbStore:    db,
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
-		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
+		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		logger:     logger,
 	}
 
@@ -354,45 +358,69 @@ func (s *Storage) IsIndex(name string) bool {
 	}
 }
 
-func (rs *ramStorage) toJSON() ([]byte, error) {
-	rs.Lock()
-	var m = make(map[string]string, 1000)
-	rs.Iter(func(key string, value string) bool {
-		m[key] = value
-		return false
-	})
+func (is *indexes) save() (err error) {
+	path := is.path
+	if err = os.MkdirAll(path, 0777); err != nil {
+		return err
+	}
 
-	rs.Unlock()
-	return json.Marshal(m)
-}
-
-func (is *indexes) toJSON() ([]byte, error) {
-	var m = make(map[string]any, 1000)
-
-	// TODO: mutex?
+	is.Lock()
 	is.Iter(func(key string, value ivalue) bool {
 		if value.IsIndex() {
-			m[key] = value.toJSON()
+			err = value.save(path + "/" + key)
+			if err != nil {
+				return true
+			}
 		}
-		m[key] = value.GetValue()
+
 		return false
 	})
+	is.Unlock()
 
-	return json.Marshal(m)
+	return err
+}
+
+func (rs *ramStorage) save() (err error) {
+	path := rs.path
+
+	if err = os.MkdirAll(path, 0777); err != nil {
+		return err
+	}
+
+	rs.Lock()
+
+	var f *os.File
+	rs.Iter(func(key string, value string) bool {
+		f, err = os.OpenFile(path+"/"+key, os.O_RDWR|os.O_CREATE, 0777)
+		if err != nil {
+			return true
+		}
+		defer f.Close()
+
+		_, err = f.WriteString(value)
+		if err != nil {
+			return true
+		}
+
+		return false
+	})
+	rs.Unlock()
+
+	return err
 }
 
 func (s *Storage) Save() error {
-	bytes, err := s.ramStorage.toJSON()
+	fmt.Println("Saving pairs to disk...")
+	err := s.ramStorage.save()
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(bytes))
 
-	bytes, err = s.indexes.toJSON()
+	fmt.Println("Saving indexes to disk...")
+	err = s.indexes.save()
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(bytes))
 
 	if s.tLogger == nil {
 		return nil
@@ -426,4 +454,40 @@ func (s *Storage) DeleteAttr(name, key string) error {
 	}
 
 	return index.Delete(key)
+}
+
+func (s *Storage) GetFromDisk(key string) (string, error) {
+	path := s.ramStorage.path + "/" + key
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrNotFound
+		}
+		return "", err
+	}
+	defer f.Close()
+	buf := make([]byte, 1024)
+	n, err := f.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	return string(buf[:n]), nil
+}
+
+func (s *Storage) GetFromDiskIndex(name, key string) (string, error) {
+	path := s.indexes.path + "/" + name + "/" + key
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrIndexNotFound
+		}
+		return "", err
+	}
+	defer f.Close()
+	buf := make([]byte, 1024)
+	n, err := f.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	return string(buf[:n]), nil
 }
