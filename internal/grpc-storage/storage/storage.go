@@ -199,6 +199,7 @@ func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
 }
 
 var ErrWrongIndexName = errors.New("wrong index name provided")
+var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 func (s *Storage) AttachToIndex(dst, src string) error {
 	index1, err := s.findIndex(dst)
@@ -211,12 +212,11 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 		return err
 	}
 
-	source := strings.Split(src, "/")
-	if len(source) == 0 {
-		return ErrWrongIndexName // TODO: catch
+	if index2.IsAttached(dst) {
+		return ErrCircularAttachment
 	}
 
-	err = index1.AttachIndex(source[len(source)-1], index2)
+	err = index1.AttachIndex(index2)
 	return err
 }
 
@@ -240,7 +240,7 @@ func (s *Storage) CreateIndex(name string) (err error) {
 	val, ok := s.indexes.Get(path[0])
 	if !ok || val.IsEmpty() {
 		s.indexes.Lock()
-		val = NewIndex()
+		val = NewIndex(path[0])
 		s.indexes.Put(path[0], val)
 		s.indexes.Unlock()
 	}
@@ -265,19 +265,6 @@ func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error
 	}
 
 	result := make(map[string]string)
-
-	// prevent infinite loop
-	if index.IsAttached() {
-		index.Iter(func(key string, value ivalue) bool {
-			if value.IsIndex() {
-				result[key] = "index"
-			} else {
-				result[key] = value.GetValue()
-			}
-			return false
-		})
-		return result, nil
-	}
 
 	index.Iter(func(key string, value ivalue) bool {
 		if value.IsIndex() {

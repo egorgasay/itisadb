@@ -8,10 +8,11 @@ import (
 
 type value struct {
 	value      string
+	name       string
 	next       *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
 	isIndex    bool
-	isAttached bool // TODO: handle it better. map[attached] = true
+	attachedTo map[string]bool
 }
 
 type ivalue interface {
@@ -27,17 +28,18 @@ type ivalue interface {
 	Next(name string) (val ivalue, ok bool)
 	Size() int
 	Iter(func(k string, v ivalue) bool)
-	AttachIndex(name string, val ivalue) error
+	AttachIndex(src ivalue) error
 	DeleteIndex()
 	Delete(key string) error
 	Has(key string) bool
-	IsAttached() bool
-	setAttached()
+	IsAttached(name string) bool
+	setAttached(name string)
 	save(path string) error
+	Name() string
 }
 
-func NewIndex() *value {
-	return &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100), isIndex: true}
+func NewIndex(name string) *value {
+	return &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100), isIndex: true, name: name}
 }
 
 func (v *value) GetValue() (val string) {
@@ -45,6 +47,10 @@ func (v *value) GetValue() (val string) {
 	val = v.value
 	v.mutex.RUnlock()
 	return val
+}
+
+func (v *value) Name() string {
+	return v.name
 }
 
 func (v *value) IsEmpty() bool {
@@ -76,32 +82,34 @@ func (v *value) IsIndex() bool {
 	return v.isIndex
 }
 
-func (v *value) IsAttached() bool {
-	return v.isAttached
+func (v *value) IsAttached(name string) bool {
+	return v.attachedTo[name]
 }
 
-func (v *value) setAttached() {
-	v.isAttached = true
+func (v *value) setAttached(name string) {
+	v.mutex.Lock()
+	v.attachedTo[name] = true
+	v.mutex.Unlock()
 }
 
-func (v *value) AttachIndex(name string, val ivalue) (err error) {
+func (v *value) AttachIndex(src ivalue) (err error) {
 	v.mutex.Lock()
 	defer func() {
 		v.mutex.Unlock()
 		if err == nil {
-			val.setAttached()
+			src.setAttached(v.Name())
 		}
 	}()
 	if v.next == nil {
-		v.next = swiss.NewMap[string, ivalue](100)
-		v.next.Put(name, val)
+		v.next = swiss.NewMap[string, ivalue](10)
+		v.next.Put(src.Name(), src)
 		return nil
 	}
-	if v.next.Has(name) {
+	if v.next.Has(src.Name()) {
 		return nil
 	}
 	v.isIndex = true
-	v.next.Put(name, val)
+	v.next.Put(src.Name(), src)
 	return nil
 }
 
@@ -120,7 +128,7 @@ func (v *value) NextOrCreate(name string) ivalue {
 	defer v.mutex.Unlock()
 	val, ok := v.next.Get(name)
 	if !ok {
-		blank := NewIndex()
+		blank := NewIndex(name)
 		v.next.Put(name, blank)
 		return blank
 	}

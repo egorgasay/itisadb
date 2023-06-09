@@ -196,6 +196,37 @@ func Test_value_AttachIndex(t *testing.T) {
 }
 
 func Test_value_save(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100)}
+	is := indexes{
+		Map:     swiss.NewMap[string, ivalue](100),
+		RWMutex: &sync.RWMutex{},
+		path:    "C:\\tmp4",
+	}
+	s := &Storage{
+		indexes: is,
+	}
 
+	for i := 0; i < 100; i++ {
+		err := s.CreateIndex(fmt.Sprint(i))
+		if err != nil {
+			t.Errorf("CreateIndex() error = %v", err)
+		}
+
+		err = s.SetToIndex(fmt.Sprint(i), "key", fmt.Sprint(i), false)
+		if err != nil {
+			t.Errorf("Set() error = %v", err)
+		}
+	}
+
+	if err := is.save(); err != nil {
+		t.Errorf("save() error = %v", err)
+		return
+	}
+
+	for i := 0; i < 100; i++ {
+		if v, err := s.GetFromDiskIndex(fmt.Sprint(i), "key"); err != nil {
+			t.Errorf("GetFromDiskIndex() error = %v", err)
+		} else if v != fmt.Sprint(i) {
+			t.Errorf("GetFromDiskIndex() = %v, want %v", v, fmt.Sprint(i))
+		}
+	}
 }
