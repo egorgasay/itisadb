@@ -3,6 +3,7 @@ module itisadb
 go 1.19
 
 require (
+	github.com/BurntSushi/toml v1.3.0
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dolthub/swiss v0.1.0
 	github.com/egorgasay/dockerdb/v2 v2.0.2
@@ -12,8 +13,9 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/mock v1.6.0
 	github.com/labstack/echo v3.3.10+incompatible
+	github.com/labstack/gommon v0.4.0
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
-	github.com/rs/zerolog v1.27.0
+	github.com/pkg/errors v0.9.1
 	github.com/valyala/fasthttp v1.46.0
 	go.mongodb.org/mongo-driver v1.7.0
 	go.uber.org/zap v1.24.0
@@ -25,7 +27,6 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/BurntSushi/toml v1.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/docker/docker v23.0.0+incompatible // indirect
@@ -39,16 +40,12 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
-	github.com/labstack/gommon v0.4.0 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
-	github.com/panjf2000/ants/v2 v2.7.4 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

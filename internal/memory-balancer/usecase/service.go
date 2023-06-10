@@ -40,7 +40,6 @@ type UseCase struct {
 	logger  logger.ILogger
 	storage iStorage
 
-	// TODO: add copy to disk
 	indexes map[string]int32
 	mu      sync.RWMutex
 

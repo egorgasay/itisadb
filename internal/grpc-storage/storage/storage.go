@@ -167,9 +167,9 @@ func (s *Storage) WriteDelete(key string) {
 
 func (s *Storage) Get(key string) (string, error) {
 	s.ramStorage.RLock()
+	defer s.ramStorage.RUnlock()
 
 	val, ok := s.ramStorage.Get(key)
-	s.ramStorage.RUnlock()
 	if !ok {
 		return "", ErrNotFound
 	}

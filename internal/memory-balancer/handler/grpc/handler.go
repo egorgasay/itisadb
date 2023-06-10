@@ -185,14 +185,17 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrReque
 	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetIndex())
 	if err != nil {
 		if errors.Is(err, servers.ErrNotFound) {
-			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, "")
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.NotFound, "")
 		}
+
 		if errors.Is(err, servers.ErrUnavailable) {
 			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.Unavailable, "")
 		}
+
 		if errors.Is(err, usecase.ErrIndexNotFound) {
-			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.NotFound, "")
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, "")
 		}
+
 		return &api.BalancerDeleteAttrResponse{}, err
 	}
 	return &api.BalancerDeleteAttrResponse{}, nil

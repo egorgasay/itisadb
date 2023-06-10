@@ -12,6 +12,7 @@ type UseCase struct {
 	dirDB   bool
 }
 
+//go:generate mockgen -destination=mocks/usecase/mock_usecase.go -package=mocks . IUseCase
 type IUseCase interface {
 	Set(key string, val string, uniques bool) (RAM, error)
 	SetToIndex(name string, key string, val string, uniques bool) (RAM, error)
