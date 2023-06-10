@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -98,18 +99,18 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	//sc := bufio.NewScanner(os.Stdin)
+	sc := bufio.NewScanner(os.Stdin)
 
-	//fmt.Println("PRESS ENTER FOR RECONNECT")
-	//for sc.Scan() {
-	//	fmt.Print("RECONNECTING ...\n")
-	//	cr.Server = resp.ServerNumber
-	//	_, err = cl.Connect(context.Background(), cr)
-	//	if err != nil {
-	//		log.Println("Unable to connect to the balancer: %w", err)
-	//	}
-	//	fmt.Print("PRESS ENTER FOR RECONNECT")
-	//}
+	fmt.Println("PRESS ENTER FOR RECONNECT")
+	for sc.Scan() {
+		fmt.Print("RECONNECTING ...\n")
+		cr.Server = resp.ServerNumber
+		_, err = cl.Connect(context.Background(), cr)
+		if err != nil {
+			log.Println("Unable to connect to the balancer: %w", err)
+		}
+		fmt.Print("PRESS ENTER FOR RECONNECT")
+	}
 
 	<-quit
 	_, err = cl.Disconnect(context.Background(), &balancer.BalancerDisconnectRequest{ServerNumber: resp.GetServerNumber()})

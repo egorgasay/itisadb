@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -25,12 +26,15 @@ func main() {
 	}
 
 	cfg := config.New()
-	store, err := storage.New(cfg)
+	store, err := storage.New()
 	if err != nil {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
 
-	logic, err := usecase.New(store, logger.New(loggerInstance))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	logic, err := usecase.New(ctx, store, logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
@@ -70,6 +74,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
-	grpcServer.GracefulStop()
 	log.Println("Shutdown Balancer ...")
+	grpcServer.GracefulStop()
+	cancel()
 }

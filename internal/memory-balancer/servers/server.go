@@ -8,6 +8,7 @@ import (
 	"itisadb/pkg/api/storage"
 	"reflect"
 	"sync"
+	"sync/atomic"
 )
 
 // =============== server ====================== //
@@ -15,8 +16,9 @@ import (
 func NewServer(storage storage.StorageClient, number int32) *Server {
 	return &Server{
 		storage: storage,
-		number:  number,
+		number:  0,
 		mu:      &sync.RWMutex{},
+		tries:   atomic.Uint32{},
 	}
 }
 
@@ -24,7 +26,7 @@ var ErrAlreadyExists = errors.New("already exists")
 var ErrUnavailable = errors.New("server is unavailable")
 
 type Server struct {
-	tries   uint
+	tries   atomic.Uint32
 	storage storage.StorageClient
 	ram     RAM
 	number  int32
@@ -303,20 +305,16 @@ func (s *Server) GetNumber() int32 {
 	return s.number
 }
 
-func (s *Server) GetTries() uint {
-	return s.tries
+func (s *Server) GetTries() uint32 {
+	return s.tries.Load()
 }
 
 func (s *Server) IncTries() {
-	s.mu.Lock()
-	s.tries++ // TODO: atomic??
-	s.mu.Unlock()
+	s.tries.Add(1)
 }
 
 func (s *Server) ResetTries() {
-	s.mu.Lock()
-	s.tries = 0 // TODO: atomic??
-	s.mu.Unlock()
+	s.tries.Store(0)
 }
 
 func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) error {

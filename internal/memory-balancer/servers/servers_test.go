@@ -10,6 +10,7 @@ import (
 	storagemock "itisadb/pkg/api/storage/gomocks"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -38,7 +39,7 @@ func TestServer_find(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{
-					Value: "value"}, nil).AnyTimes()
+					Value: "value"}, nil)
 			},
 			want: "value",
 		},
@@ -52,7 +53,7 @@ func TestServer_find(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found"))
 			},
 			wantErr: true,
 		},
@@ -69,7 +70,7 @@ func TestServer_find(t *testing.T) {
 			defer cancel()
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -170,7 +171,7 @@ func TestServers_DeepSearch(t *testing.T) {
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -179,7 +180,7 @@ func TestServers_DeepSearch(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 44,
 						total:     100,
@@ -188,7 +189,7 @@ func TestServers_DeepSearch(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 43,
 						total:     100,
@@ -211,7 +212,7 @@ func TestServers_DeepSearch(t *testing.T) {
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -220,7 +221,7 @@ func TestServers_DeepSearch(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 23,
 						total:     100,
@@ -243,7 +244,7 @@ func TestServers_DeepSearch(t *testing.T) {
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -252,7 +253,7 @@ func TestServers_DeepSearch(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 23,
 						total:     100,
@@ -311,14 +312,13 @@ func TestServers_Disconnect(t *testing.T) {
 		{
 			name: "ok",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 			},
 			args: args{
 				number: 1,
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -327,7 +327,7 @@ func TestServers_Disconnect(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 32,
 						total:     100,
@@ -341,15 +341,13 @@ func TestServers_Disconnect(t *testing.T) {
 		{
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
 			},
 			args: args{
 				number: 1,
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -358,7 +356,7 @@ func TestServers_Disconnect(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 34,
 						total:     100,
@@ -372,15 +370,13 @@ func TestServers_Disconnect(t *testing.T) {
 		{
 			name: "notFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
 			},
 			args: args{
 				number: 333,
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -389,7 +385,7 @@ func TestServers_Disconnect(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 13,
 						total:     100,
@@ -443,7 +439,7 @@ func TestServers_Exists(t *testing.T) {
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -452,7 +448,7 @@ func TestServers_Exists(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 55,
 						total:     100,
@@ -470,7 +466,7 @@ func TestServers_Exists(t *testing.T) {
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -479,7 +475,7 @@ func TestServers_Exists(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 11,
 						total:     100,
@@ -516,7 +512,7 @@ func TestServers_GetClient(t *testing.T) {
 			name: "ok",
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 100,
 						total:     100,
@@ -525,7 +521,7 @@ func TestServers_GetClient(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -534,7 +530,7 @@ func TestServers_GetClient(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,
@@ -550,7 +546,7 @@ func TestServers_GetClient(t *testing.T) {
 			name: "ok2",
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 33,
 						total:     100,
@@ -559,7 +555,7 @@ func TestServers_GetClient(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -568,7 +564,7 @@ func TestServers_GetClient(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,
@@ -697,7 +693,7 @@ func TestServers_GetServers(t *testing.T) {
 			name: "ok",
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 33,
 						total:     100,
@@ -706,7 +702,7 @@ func TestServers_GetServers(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -715,7 +711,7 @@ func TestServers_GetServers(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,
@@ -760,7 +756,7 @@ func TestServers_Len(t *testing.T) {
 			name: "ok",
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 33,
 						total:     100,
@@ -769,7 +765,7 @@ func TestServers_Len(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -778,7 +774,7 @@ func TestServers_Len(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,
@@ -831,11 +827,11 @@ func TestServers_SetToAll(t *testing.T) {
 				val: "val",
 			},
 			mockBehavior: func(r *storagemock.MockStorageClient) {
-				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, nil).Times(3)
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 33,
 						total:     100,
@@ -844,7 +840,7 @@ func TestServers_SetToAll(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -853,7 +849,7 @@ func TestServers_SetToAll(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,
@@ -873,11 +869,11 @@ func TestServers_SetToAll(t *testing.T) {
 			},
 			mockBehavior: func(r *storagemock.MockStorageClient) {
 				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection")).Times(3)
 			},
 			servers: map[int32]*Server{
 				1: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 33,
 						total:     100,
@@ -886,7 +882,7 @@ func TestServers_SetToAll(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				2: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 66,
 						total:     100,
@@ -895,7 +891,7 @@ func TestServers_SetToAll(t *testing.T) {
 					mu:     &sync.RWMutex{},
 				},
 				3: {
-					tries: 0,
+					tries: atomic.Uint32{},
 					ram: RAM{
 						available: 77,
 						total:     100,

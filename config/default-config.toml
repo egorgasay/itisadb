@@ -1,10 +1,10 @@
 [Storage]
 
 # DNS to External Storage.
-# The External Storage is used to save all values before shutdown.
+# The External Storage is used to save setToAll values before shutdown.
 DSN = ""
 
-# Storage will save all transactions to disk in case of a failure.
+# Storage will save setToAll transactions to disk in case of a failure.
 # off - no TransactionLogger
 # file - file
 # db - MySQL db

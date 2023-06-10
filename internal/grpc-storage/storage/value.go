@@ -215,7 +215,7 @@ func (v *value) save(path string) (err error) {
 	defer v.mutex.RUnlock()
 
 	err = os.Mkdir(path, os.ModePerm)
-	if err != nil {
+	if err != nil && !os.IsExist(err) {
 		return err
 	}
 
@@ -231,7 +231,7 @@ func (v *value) save(path string) (err error) {
 		}
 
 		f, err = os.OpenFile(name, os.O_CREATE, os.ModePerm)
-		if err != nil {
+		if err != nil && !os.IsExist(err) {
 			return true
 		}
 

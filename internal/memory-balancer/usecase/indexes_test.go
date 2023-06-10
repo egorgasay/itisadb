@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 	"itisadb/internal/memory-balancer/servers"
 	serversmock "itisadb/internal/memory-balancer/usecase/mocks/servers"
-	repomock "itisadb/internal/memory-balancer/usecase/mocks/storage"
 	"itisadb/pkg/api/storage"
 	"itisadb/pkg/api/storage/gomocks"
 	"itisadb/pkg/logger"
@@ -17,7 +16,6 @@ import (
 	"testing"
 )
 
-type storageBehavior func(cl *repomock.MockIStorage)
 type serversBehavior func(cl *serversmock.MockIServers)
 type gStorageBehavior func(cl *storagemock.MockStorageClient)
 
@@ -34,7 +32,6 @@ func TestUseCase_AttachToIndex(t *testing.T) {
 	tests := []struct {
 		name                string
 		args                args
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		wantErr             bool
@@ -139,7 +136,6 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -243,7 +239,6 @@ func TestUseCase_DeleteIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -345,7 +340,6 @@ func TestUseCase_GetFromIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -465,7 +459,6 @@ func TestUseCase_GetIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -584,7 +577,6 @@ func TestUseCase_Index(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -616,7 +608,7 @@ func TestUseCase_Index(t *testing.T) {
 				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
 					&storage.NewIndexResponse{}, nil)
 			},
-			want: 1,
+			want: 0,
 		}, {
 			name: "noActiveClients",
 			args: args{
@@ -678,7 +670,6 @@ func TestUseCase_IsIndex(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
@@ -751,7 +742,6 @@ func TestUseCase_SetToIndex(t *testing.T) {
 		name                string
 		args                args
 		want                int32
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		wantErr             bool
@@ -871,7 +861,6 @@ func TestUseCase_Size(t *testing.T) {
 	}
 	tests := []struct {
 		name                string
-		storageBehavior     storageBehavior
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args

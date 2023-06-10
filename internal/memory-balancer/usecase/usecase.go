@@ -4,46 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
-	//"github.com/tomakado/containers/queue"
-	"go.mongodb.org/mongo-driver/mongo"
 	"itisadb/internal/memory-balancer/servers"
 )
 
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
-	setDB := uc.storage.Set
-	if uniques {
-		setDB = uc.storage.SetUnique
+	if uc.servers.Len() == 0 {
+		return 0, ErrNoServers
 	}
 
-	if uc.servers.Len() == 0 && serverNumber != -1 {
-		err := setDB(ctx, key, val)
-		if err != nil {
-			uc.logger.Warn(err.Error())
-			return 0, fmt.Errorf("error while setting new pair to dbstorage with no active grpc-storages: %w", err)
-		}
-		return -1, nil
-	}
-
-	switch serverNumber {
-	case dbOnly:
-		uc.logger.Info("setting k:val to db")
-		return dbOnly, setDB(ctx, key, val)
-	case all:
+	if serverNumber == setToAll {
 		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
-			return all, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
-		return all, nil
-	case allAndDB:
-		uc.logger.Info("setting key:val to all instance")
-		failedServers := uc.servers.SetToAll(ctx, key, val, uniques)
-		if len(failedServers) != 0 {
-			return allAndDB, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
-		}
-		uc.logger.Info("setting key:val to db")
-		return allAndDB, setDB(ctx, key, val)
+		return setToAll, nil
 	}
 
 	var cl *servers.Server
@@ -57,12 +31,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	} else {
 		cl, ok = uc.servers.GetServer()
 		if !ok || cl == nil {
-			err := setDB(ctx, key, val)
-			if err != nil {
-				uc.logger.Warn(err.Error())
-				return 0, fmt.Errorf("error while adding new pair to dbstorage with offline grpc-storage: %w", err)
-			}
-			return -1, nil
+			return 0, ErrNoServers
 		}
 	}
 
@@ -74,51 +43,38 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	return cl.GetNumber(), nil
 }
 
-var timeout = 4 * time.Second
-
-func (uc *UseCase) FindInDB(ctx context.Context, key string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	value, err := uc.storage.Get(ctx, key)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return "", fmt.Errorf("error while getting new pair from dbstorage: %w", ErrNoData)
-		}
-		uc.logger.Warn(err.Error())
-		return value, fmt.Errorf("error while getting new pair from dbstorage: %w", err)
-	}
-	return value, nil
-}
+var ErrNoServers = errors.New("no servers available")
+var ErrNotFound = errors.New("key not found")
 
 func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
-		return uc.FindInDB(ctx, key)
+		return "", ErrNoServers
 	}
 
-	if serverNumber == 0 {
+	if serverNumber == searchEverywhere {
 		value, err := uc.servers.DeepSearch(ctx, key)
 		if errors.Is(err, servers.ErrNotFound) {
-			return uc.FindInDB(ctx, key)
+			return "", ErrNotFound
 		}
 		return value, err
-	} else if serverNumber == -1 {
-		return uc.FindInDB(ctx, key)
 	} else if !uc.servers.Exists(serverNumber) {
-		return uc.FindInDB(ctx, key)
+		return "", ErrNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
-		return uc.FindInDB(ctx, key)
+		return "", ErrUnknownServer
 	}
 
 	res, err := cl.Get(context.Background(), key)
 	if err == nil {
+		cl.ResetTries()
 		return res.Value, nil
 	}
 
 	uc.logger.Warn(err.Error())
+
+	cl.IncTries()
 
 	if cl.GetTries() > 2 {
 		err = uc.Disconnect(ctx, cl.GetNumber())
@@ -126,9 +82,8 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 			uc.logger.Warn(err.Error())
 		}
 	}
-	cl.ResetTries()
 
-	return uc.FindInDB(ctx, key)
+	return "", ErrNotFound
 }
 
 func (uc *UseCase) Connect(address string, available, total uint64, server int32) (int32, error) {
@@ -164,7 +119,7 @@ func (uc *UseCase) Servers() []string {
 }
 
 func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
-	ch := make(chan struct{})
+	ch := make(chan struct{}) // TODO: handle possible memory leak
 
 	uc.pool <- struct{}{}
 	go func() {
@@ -189,17 +144,12 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 	}
 
 	if num == 0 {
-		num = all
+		num = setToAll
 	}
 
 	switch num {
-	case dbOnly:
-		//  TODO: delete from db
-	case all:
-		// TODO: delete from all servers
-	case allAndDB:
-		// TODO: delete from all servers
-		// TODO: delete from db
+	case setToAll:
+		// TODO: delete from setToAll servers
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)

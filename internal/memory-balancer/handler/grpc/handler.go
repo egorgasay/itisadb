@@ -27,7 +27,6 @@ type iUseCase interface {
 	AttachToIndex(ctx context.Context, dst string, src string) error
 	DeleteAttr(ctx context.Context, attr string, index string) error
 	Set(ctx context.Context, key string, val string, serverNumber int32, uniques bool) (int32, error)
-	FindInDB(ctx context.Context, key string) (string, error)
 	Get(ctx context.Context, key string, serverNumber int32) (string, error)
 	Connect(address string, available uint64, total uint64, server int32) (int32, error)
 	Disconnect(ctx context.Context, number int32) error

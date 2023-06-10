@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/dolthub/swiss"
+	"os"
 	"reflect"
 	"sync"
 	"testing"
@@ -235,5 +236,9 @@ func Test_value_save(t *testing.T) {
 		} else if v != fmt.Sprint(i) {
 			t.Errorf("GetFromDiskIndex() = %v, want %v", v, fmt.Sprint(i))
 		}
+	}
+
+	if err := os.RemoveAll(is.path); err != nil {
+		t.Errorf("RemoveAll() error = %v", err)
 	}
 }

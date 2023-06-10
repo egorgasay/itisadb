@@ -350,7 +350,9 @@ func (s *Storage) IsIndex(name string) bool {
 func (is *indexes) save() (err error) {
 	path := is.path
 	if err = os.MkdirAll(path, 0777); err != nil {
-		return err
+		if !os.IsExist(err) {
+			return err
+		}
 	}
 
 	is.Lock()
@@ -381,7 +383,7 @@ func (rs *ramStorage) save() (err error) {
 	var f *os.File
 	rs.Iter(func(key string, value string) bool {
 		f, err = os.OpenFile(path+"/"+key, os.O_RDWR|os.O_CREATE, 0777)
-		if err != nil {
+		if err != nil && !os.IsExist(err) {
 			return true
 		}
 		defer f.Close()

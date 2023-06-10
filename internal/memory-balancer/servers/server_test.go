@@ -10,6 +10,7 @@ import (
 	storagemock "itisadb/pkg/api/storage/gomocks"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -28,7 +29,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().AttachToIndex(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				cl.EXPECT().AttachToIndex(gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -40,7 +41,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().AttachToIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -53,7 +54,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 			name: "indexNotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().AttachToIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "index not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "index not found"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -71,7 +72,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -101,7 +102,7 @@ func TestServer_Delete(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -112,7 +113,7 @@ func TestServer_Delete(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -124,7 +125,7 @@ func TestServer_Delete(t *testing.T) {
 			name: "keyNotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "key was not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "key was not found"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -141,7 +142,7 @@ func TestServer_Delete(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -172,7 +173,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().DeleteAttr(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				cl.EXPECT().DeleteAttr(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -184,7 +185,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().DeleteAttr(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -197,7 +198,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 			name: "indexNotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().DeleteAttr(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "index not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "index not found"))
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -215,7 +216,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -245,7 +246,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+				cl.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
 			args: args{
 				ctx:  context.Background(),
@@ -256,7 +257,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx:  context.Background(),
@@ -268,7 +269,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 			name: "indexNotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "index not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "index not found"))
 			},
 			args: args{
 				ctx:  context.Background(),
@@ -285,7 +286,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -316,7 +317,7 @@ func TestServer_Get(t *testing.T) {
 		{
 			name: "Success",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{Value: "test"}, nil).AnyTimes()
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{Value: "test"}, nil)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -330,7 +331,7 @@ func TestServer_Get(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -342,7 +343,7 @@ func TestServer_Get(t *testing.T) {
 			name: "NotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -359,7 +360,7 @@ func TestServer_Get(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -405,14 +406,14 @@ func TestServer_GetFromIndex(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).
-					Return(&storage.GetResponse{Value: "test"}, nil).AnyTimes()
+					Return(&storage.GetResponse{Value: "test"}, nil)
 			},
 		},
 		{
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -424,7 +425,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 			name: "NotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().GetFromIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found"))
 			},
 			args: args{
 				ctx: context.Background(),
@@ -439,7 +440,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 	for _, tt := range tests {
 		tt.mockBehavior(cl)
 		s := &Server{
-			tries:   0,
+			tries:   atomic.Uint32{},
 			storage: cl,
 			ram: RAM{
 				available: 100,
@@ -496,7 +497,7 @@ func TestServer_GetIndex(t *testing.T) {
 							"Key_GetIndex3": "test",
 						},
 					}, nil,
-				).AnyTimes()
+				)
 			},
 			want: &storage.GetIndexResponse{
 				Index: map[string]string{
@@ -510,7 +511,7 @@ func TestServer_GetIndex(t *testing.T) {
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx:  context.Background(),
@@ -522,7 +523,7 @@ func TestServer_GetIndex(t *testing.T) {
 			name: "NotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found"))
 			},
 			args: args{
 				ctx:  context.Background(),
@@ -538,7 +539,7 @@ func TestServer_GetIndex(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -611,7 +612,7 @@ func TestServer_NewIndex(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -690,7 +691,7 @@ func TestServer_Set(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -731,7 +732,7 @@ func TestServer_SetToIndex(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
-					nil, nil).AnyTimes()
+					nil, nil)
 			},
 		},
 		{
@@ -745,7 +746,7 @@ func TestServer_SetToIndex(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			wantErr: ErrUnavailable,
 		},
@@ -760,7 +761,7 @@ func TestServer_SetToIndex(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.AlreadyExists, "already exists")).AnyTimes()
+					nil, status.Error(codes.AlreadyExists, "already exists"))
 			},
 			wantErr: ErrAlreadyExists,
 		},
@@ -773,7 +774,7 @@ func TestServer_SetToIndex(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -811,7 +812,7 @@ func TestServer_Size(t *testing.T) {
 				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
 					&storage.IndexSizeResponse{
 						Size: 100,
-					}, nil).AnyTimes()
+					}, nil)
 			},
 			want: &storage.IndexSizeResponse{
 				Size: 100,
@@ -825,7 +826,7 @@ func TestServer_Size(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			wantErr: ErrUnavailable,
 		},
@@ -837,7 +838,7 @@ func TestServer_Size(t *testing.T) {
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
 				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+					nil, status.Error(codes.NotFound, "not found"))
 			},
 			wantErr: ErrNotFound,
 		},
@@ -850,7 +851,7 @@ func TestServer_Size(t *testing.T) {
 			tt.mockBehavior(cl)
 
 			s := &Server{
-				tries:   0,
+				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
 					available: 100,
@@ -900,7 +901,7 @@ func TestServer_setRAM(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Server{
-				tries: 0,
+				tries: atomic.Uint32{},
 				ram: RAM{
 					available: 100,
 					total:     100,

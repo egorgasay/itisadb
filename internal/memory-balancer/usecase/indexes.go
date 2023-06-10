@@ -41,6 +41,11 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 	}
 
 	num = cl.GetNumber()
+	err = uc.storage.SaveIndexLoc(ctx, name, num)
+	if err != nil {
+		uc.logger.Warn(fmt.Sprintf("error while saving index: %s", err.Error()))
+	}
+
 	uc.indexes[name] = num
 	return num, nil
 }
