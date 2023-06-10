@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/dolthub/swiss"
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -172,24 +173,30 @@ func Test_value_AttachIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "foo",
-				val:  v,
+				val: NewIndex("foo", nil),
 			},
 		},
 		{
-			name: "ok",
+			name: "ok2",
 			args: args{
-				name: "fefwefwegw",
-				val:  v,
+				val: NewIndex("qwdqdq", nil),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			va := &value{mutex: &sync.RWMutex{}, next: swiss.NewMap[string, ivalue](100)}
-			v.next.Put(tt.args.name, va)
-			if err := v.AttachIndex(tt.args.name, tt.args.val); (err != nil) != tt.wantErr {
+			if err := v.AttachIndex(tt.args.val); (err != nil) != tt.wantErr {
 				t.Errorf("AttachIndex() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			vv, ok := v.next.Get(tt.args.val.Name())
+			if !ok {
+				t.Errorf("AttachIndex() ok = %v, wantOk %v", ok, true)
+				return
+			}
+			if !reflect.DeepEqual(vv, tt.args.val) {
+				t.Errorf("AttachIndex() = %v, want %v", vv, tt.args.val)
+				return
 			}
 		})
 	}

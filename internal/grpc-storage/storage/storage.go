@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -212,7 +214,7 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 		return err
 	}
 
-	if index2.IsAttached(dst) {
+	if index2.IsAttached(index1.Name()) {
 		return ErrCircularAttachment
 	}
 
@@ -240,7 +242,7 @@ func (s *Storage) CreateIndex(name string) (err error) {
 	val, ok := s.indexes.Get(path[0])
 	if !ok || val.IsEmpty() {
 		s.indexes.Lock()
-		val = NewIndex(path[0])
+		val = NewIndex(path[0], nil)
 		s.indexes.Put(path[0], val)
 		s.indexes.Unlock()
 	}
@@ -423,13 +425,12 @@ func (s *Storage) DeleteIfExists(key string) {
 
 func (s *Storage) Delete(key string) error {
 	s.ramStorage.Lock()
+	defer s.ramStorage.Unlock()
 	if _, ok := s.ramStorage.Get(key); !ok {
-		s.ramStorage.Unlock()
 		return ErrNotFound
 	}
 
 	s.ramStorage.Delete(key)
-	s.ramStorage.Unlock()
 
 	return nil
 }
@@ -453,12 +454,14 @@ func (s *Storage) GetFromDisk(key string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	buf := make([]byte, 1024)
-	n, err := f.Read(buf)
-	if err != nil {
-		return "", err
+
+	scanner := bufio.NewScanner(f)
+	var buf bytes.Buffer
+	for scanner.Scan() {
+		buf.Write(scanner.Bytes())
 	}
-	return string(buf[:n]), nil
+
+	return buf.String(), nil
 }
 
 func (s *Storage) GetFromDiskIndex(name, key string) (string, error) {
@@ -471,10 +474,12 @@ func (s *Storage) GetFromDiskIndex(name, key string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	buf := make([]byte, 1024)
-	n, err := f.Read(buf)
-	if err != nil {
-		return "", err
+
+	scanner := bufio.NewScanner(f)
+	var buf bytes.Buffer
+	for scanner.Scan() {
+		buf.Write(scanner.Bytes())
 	}
-	return string(buf[:n]), nil
+
+	return buf.String(), nil
 }
