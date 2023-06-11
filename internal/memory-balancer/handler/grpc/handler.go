@@ -16,6 +16,7 @@ type Handler struct {
 	logic iUseCase
 }
 
+//go:generate mockgen -destination=mocks/usecase/mock_usecase.go -package=mocks . IUseCase
 type iUseCase interface {
 	Index(ctx context.Context, name string) (int32, error)
 	GetFromIndex(ctx context.Context, index string, key string, serverNumber int32) (string, error)

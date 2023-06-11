@@ -21,15 +21,12 @@ func New(logic usecase.IUseCase) *Handler {
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
 	ram, err := h.logic.Set(r.Key, r.Value, r.Unique)
+	resp := &api.SetResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if errors.Is(err, storage.ErrAlreadyExists) {
-		return &api.SetResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, status.Error(codes.AlreadyExists, err.Error())
+		return resp, status.Error(codes.AlreadyExists, err.Error())
 	}
 
-	return &api.SetResponse{
-		Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-	}, err
+	return resp, err
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
@@ -37,13 +34,11 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &api.GetResponse{
-				Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
-				Value: "",
+				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.NotFound, err.Error())
 		}
 		return &api.GetResponse{
-			Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
-			Value: err.Error(),
+			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
 	}
 
@@ -55,27 +50,20 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 
 func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*api.SetResponse, error) {
 	ram, err := h.logic.SetToIndex(r.Name, r.Key, r.Value, r.Unique)
+	resp := &api.SetResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrAlreadyExists) {
-			return &api.SetResponse{
-				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-			}, status.Error(codes.AlreadyExists, err.Error())
+			return resp, status.Error(codes.AlreadyExists, err.Error())
 		}
 
 		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.SetResponse{
-				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-			}, status.Error(codes.ResourceExhausted, err.Error())
+			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 
-		return &api.SetResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, err
+		return resp, err
 	}
 
-	return &api.SetResponse{
-		Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-	}, nil
+	return resp, nil
 }
 
 func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) (*api.GetResponse, error) {

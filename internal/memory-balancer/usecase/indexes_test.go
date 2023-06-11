@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/memory-balancer/servers"
+	repo "itisadb/internal/memory-balancer/storage"
 	serversmock "itisadb/internal/memory-balancer/usecase/mocks/servers"
 	"itisadb/pkg/api/storage"
 	"itisadb/pkg/api/storage/gomocks"
@@ -630,6 +631,11 @@ func TestUseCase_Index(t *testing.T) {
 		t.Fatalf("failed to inizialise logger: %v", err)
 	}
 
+	st, err := repo.New()
+	if err != nil {
+		t.Fatalf("failed to inizialise repo: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
@@ -641,6 +647,7 @@ func TestUseCase_Index(t *testing.T) {
 
 			uc := &UseCase{
 				servers: s,
+				storage: st,
 				logger:  logger.New(loggerInstance),
 				indexes: map[string]int32{
 					"test_index": 1,
