@@ -136,7 +136,7 @@ func TestServers_AddClient(t *testing.T) {
 
 			got, err := s.AddServer(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddServer() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddServer() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
@@ -288,7 +288,7 @@ func TestServers_DeepSearch(t *testing.T) {
 
 			got, err := s.DeepSearch(tt.args.ctx, tt.args.key)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DeepSearch() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeepSearch() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
@@ -415,7 +415,7 @@ func TestServers_Disconnect(t *testing.T) {
 			s.Disconnect(tt.args.number)
 
 			if tt.want && s.Exists(tt.args.number) {
-				t.Errorf("Disconnect() error = %v, wantErr %v", s.Exists(tt.args.number), false)
+				t.Errorf("Disconnect() error = %v, wantCode %v", s.Exists(tt.args.number), false)
 			}
 		})
 	}

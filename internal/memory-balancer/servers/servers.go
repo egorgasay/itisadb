@@ -3,8 +3,8 @@ package servers
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/pkg/api/storage"
@@ -83,13 +83,15 @@ func (s *Servers) Len() int32 {
 	return int32(len(s.servers))
 }
 
+var ErrInternal = errors.New("internal error")
+
 func (s *Servers) AddServer(address string, available, total uint64, server int32) (int32, error) {
 	s.Lock()
 	defer s.Unlock()
 
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(ErrInternal, err.Error())
 	}
 
 	cl := storage.NewStorageClient(conn)
@@ -106,17 +108,18 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 			s.freeID = server + 1
 		}
 	} else {
+		// saving last id
 		f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
-			return 0, err
+			return 0, errors.Wrapf(ErrInternal, "can't open file: servers, %v", err.Error())
 		}
 		defer f.Close()
 
 		stClient.number = s.freeID
 		s.freeID++
-		_, err = f.WriteString(fmt.Sprintf("%d", s.freeID))
+		_, err = f.WriteString(fmt.Sprintf("%d\n", s.freeID))
 		if err != nil {
-			return 0, fmt.Errorf("can't save last id: %w", err)
+			return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
 		}
 	}
 

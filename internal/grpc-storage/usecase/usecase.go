@@ -30,7 +30,7 @@ type IUseCase interface {
 }
 
 func New(storage storage.IStorage, logger logger.ILogger) *UseCase {
-	return &UseCase{storage: storage, logger: logger, dirDB: true}
+	return &UseCase{storage: storage, logger: logger, dirDB: true} // TODO: TO CONFIG
 }
 
 func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
@@ -114,7 +114,7 @@ func (uc *UseCase) AttachToIndex(dst, src string) (RAM, error) {
 func (uc *UseCase) DeleteIfExists(key string) RAM {
 	uc.storage.DeleteIfExists(key)
 
-	if uc.logger != nil {
+	if !uc.storage.NoTLogger() {
 		uc.storage.WriteDelete(key)
 	}
 	return RAMUsage()
@@ -122,7 +122,7 @@ func (uc *UseCase) DeleteIfExists(key string) RAM {
 
 func (uc *UseCase) Delete(key string) (RAM, error) {
 	err := uc.storage.Delete(key)
-	if err == nil && uc.logger != nil {
+	if !uc.storage.NoTLogger() {
 		uc.storage.WriteDelete(key)
 	}
 	return RAMUsage(), err

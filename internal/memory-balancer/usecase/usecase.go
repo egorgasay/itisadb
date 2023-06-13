@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"itisadb/internal/memory-balancer/servers"
+	"sync"
 )
 
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
@@ -52,11 +53,11 @@ func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (str
 	}
 
 	if serverNumber == searchEverywhere {
-		value, err := uc.servers.DeepSearch(ctx, key)
-		if errors.Is(err, servers.ErrNotFound) {
+		v, err := uc.servers.DeepSearch(ctx, key)
+		if err != nil && errors.Is(err, servers.ErrNotFound) {
 			return "", ErrNotFound
 		}
-		return value, err
+		return v, err
 	} else if !uc.servers.Exists(serverNumber) {
 		return "", ErrNotFound
 	}
@@ -119,12 +120,14 @@ func (uc *UseCase) Servers() []string {
 }
 
 func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
-	ch := make(chan struct{}) // TODO: handle possible memory leak
+	once := sync.Once{}
+	ch := make(chan struct{})
+	done := func() { close(ch) }
 
 	uc.pool <- struct{}{}
 	go func() {
 		err = uc.delete(ctx, key, num)
-		close(ch)
+		once.Do(done)
 		<-uc.pool
 	}()
 
@@ -132,6 +135,7 @@ func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error
 	case <-ch:
 		return err
 	case <-ctx.Done():
+		once.Do(done)
 		return ctx.Err()
 	}
 }
@@ -159,7 +163,7 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 
 	err := cl.Delete(ctx, key)
 	if err != nil {
-		return fmt.Errorf("error while deleting value: %w", err)
+		return err
 	}
 	return nil
 }

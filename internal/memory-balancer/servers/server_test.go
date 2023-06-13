@@ -24,7 +24,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 		name         string
 		mockBehavior func(r *storagemock.MockStorageClient)
 		args         args
-		wantErr      error
+		wantCode     error
 	}{
 		{
 			name: "Success",
@@ -48,7 +48,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 				dst: "test2",
 				src: "inner2",
 			},
-			wantErr: ErrUnavailable,
+			wantCode: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "indexNotFound",
@@ -61,7 +61,7 @@ func TestServer_AttachToIndex(t *testing.T) {
 				dst: "test3",
 				src: "inner3",
 			},
-			wantErr: ErrNotFound,
+			wantCode: status.Error(codes.NotFound, "index not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -81,8 +81,8 @@ func TestServer_AttachToIndex(t *testing.T) {
 				number: 1,
 				mu:     &sync.RWMutex{},
 			}
-			if err := s.AttachToIndex(tt.args.ctx, tt.args.dst, tt.args.src); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("AttachToIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.AttachToIndex(tt.args.ctx, tt.args.dst, tt.args.src); (err != nil) && (!errors.Is(err, tt.wantCode)) {
+				t.Errorf("AttachToIndex() error = %v, wantCode %v", err, tt.wantCode)
 			}
 		})
 	}
@@ -119,7 +119,7 @@ func TestServer_Delete(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "keyNotFound",
@@ -131,7 +131,7 @@ func TestServer_Delete(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test2",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "key was not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -152,7 +152,7 @@ func TestServer_Delete(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.Delete(tt.args.ctx, tt.args.Key); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Delete() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -192,7 +192,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 				attr:  "test2",
 				index: "inner2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "indexNotFound",
@@ -205,7 +205,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 				attr:  "test2",
 				index: "inner2",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "index not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -226,7 +226,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.DeleteAttr(tt.args.ctx, tt.args.attr, tt.args.index); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("DeleteAttr() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeleteAttr() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -263,7 +263,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 				ctx:  context.Background(),
 				name: "test2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "indexNotFound",
@@ -275,7 +275,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 				ctx:  context.Background(),
 				name: "test2",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "index not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -296,7 +296,7 @@ func TestServer_DeleteIndex(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.DeleteIndex(tt.args.ctx, tt.args.name); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeleteIndex() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -337,7 +337,7 @@ func TestServer_Get(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "NotFound",
@@ -349,7 +349,7 @@ func TestServer_Get(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test2",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -371,7 +371,7 @@ func TestServer_Get(t *testing.T) {
 			}
 			got, err := s.Get(tt.args.ctx, tt.args.Key)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Get() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -419,7 +419,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "NotFound",
@@ -431,7 +431,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 				ctx: context.Background(),
 				Key: "test3",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "not found"),
 		},
 	}
 	c := gomock.NewController(t)
@@ -452,7 +452,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := s.GetFromIndex(tt.args.ctx, tt.args.name, tt.args.Key)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("GetFromIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetFromIndex() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 
@@ -517,7 +517,7 @@ func TestServer_GetIndex(t *testing.T) {
 				ctx:  context.Background(),
 				name: "TestServer_GetIndex2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "NotFound",
@@ -529,7 +529,7 @@ func TestServer_GetIndex(t *testing.T) {
 				ctx:  context.Background(),
 				name: "TestServer_GetIndex3",
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -550,7 +550,7 @@ func TestServer_GetIndex(t *testing.T) {
 			}
 			got, err := s.GetIndex(tt.args.ctx, tt.args.name)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetIndex() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr != nil {
@@ -601,7 +601,7 @@ func TestServer_NewIndex(t *testing.T) {
 				ctx:  context.Background(),
 				name: "TestServer_NewIndex2",
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 	}
 	for _, tt := range tests {
@@ -622,7 +622,7 @@ func TestServer_NewIndex(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.NewIndex(tt.args.ctx, tt.args.name); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("NewIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewIndex() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -666,7 +666,7 @@ func TestServer_Set(t *testing.T) {
 				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "AlreadyExists",
@@ -680,7 +680,7 @@ func TestServer_Set(t *testing.T) {
 				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.AlreadyExists, "already exists"))
 			},
-			wantErr: ErrAlreadyExists,
+			wantErr: status.Error(codes.AlreadyExists, "already exists"),
 		},
 	}
 	for _, tt := range tests {
@@ -701,7 +701,7 @@ func TestServer_Set(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.Set(tt.args.ctx, tt.args.Key, tt.args.Value, tt.args.unique); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Set() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -748,7 +748,7 @@ func TestServer_SetToIndex(t *testing.T) {
 				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "AlreadyExists",
@@ -763,7 +763,7 @@ func TestServer_SetToIndex(t *testing.T) {
 				cl.EXPECT().SetToIndex(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.AlreadyExists, "already exists"))
 			},
-			wantErr: ErrAlreadyExists,
+			wantErr: status.Error(codes.AlreadyExists, "already exists"),
 		},
 	}
 	for _, tt := range tests {
@@ -784,7 +784,7 @@ func TestServer_SetToIndex(t *testing.T) {
 				mu:     &sync.RWMutex{},
 			}
 			if err := s.SetToIndex(tt.args.ctx, tt.args.name, tt.args.Key, tt.args.Value, tt.args.unique); (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("SetToIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SetToIndex() error = %v, wantCode %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -828,7 +828,7 @@ func TestServer_Size(t *testing.T) {
 				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
-			wantErr: ErrUnavailable,
+			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "NotFound",
@@ -840,7 +840,7 @@ func TestServer_Size(t *testing.T) {
 				cl.EXPECT().Size(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 			},
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, "not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -862,7 +862,7 @@ func TestServer_Size(t *testing.T) {
 			}
 			got, err := s.Size(tt.args.ctx, tt.args.name)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("Size() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Size() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
