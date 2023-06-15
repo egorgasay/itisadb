@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -797,7 +798,38 @@ func TestHandler_Servers(t *testing.T) {
 		want        *api.BalancerServersResponse
 		wantErr     bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx:     context.Background(),
+				request: &api.BalancerServersRequest{},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Servers().Return([]string{
+					fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", 1, 1, 1),
+					fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", 2, 2, 2),
+					fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", 3, 3, 3),
+				})
+			},
+			want: &api.BalancerServersResponse{
+				ServersInfo: "s#1 Avaliable: 1 MB, Total: 1 MB<br>s#2 Avaliable: 2 MB, Total: 2 MB<br>s#3 Avaliable: 3 MB, Total: 3 MB",
+			},
+		},
+		{
+			name: "success",
+			args: args{
+				ctx:     context.Background(),
+				request: &api.BalancerServersRequest{},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Servers().Return([]string{
+					fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", 1, 1, 1),
+				})
+			},
+			want: &api.BalancerServersResponse{
+				ServersInfo: "s#1 Avaliable: 1 MB, Total: 1 MB",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -831,7 +863,42 @@ func TestHandler_Set(t *testing.T) {
 		want        *api.BalancerSetResponse
 		wantErr     bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx: context.Background(),
+				r: &api.BalancerSetRequest{
+					Key:     "key",
+					Value:   "value",
+					Server:  0,
+					Uniques: false,
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(1), nil)
+			},
+			want: &api.BalancerSetResponse{
+				SavedTo: 1,
+			},
+		},
+		{
+			name: "error",
+			args: args{
+				ctx: context.Background(),
+				r: &api.BalancerSetRequest{
+					Key:     "key",
+					Value:   "value",
+					Server:  0,
+					Uniques: false,
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(1), errors.New("unexpected error"))
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -865,7 +932,42 @@ func TestHandler_SetToIndex(t *testing.T) {
 		want        *api.BalancerSetToIndexResponse
 		wantErr     bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx: context.Background(),
+				r: &api.BalancerSetToIndexRequest{
+					Key:     "key",
+					Value:   "value",
+					Uniques: false,
+					Index:   "index",
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().SetToIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(1), nil)
+			},
+			want: &api.BalancerSetToIndexResponse{
+				SavedTo: 1,
+			},
+		},
+		{
+			name: "error",
+			args: args{
+				ctx: context.Background(),
+				r: &api.BalancerSetToIndexRequest{
+					Key:     "key",
+					Value:   "value",
+					Uniques: false,
+					Index:   "index",
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().SetToIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(1), errors.New("unexpected error"))
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -899,7 +1001,36 @@ func TestHandler_Size(t *testing.T) {
 		want        *api.BalancerIndexSizeResponse
 		wantErr     bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			args: args{
+				ctx: context.Background(),
+				request: &api.BalancerIndexSizeRequest{
+					Name: "index",
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Size(gomock.Any(), gomock.Any()).
+					Return(uint64(1), nil)
+			},
+			want: &api.BalancerIndexSizeResponse{
+				Size: 1,
+			},
+		},
+		{
+			name: "error",
+			args: args{
+				ctx: context.Background(),
+				request: &api.BalancerIndexSizeRequest{
+					Name: "index2",
+				},
+			},
+			mockUseCase: func(*mockusecase.MockIUseCase) {
+				logicmock.EXPECT().Size(gomock.Any(), gomock.Any()).
+					Return(uint64(0), errors.New("unexpected error"))
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
