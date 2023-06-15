@@ -1,26 +1,14 @@
-package file
+package transactionlogger
 
 import (
 	"bufio"
 	"fmt"
-	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"log"
 	"modernc.org/strutil"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
-
-type TransactionLogger struct {
-	path string
-	file *os.File
-
-	events chan service.Event
-	errors chan error
-
-	sync.RWMutex
-}
 
 func NewLogger(path string) (*TransactionLogger, error) {
 	path = strings.TrimRight(path, "/") + "/transactionLogger"
@@ -31,15 +19,42 @@ func NewLogger(path string) (*TransactionLogger, error) {
 }
 
 func (t *TransactionLogger) WriteSet(key, value string) {
-	t.events <- service.Event{EventType: service.Set, Key: key, Value: value}
+	t.events <- Event{EventType: Set, Key: key, Value: value}
+}
+
+type restorer interface {
+	Set(string, string, bool)
+	Delete(string)
+}
+
+func (t *TransactionLogger) Restore(r restorer) {
+	var err error
+
+	events, errs := t.readEvents()
+	e, ok := Event{}, true
+
+	t.run()
+
+	for ok && err == nil {
+		select {
+		case err, ok = <-errs:
+		case e, ok = <-events:
+			switch e.EventType {
+			case Set:
+				r.Set(e.Key, e.Value, false)
+			case Delete:
+				r.Delete(e.Key)
+			}
+		}
+	}
 }
 
 func (t *TransactionLogger) WriteDelete(key string) {
-	t.events <- service.Event{EventType: service.Delete, Key: key}
+	t.events <- Event{EventType: Delete, Key: key}
 }
 
-func (t *TransactionLogger) Run() {
-	events := make(chan service.Event, 60000)
+func (t *TransactionLogger) run() {
+	events := make(chan Event, 60000)
 	errorsch := make(chan error, 60000)
 	t.errors = errorsch
 	t.events = events
@@ -80,8 +95,8 @@ func (t *TransactionLogger) Err() <-chan error {
 	return t.errors
 }
 
-func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
-	outEvent := make(chan service.Event)
+func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
+	outEvent := make(chan Event)
 	outError := make(chan error, 1)
 	f, err := os.OpenFile(t.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	t.file = f
@@ -92,7 +107,7 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 	scanner := bufio.NewScanner(f)
 
 	go func() {
-		var event service.Event
+		var event Event
 		defer close(outEvent)
 		defer close(outError)
 
@@ -113,7 +128,7 @@ func (t *TransactionLogger) ReadEvents() (<-chan service.Event, <-chan error) {
 				continue
 			}
 
-			event.EventType = service.EventType(num)
+			event.EventType = EventType(num)
 			event.Key = args[1]
 			event.Value = args[2]
 

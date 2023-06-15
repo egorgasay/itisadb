@@ -3,15 +3,11 @@ package storage
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"itisadb/internal/grpc-storage/config"
 	tlogger "itisadb/internal/grpc-storage/transaction-logger"
-	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"itisadb/pkg/logger"
 	"os"
 	"strings"
@@ -22,19 +18,10 @@ import (
 
 var ErrNotFound = errors.New("the value does not exist")
 var ErrAlreadyExists = errors.New("the value already exists")
-
 var ErrIndexNotFound = errors.New("index not found")
 var ErrSomethingExists = errors.New("something with this name already exists")
 var ErrEmptyIndexName = errors.New("index name is empty")
-
-type Storage struct {
-	dbStore    *mongo.Database
-	ramStorage ramStorage
-	indexes    indexes
-	tLogger    tlogger.ITransactionLogger
-	logger     logger.ILogger
-	noTLogger  bool
-}
+var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 type IStorage interface {
 	InitTLogger(Type string, dir string) error
@@ -59,6 +46,14 @@ type IStorage interface {
 	GetFromDiskIndex(name, key string) (string, error)
 }
 
+type Storage struct {
+	ramStorage ramStorage
+	indexes    indexes
+	tLogger    *tlogger.TransactionLogger
+	logger     logger.ILogger
+	noTLogger  bool
+}
+
 type ramStorage struct {
 	*swiss.Map[string, string]
 	path string
@@ -71,41 +66,26 @@ type indexes struct {
 	path string
 }
 
-func NewWithTLogger(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
-	st, err := New(cfg, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
-	if err != nil {
-		return nil, err
-	}
-
-	return st, nil
-}
-
-func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
+func New(cfg *config.Config, logger logger.ILogger, enableTLogger bool) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
 	}
 
-	ctx := context.Background()
-
-	var db *mongo.Database
-	if cfg.DSN != "" {
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DSN))
-		if err != nil {
-			return nil, err
-		}
-		db = client.Database("grpc-server")
-	}
-
 	st := &Storage{
-		dbStore:    db,
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		logger:     logger,
+		noTLogger:  true,
+	}
+
+	if enableTLogger {
+		tl, err := tlogger.New(cfg.TLoggerDir)
+		if err != nil {
+			return nil, fmt.Errorf("can't create transaction logger: %w", err)
+		}
+
+		st.tLogger = tl
+		st.noTLogger = false
 	}
 
 	return st, nil
@@ -113,37 +93,6 @@ func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 
 func (s *Storage) NoTLogger() bool {
 	return s.noTLogger
-}
-
-func (s *Storage) InitTLogger(Type string, dir string) error {
-	if Type == "off" {
-		s.noTLogger = true
-		return nil
-	}
-
-	var err error
-	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
-	if err != nil {
-		return fmt.Errorf("failed to create event logger: %w", err)
-	}
-
-	events, errs := s.tLogger.ReadEvents()
-	e, ok := service.Event{}, true
-	s.tLogger.Run()
-	for ok && err == nil {
-		select {
-		case err, ok = <-errs:
-		case e, ok = <-events:
-			switch e.EventType {
-			case service.Set:
-				s.Set(e.Key, e.Value, false)
-			case service.Delete:
-				s.Delete(e.Key)
-			}
-		}
-	}
-
-	return nil
 }
 
 func (s *Storage) Set(key, val string, unique bool) error {
@@ -199,9 +148,6 @@ func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
 	index.Set(key, value)
 	return nil
 }
-
-var ErrWrongIndexName = errors.New("wrong index name provided")
-var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 func (s *Storage) AttachToIndex(dst, src string) error {
 	index1, err := s.findIndex(dst)
