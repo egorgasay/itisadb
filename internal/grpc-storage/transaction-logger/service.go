@@ -24,8 +24,7 @@ type Event struct {
 }
 
 type TransactionLogger struct {
-	kvPath      string
-	indexesPath string
+	path string
 
 	events chan Event
 	errors chan error
@@ -34,16 +33,17 @@ type TransactionLogger struct {
 }
 
 func New() (*TransactionLogger, error) {
-	if err := os.MkdirAll(PATH+"/kv", 0755); err != nil {
+	if err := os.MkdirAll(PATH, 0755); err != nil {
 		return nil, err
 	}
 
-	if err := os.MkdirAll(PATH+"/indexes", 0755); err != nil {
+	f, err := os.Create(PATH + "/1")
+	if err != nil {
 		return nil, err
 	}
+	f.Close()
 
 	return &TransactionLogger{
-		indexesPath: PATH + "/indexes",
-		kvPath:      PATH + "/kv",
+		path: PATH,
 	}, nil
 }

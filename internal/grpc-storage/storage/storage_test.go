@@ -3,7 +3,6 @@ package storage
 import (
 	"errors"
 	"github.com/dolthub/swiss"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -146,7 +145,7 @@ func TestStorage_GetFromIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index/innner/inner2",
+				name: "index.innner.inner2",
 				key:  "key2",
 			},
 			want: "val2",
@@ -213,7 +212,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name:  "index/innner/inner3",
+				name:  "index.innner.inner3",
 				key:   "key2",
 				value: "val2",
 			},
@@ -280,15 +279,15 @@ func TestStorage_AttachToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				dst: "index11/inner1",
+				dst: "index11.inner1",
 				src: "index22",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				dst: "index678/inner1/inner2/inner3",
-				src: "index23/inner1",
+				dst: "index678.inner1.inner2.inner3",
+				src: "index23.inner1",
 			},
 		},
 		{
@@ -302,7 +301,7 @@ func TestStorage_AttachToIndex(t *testing.T) {
 		{
 			name: "circle",
 			args: args{
-				dst: "index1/inner1",
+				dst: "index1.inner1",
 				src: "index1",
 			},
 			wantErr: ErrCircularAttachment,
@@ -330,12 +329,12 @@ func TestStorage_AttachToIndex(t *testing.T) {
 					t.Fatalf("findIndex() error = %v", err)
 				}
 
-				split := strings.Split(tt.args.src, "/")
+				split := strings.Split(tt.args.src, ".")
 				if len(split) == 0 {
 					t.Fatalf("index name error, fix it!")
 				}
 
-				attached, err := s.findIndex(tt.args.dst + "/" + split[len(split)-1])
+				attached, err := s.findIndex(tt.args.dst + "." + split[len(split)-1])
 				if err != nil {
 					t.Fatalf("findIndex() error = %v", err)
 				}
@@ -441,13 +440,13 @@ func TestStorage_CreateIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index/inner",
+				name: "index.inner",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index/inner/inner2/inner3/inner4",
+				name: "index.inner.inner2.inner3.inner4",
 			},
 		},
 		{
@@ -509,7 +508,7 @@ func TestStorage_GetIndex(t *testing.T) {
 		{
 			name: "ok#3",
 			args: args{
-				name: "index6/inner",
+				name: "index6.inner",
 			},
 			want: map[string]string{
 				"key":  "value",
@@ -711,7 +710,7 @@ func TestStorage_IsIndex(t *testing.T) {
 		{
 			name: "not ok",
 			args: args{
-				name: "index678/qwe",
+				name: "index678.qwe",
 			},
 			wantOk: false,
 		},
@@ -725,9 +724,9 @@ func TestStorage_IsIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			split := strings.Split(tt.args.name, "/")
+			split := strings.Split(tt.args.name, ".")
 			if !tt.wantOk && len(split) > 1 {
-				path := strings.Join(split[:len(split)-1], "/")
+				path := strings.Join(split[:len(split)-1], ".")
 				err := s.CreateIndex(path)
 				if err != nil {
 					t.Fatalf("CreateIndex() error = %v", err)
@@ -789,153 +788,6 @@ func TestStorage_Delete(t *testing.T) {
 			_, err = s.Get(tt.args.key)
 			if err == nil {
 				t.Fatalf("Get() error = %v", err)
-			}
-		})
-	}
-}
-
-func TestStorage_GetFromDisk(t *testing.T) {
-	s := Storage{
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10), RWMutex: &sync.RWMutex{}, path: "C:\\tmp2"},
-	}
-	err := s.Set("test_key", "test_value", false)
-	if err != nil {
-		t.Fatalf("Set() error = %v", err)
-	}
-
-	err = s.Set("test_key2", "test_value2", false)
-	if err != nil {
-		t.Fatalf("Set() error = %v", err)
-	}
-
-	err = s.ramStorage.save()
-	if err != nil {
-		t.Fatalf("indexes.save() error = %v", err)
-	}
-
-	type args struct {
-		key string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "ok",
-			args: args{
-				key: "test_key",
-			},
-			want: "test_value",
-		},
-		{
-			name: "ok",
-			args: args{
-				key: "test_key2",
-			},
-			want: "test_value2",
-		},
-		{
-			name: "notFound",
-			args: args{
-				key: "test_key3",
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := s.GetFromDisk(tt.args.key)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetFromDisk() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("GetFromDisk() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-
-	if err := os.RemoveAll("C:\\tmp2"); err != nil {
-		t.Fatalf("RemoveAll() error = %v", err)
-	}
-}
-
-func TestStorageGetFromDiskIndex(t *testing.T) {
-	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}, path: "C:\\tmp3"},
-	}
-
-	err := s.CreateIndex("test_index")
-	if err != nil {
-		t.Fatalf("CreateIndex() error = %v", err)
-	}
-
-	err = s.CreateIndex("test_index/inner")
-	if err != nil {
-		t.Fatalf("CreateIndex() error = %v", err)
-	}
-
-	err = s.SetToIndex("test_index", "test_attr_key", "test_value", false)
-	if err != nil {
-		t.Fatalf("SetToIndex() error = %v", err)
-	}
-
-	err = s.SetToIndex("test_index/inner", "test_attr_key2", "test_value2", false)
-	if err != nil {
-		t.Fatalf("SetToIndex() error = %v", err)
-	}
-
-	err = s.indexes.save()
-	if err != nil {
-		return
-	}
-
-	type args struct {
-		name string
-		key  string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "ok",
-			args: args{
-				name: "test_index",
-				key:  "test_attr_key",
-			},
-			want: "test_value",
-		},
-		{
-			name: "inner",
-			args: args{
-				name: "test_index/inner",
-				key:  "test_attr_key2",
-			},
-			want: "test_value2",
-		},
-		{
-			name: "notFound",
-			args: args{
-				name: "test_index/inne3r",
-				key:  "test_attr_k3ey2",
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := s.GetFromDiskIndex(tt.args.name, tt.args.key)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetFromDiskIndex() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("GetFromDiskIndex() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

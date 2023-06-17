@@ -144,7 +144,7 @@ func (s *Storage) DeleteIndex(name string) error {
 }
 
 func (s *Storage) CreateIndex(name string) (err error) {
-	path := strings.Split(name, "/")
+	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
 		return ErrEmptyIndexName
 	}
@@ -181,7 +181,7 @@ func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error
 	index.Iter(func(key string, value ivalue) bool {
 		if value.IsIndex() {
 			prefix = prefix + "\t"
-			m, err := s.GetIndex(name+"/"+key, prefix)
+			m, err := s.GetIndex(name+"."+key, prefix)
 			if err != nil {
 				result[key] = err.Error()
 			} else {
@@ -208,7 +208,7 @@ func mapToString(m map[string]string, prefix string) string {
 }
 
 func (s *Storage) findIndex(name string) (ivalue, error) {
-	path := strings.Split(name, "/")
+	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
 		return nil, ErrIndexNotFound
