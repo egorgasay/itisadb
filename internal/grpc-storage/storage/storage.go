@@ -1,15 +1,10 @@
 package storage
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
-	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
 	"itisadb/internal/grpc-storage/config"
-	tlogger "itisadb/internal/grpc-storage/transaction-logger"
 	"itisadb/pkg/logger"
-	"os"
 	"strings"
 	"sync"
 
@@ -24,34 +19,26 @@ var ErrEmptyIndexName = errors.New("index name is empty")
 var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 type IStorage interface {
-	InitTLogger(Type string, dir string) error
 	Set(key string, val string, unique bool) error
-	WriteSet(key string, val string)
 	Get(key string) (string, error)
-	GetFromIndex(name string, key string) (string, error)
+	DeleteIfExists(key string)
+	Delete(key string) error
+
 	SetToIndex(name string, key string, value string, uniques bool) error
+	GetFromIndex(name string, key string) (string, error)
 	AttachToIndex(dst string, src string) error
 	DeleteIndex(name string) error
 	CreateIndex(name string) (err error)
 	GetIndex(name string, prefix string) (map[string]string, error)
 	Size(name string) (uint64, error)
 	IsIndex(name string) bool
-	Save() error
-	DeleteIfExists(key string)
-	Delete(key string) error
 	DeleteAttr(name string, key string) error
-	WriteDelete(key string)
-	NoTLogger() bool
-	GetFromDisk(key string) (string, error)
-	GetFromDiskIndex(name, key string) (string, error)
 }
 
 type Storage struct {
 	ramStorage ramStorage
 	indexes    indexes
-	tLogger    *tlogger.TransactionLogger
 	logger     logger.ILogger
-	noTLogger  bool
 }
 
 type ramStorage struct {
@@ -66,7 +53,7 @@ type indexes struct {
 	path string
 }
 
-func New(cfg *config.Config, logger logger.ILogger, enableTLogger bool) (*Storage, error) {
+func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
 	if cfg == nil {
 		return nil, errors.New("empty configuration")
 	}
@@ -75,24 +62,9 @@ func New(cfg *config.Config, logger logger.ILogger, enableTLogger bool) (*Storag
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		logger:     logger,
-		noTLogger:  true,
-	}
-
-	if enableTLogger {
-		tl, err := tlogger.New(cfg.TLoggerDir)
-		if err != nil {
-			return nil, fmt.Errorf("can't create transaction logger: %w", err)
-		}
-
-		st.tLogger = tl
-		st.noTLogger = false
 	}
 
 	return st, nil
-}
-
-func (s *Storage) NoTLogger() bool {
-	return s.noTLogger
 }
 
 func (s *Storage) Set(key, val string, unique bool) error {
@@ -104,14 +76,6 @@ func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Put(key, val)
 
 	return nil
-}
-
-func (s *Storage) WriteSet(key, val string) {
-	s.tLogger.WriteSet(key, val)
-}
-
-func (s *Storage) WriteDelete(key string) {
-	s.tLogger.WriteDelete(key)
 }
 
 func (s *Storage) Get(key string) (string, error) {
@@ -293,78 +257,6 @@ func (s *Storage) IsIndex(name string) bool {
 	}
 }
 
-func (is *indexes) save() (err error) {
-	path := is.path
-	if err = os.MkdirAll(path, 0777); err != nil {
-		if !os.IsExist(err) {
-			return err
-		}
-	}
-
-	is.Lock()
-	is.Iter(func(key string, value ivalue) bool {
-		if value.IsIndex() {
-			err = value.save(path + "/" + key)
-			if err != nil {
-				return true
-			}
-		}
-
-		return false
-	})
-	is.Unlock()
-
-	return err
-}
-
-func (rs *ramStorage) save() (err error) {
-	path := rs.path
-
-	if err = os.MkdirAll(path, 0777); err != nil {
-		return err
-	}
-
-	rs.Lock()
-
-	var f *os.File
-	rs.Iter(func(key string, value string) bool {
-		f, err = os.OpenFile(path+"/"+key, os.O_RDWR|os.O_CREATE, 0777)
-		if err != nil && !os.IsExist(err) {
-			return true
-		}
-		defer f.Close()
-
-		_, err = f.WriteString(value)
-		if err != nil {
-			return true
-		}
-
-		return false
-	})
-	rs.Unlock()
-
-	return err
-}
-
-func (s *Storage) Save() error {
-	fmt.Println("Saving pairs to disk...")
-	err := s.ramStorage.save()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Saving indexes to disk...")
-	err = s.indexes.save()
-	if err != nil {
-		return err
-	}
-
-	if s.tLogger == nil {
-		return nil
-	}
-	return s.tLogger.Clear()
-}
-
 func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Lock()
 	s.ramStorage.Delete(key)
@@ -390,44 +282,4 @@ func (s *Storage) DeleteAttr(name, key string) error {
 	}
 
 	return index.Delete(key)
-}
-
-func (s *Storage) GetFromDisk(key string) (string, error) {
-	path := s.ramStorage.path + "/" + key
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", ErrNotFound
-		}
-		return "", err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	var buf bytes.Buffer
-	for scanner.Scan() {
-		buf.Write(scanner.Bytes())
-	}
-
-	return buf.String(), nil
-}
-
-func (s *Storage) GetFromDiskIndex(name, key string) (string, error) {
-	path := s.indexes.path + "/" + name + "/" + key
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", ErrIndexNotFound
-		}
-		return "", err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	var buf bytes.Buffer
-	for scanner.Scan() {
-		buf.Write(scanner.Bytes())
-	}
-
-	return buf.String(), nil
 }

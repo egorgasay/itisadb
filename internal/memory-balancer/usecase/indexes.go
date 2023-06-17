@@ -24,9 +24,6 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 
 	if num, ok = uc.indexes[name]; ok {
 		cl, ok = uc.servers.GetServerByID(num)
-		if ok {
-			return num, nil
-		}
 	} else {
 		cl, ok = uc.servers.GetServer()
 	}
@@ -37,7 +34,7 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 
 	err := cl.NewIndex(ctx, name)
 	if err != nil {
-		return 0, fmt.Errorf("error while creating index: %w", err)
+		return 0, err
 	}
 
 	num = cl.GetNumber()
@@ -191,7 +188,7 @@ func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
 
 	err := cl.DeleteIndex(ctx, name)
 	if err != nil {
-		return fmt.Errorf("error while deleting index: %w", err)
+		return err
 	}
 
 	uc.mu.Lock()
@@ -220,7 +217,7 @@ func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) er
 
 	err := cl.AttachToIndex(ctx, dst, src)
 	if err != nil {
-		return fmt.Errorf("error while attaching index: %w", err)
+		return err
 	}
 	return nil
 }
@@ -245,7 +242,7 @@ func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, index string) er
 
 	err := cl.DeleteAttr(ctx, attr, index)
 	if err != nil {
-		return fmt.Errorf("error while deleting attr: %w", err)
+		return err
 	}
 	return nil
 }

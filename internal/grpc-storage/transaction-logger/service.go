@@ -10,17 +10,22 @@ type EventType byte
 const (
 	Set EventType = iota
 	Delete
+	SetToIndex
+	DeleteAttr
+	CreateIndex
+	Attach
+	DeleteIndex
 )
 
 type Event struct {
 	EventType EventType
-	Key       string
+	Name      string
 	Value     string
 }
 
 type TransactionLogger struct {
-	path string
-	file *os.File
+	kvPath      string
+	indexesPath string
 
 	events chan Event
 	errors chan error
@@ -28,16 +33,17 @@ type TransactionLogger struct {
 	sync.RWMutex
 }
 
-func New(dir string) (*TransactionLogger, error) {
-	err := os.MkdirAll(dir, 0644)
-	if err != nil {
+func New() (*TransactionLogger, error) {
+	if err := os.MkdirAll(PATH+"/kv", 0755); err != nil {
 		return nil, err
 	}
 
-	tLogger, err := NewLogger(dir)
-	if err != nil {
+	if err := os.MkdirAll(PATH+"/indexes", 0755); err != nil {
 		return nil, err
 	}
 
-	return tLogger, nil
+	return &TransactionLogger{
+		indexesPath: PATH + "/indexes",
+		kvPath:      PATH + "/kv",
+	}, nil
 }

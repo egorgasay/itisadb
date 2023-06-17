@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/dolthub/swiss"
-	"os"
 	"sync"
 )
 
@@ -34,7 +33,6 @@ type ivalue interface {
 	Has(key string) bool
 	IsAttached(name string) bool
 	setAttached(attachedTo map[string]bool)
-	save(path string) error
 	Name() string
 }
 
@@ -208,41 +206,4 @@ func (v *value) Has(key string) bool {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
 	return v.next.Has(key)
-}
-
-func (v *value) save(path string) (err error) {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
-
-	err = os.Mkdir(path, os.ModePerm)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-
-	var f *os.File
-	v.next.Iter(func(key string, v ivalue) bool {
-		name := path + "/" + key
-		if v.IsIndex() {
-			err = v.save(name)
-			if err != nil {
-				return true
-			}
-			return false
-		}
-
-		f, err = os.OpenFile(name, os.O_CREATE, os.ModePerm)
-		if err != nil && !os.IsExist(err) {
-			return true
-		}
-
-		_, err = f.WriteString(v.GetValue())
-		if err != nil {
-			return true
-		}
-		f.Close()
-
-		return false
-	})
-
-	return err
 }
