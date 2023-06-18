@@ -3,7 +3,6 @@ package storage
 import (
 	"errors"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"itisadb/internal/grpc-storage/config"
 	"itisadb/pkg/logger"
 	"strings"
 	"sync"
@@ -53,11 +52,7 @@ type indexes struct {
 	path string
 }
 
-func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
-	if cfg == nil {
-		return nil, errors.New("empty configuration")
-	}
-
+func New(logger logger.ILogger) (*Storage, error) {
 	st := &Storage{
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},

@@ -24,7 +24,8 @@ type Event struct {
 }
 
 type TransactionLogger struct {
-	path string
+	pathToDir  string
+	pathToFile string
 
 	events chan Event
 	errors chan error
@@ -44,6 +45,7 @@ func New() (*TransactionLogger, error) {
 	f.Close()
 
 	return &TransactionLogger{
-		path: PATH,
+		pathToDir:  PATH,
+		pathToFile: PATH + "/1",
 	}, nil
 }

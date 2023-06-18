@@ -45,7 +45,9 @@ func New(storage storage.IStorage, logger logger.ILogger, enableTLogger bool) (*
 	logger.Info("Transaction logger enabled")
 
 	logger.Info("Starting recovery from transaction logger")
-	tl.Restore(storage)
+	if err = tl.Restore(storage); err != nil {
+		return nil, fmt.Errorf("failed to restore from transaction logger: %w", err)
+	}
 	logger.Info("Transaction logger recovery completed")
 
 	tl.Run()

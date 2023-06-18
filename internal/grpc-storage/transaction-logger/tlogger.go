@@ -17,22 +17,37 @@ var PATH = "transaction-logger"
 type restorer interface {
 	Set(key, value string, uniques bool) error
 	Delete(key string) error
+	SetToIndex(name, key, value string, uniques bool) error
 	DeleteIndex(name string) error
 	CreateIndex(name string) error
 	AttachToIndex(dst, src string) error
 }
 
-func (t *TransactionLogger) handleIndexes(r restorer, events <-chan Event, errs <-chan error) {
+var ErrCorruptedConfigFile = fmt.Errorf("corrupted config file")
+
+func (t *TransactionLogger) handleEvents(r restorer, events <-chan Event, errs <-chan error) error {
 	e, ok := Event{}, true
 	var err error
 
 	for ok && err == nil {
 		select {
 		case err, ok = <-errs:
+			if err != nil {
+				return err
+			}
 		case e, ok = <-events:
 			switch e.EventType {
-			case SetToIndex:
+			case Set:
 				r.Set(e.Name, e.Value, false)
+			case Delete:
+				r.Delete(e.Name)
+			case SetToIndex:
+				split := strings.Split(e.Value, ".")
+				if len(split) != 2 {
+					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+				key, value := split[0], split[1]
+				r.SetToIndex(e.Name, key, value, false)
 			case DeleteAttr:
 				r.Delete(e.Name)
 			case CreateIndex:
@@ -45,32 +60,12 @@ func (t *TransactionLogger) handleIndexes(r restorer, events <-chan Event, errs 
 			}
 		}
 	}
+	return nil
 }
 
-func (t *TransactionLogger) handleKV(r restorer, events <-chan Event, errs <-chan error) {
-	e, ok := Event{}, true
-	var err error
-
-	for ok && err == nil {
-		select {
-		case err, ok = <-errs:
-		case e, ok = <-events:
-			switch e.EventType {
-			case Set:
-				r.Set(e.Name, e.Value, false)
-			case Delete:
-				r.Delete(e.Name)
-			}
-		}
-	}
-}
-
-func (t *TransactionLogger) Restore(r restorer) {
-	kvEvents, kvErrs := t.readEvents()
-	iEvents, iErrs := t.readEvents()
-
-	go t.handleKV(r, kvEvents, kvErrs)
-	go t.handleIndexes(r, iEvents, iErrs)
+func (t *TransactionLogger) Restore(r restorer) error {
+	events, errs := t.readEvents()
+	return t.handleEvents(r, events, errs)
 }
 
 type operation struct {
@@ -116,18 +111,18 @@ func (t *TransactionLogger) Run() {
 	var err error
 
 	n := strconv.Itoa(1)
-	t.path = t.path + "/" + n
 
-	op := newOperation(t.path)
+	op := newOperation(t.pathToFile)
 
 	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
 
 	var done = make(chan struct{})
+	num := 0
 
 	count := 0
 
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-done:
@@ -136,9 +131,8 @@ func (t *TransactionLogger) Run() {
 				if count < 100_000 {
 					continue
 				}
-				num := 0
 
-				split := strings.Split(t.path, "/")
+				split := strings.Split(t.pathToFile, "/")
 				if len(split) == 0 {
 					continue
 				}
@@ -149,7 +143,7 @@ func (t *TransactionLogger) Run() {
 				}
 				num++
 
-				t.path = split[0] + "/" + strconv.Itoa(num)
+				t.pathToFile = split[0] + "/" + strconv.Itoa(num)
 			}
 		}
 	}()
@@ -160,7 +154,7 @@ func (t *TransactionLogger) Run() {
 
 		for e := range events {
 			data := strutil.Base64Encode([]byte(fmt.Sprintf("%v %s %s", e.EventType, e.Name, e.Value)))
-			op.write(data, t.path, errorsch, t.flash)
+			op.write(data, t.pathToFile, errorsch, t.flash)
 			count++
 		}
 	}()
@@ -208,7 +202,7 @@ func (t *TransactionLogger) readEventsFrom(r io.Reader, outEvent chan<- Event, o
 
 		event.EventType = EventType(num)
 		event.Name = args[1]
-		event.Value = args[2]
+		event.Value = strings.TrimSpace(strings.Join(args[2:], " "))
 
 		outEvent <- event
 	}
@@ -227,7 +221,7 @@ func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
 		defer close(outEvent)
 		defer close(outError)
 
-		d, err := os.ReadDir(t.path)
+		d, err := os.ReadDir(t.pathToDir)
 		if err != nil {
 			outError <- fmt.Errorf("transaction log read failure: %w", err)
 			return
@@ -239,7 +233,7 @@ func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
 			}
 
 			func() {
-				file, err := os.Open(t.path + "/" + f.Name())
+				file, err := os.Open(t.pathToDir + "/" + f.Name())
 				if err != nil {
 					outError <- fmt.Errorf("transaction log read failure: %w", err)
 				}
