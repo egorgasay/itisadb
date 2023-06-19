@@ -36,8 +36,8 @@ func Get(dir string) int32 {
 	return int32(num)
 }
 
-func Set(dir string, server int32) error {
-	f, err := os.OpenFile(dir+"/server_number", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+func Set(server int32) error {
+	f, err := os.OpenFile("server_number", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)
 		return err

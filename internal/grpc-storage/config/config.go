@@ -11,12 +11,9 @@ type DBConfig struct {
 }
 
 type Config struct {
-	Host        string
-	Balancer    string `toml:"Balancer"`
-	TLoggerDir  string `toml:"TransactionLoggerDir"`
-	TLoggerDSN  string `toml:"TransactionLoggerDSN"`
-	DSN         string `toml:"DSN"`
-	TLoggerType string `toml:"TransactionLogger"`
+	Host      string
+	Balancer  string `toml:"Balancer"`
+	IsTLogger bool   `toml:"TransactionLoggerDir"`
 }
 
 const (
@@ -24,36 +21,25 @@ const (
 )
 
 type Flag struct {
-	host        *string
-	dsn         *string
-	balancer    *string
-	tLoggerDir  *string
-	tLoggerDSN  *string
-	tLoggerType *string
+	host      *string
+	dsn       *string
+	balancer  *string
+	isTLogger *bool
 }
 
 var f Flag
 
 func init() {
 	f.host = flag.String("a", defaultHost, "-a=host")
-	//f.dsn = flag.String("d", "", "-d=mongodb_connection_string")
-	//f.balancer = flag.String("connect", "", "-connect=ip:port")
-	//f.tLoggerDir = flag.String("tlog_dir", "/", "-tlog_dir=/tmp")
-	//f.tLoggerDSN = flag.String("tlog_dsn", "", "-tlog_dsn=mysql_connection_string")
-	//f.tLoggerType = flag.String("tlog_type", "Off", "-tlog_type=docker_db || db || file")
 }
 
 func New(cfg *Config) *Config {
 	flag.Parse()
 
 	return &Config{
-		Host:     chooseLeftIfSet[string](f.host, &cfg.Host),
-		Balancer: chooseLeftIfSet[string](f.balancer, &cfg.Balancer),
-		DSN:      chooseLeftIfSet[string](f.dsn, &cfg.DSN),
-
-		TLoggerDir:  chooseLeftIfSet[string](f.tLoggerDir, &cfg.TLoggerDir),
-		TLoggerType: chooseLeftIfSet[string](f.tLoggerType, &cfg.TLoggerType),
-		TLoggerDSN:  chooseLeftIfSet[string](f.tLoggerDSN, &cfg.TLoggerDSN),
+		Host:      chooseLeftIfSet[string](f.host, &cfg.Host),
+		Balancer:  chooseLeftIfSet[string](f.balancer, &cfg.Balancer),
+		IsTLogger: chooseLeftIfSet[bool](f.isTLogger, &cfg.IsTLogger),
 	}
 }
 

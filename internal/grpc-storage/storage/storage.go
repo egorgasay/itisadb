@@ -1,16 +1,8 @@
 package storage
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"itisadb/internal/grpc-storage/config"
-	tlogger "itisadb/internal/grpc-storage/transaction-logger"
-	"itisadb/internal/grpc-storage/transaction-logger/service"
 	"itisadb/pkg/logger"
 	"strings"
 	"sync"
@@ -20,150 +12,72 @@ import (
 
 var ErrNotFound = errors.New("the value does not exist")
 var ErrAlreadyExists = errors.New("the value already exists")
-
 var ErrIndexNotFound = errors.New("index not found")
 var ErrSomethingExists = errors.New("something with this name already exists")
 var ErrEmptyIndexName = errors.New("index name is empty")
-
-type Storage struct {
-	dbStore    *mongo.Database
-	ramStorage ramStorage
-	indexes    indexes
-	tLogger    tlogger.ITransactionLogger
-	logger     logger.ILogger
-	noTLogger  bool
-}
+var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 type IStorage interface {
-	InitTLogger(Type string, dir string) error
 	Set(key string, val string, unique bool) error
-	WriteSet(key string, val string)
 	Get(key string) (string, error)
-	GetFromIndex(name string, key string) (string, error)
+	DeleteIfExists(key string)
+	Delete(key string) error
+
 	SetToIndex(name string, key string, value string, uniques bool) error
+	GetFromIndex(name string, key string) (string, error)
 	AttachToIndex(dst string, src string) error
 	DeleteIndex(name string) error
 	CreateIndex(name string) (err error)
 	GetIndex(name string, prefix string) (map[string]string, error)
 	Size(name string) (uint64, error)
 	IsIndex(name string) bool
-	Save() error
-	DeleteIfExists(key string)
-	Delete(key string) error
 	DeleteAttr(name string, key string) error
-	WriteDelete(key string)
-	NoTLogger() bool
+}
+
+type Storage struct {
+	ramStorage ramStorage
+	indexes    indexes
+	logger     logger.ILogger
 }
 
 type ramStorage struct {
 	*swiss.Map[string, string]
+	path string
 	*sync.RWMutex
 }
 
 type indexes struct {
 	*swiss.Map[string, ivalue]
 	*sync.RWMutex
+	path string
 }
 
-func NewWithTLogger(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
-	st, err := New(cfg, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	err = st.InitTLogger(cfg.TLoggerType, cfg.TLoggerDir)
-	if err != nil {
-		return nil, err
-	}
-
-	return st, nil
-}
-
-func New(cfg *config.Config, logger logger.ILogger) (*Storage, error) {
-	if cfg == nil {
-		return nil, errors.New("empty configuration")
-	}
-
-	ctx := context.Background()
-
-	var db *mongo.Database
-	if cfg.DSN != "" {
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DSN))
-		if err != nil {
-			return nil, err
-		}
-		db = client.Database("grpc-server")
-	}
-
+func New(logger logger.ILogger) (*Storage, error) {
 	st := &Storage{
-		dbStore:    db,
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}},
-		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
+		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		logger:     logger,
 	}
 
 	return st, nil
 }
 
-func (s *Storage) NoTLogger() bool {
-	return s.noTLogger
-}
-
-func (s *Storage) InitTLogger(Type string, dir string) error {
-	if Type == "off" {
-		s.noTLogger = true
-		return nil
-	}
-
-	var err error
-	s.tLogger, err = tlogger.NewTransactionLogger(Type, dir)
-	if err != nil {
-		return fmt.Errorf("failed to create event logger: %w", err)
-	}
-
-	events, errs := s.tLogger.ReadEvents()
-	e, ok := service.Event{}, true
-	s.tLogger.Run()
-	for ok && err == nil {
-		select {
-		case err, ok = <-errs:
-		case e, ok = <-events:
-			switch e.EventType {
-			case service.Set:
-				s.Set(e.Key, e.Value, false)
-			case service.Delete:
-				s.Delete(e.Key)
-			}
-		}
-	}
-
-	return nil
-}
-
 func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Lock()
+	defer s.ramStorage.Unlock()
 	if unique && s.ramStorage.Has(key) {
 		return ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
 
-	s.ramStorage.Unlock()
 	return nil
-}
-
-func (s *Storage) WriteSet(key, val string) {
-	s.tLogger.WriteSet(key, val)
-}
-
-func (s *Storage) WriteDelete(key string) {
-	s.tLogger.WriteDelete(key)
 }
 
 func (s *Storage) Get(key string) (string, error) {
 	s.ramStorage.RLock()
+	defer s.ramStorage.RUnlock()
 
 	val, ok := s.ramStorage.Get(key)
-	s.ramStorage.RUnlock()
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -194,8 +108,6 @@ func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
 	return nil
 }
 
-var ErrWrongIndexName = errors.New("wrong index name provided")
-
 func (s *Storage) AttachToIndex(dst, src string) error {
 	index1, err := s.findIndex(dst)
 	if err != nil {
@@ -207,12 +119,11 @@ func (s *Storage) AttachToIndex(dst, src string) error {
 		return err
 	}
 
-	source := strings.Split(src, "/")
-	if len(source) == 0 {
-		return ErrWrongIndexName // TODO: catch
+	if index2.IsAttached(index1.Name()) {
+		return ErrCircularAttachment
 	}
 
-	err = index1.AttachIndex(source[len(source)-1], index2)
+	err = index1.AttachIndex(index2)
 	return err
 }
 
@@ -228,7 +139,7 @@ func (s *Storage) DeleteIndex(name string) error {
 }
 
 func (s *Storage) CreateIndex(name string) (err error) {
-	path := strings.Split(name, "/")
+	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
 		return ErrEmptyIndexName
 	}
@@ -236,7 +147,7 @@ func (s *Storage) CreateIndex(name string) (err error) {
 	val, ok := s.indexes.Get(path[0])
 	if !ok || val.IsEmpty() {
 		s.indexes.Lock()
-		val = NewIndex()
+		val = NewIndex(path[0], nil)
 		s.indexes.Put(path[0], val)
 		s.indexes.Unlock()
 	}
@@ -262,23 +173,10 @@ func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error
 
 	result := make(map[string]string)
 
-	// prevent infinite loop
-	if index.IsAttached() {
-		index.Iter(func(key string, value ivalue) bool {
-			if value.IsIndex() {
-				result[key] = "index"
-			} else {
-				result[key] = value.GetValue()
-			}
-			return false
-		})
-		return result, nil
-	}
-
 	index.Iter(func(key string, value ivalue) bool {
 		if value.IsIndex() {
 			prefix = prefix + "\t"
-			m, err := s.GetIndex(name+"/"+key, prefix)
+			m, err := s.GetIndex(name+"."+key, prefix)
 			if err != nil {
 				result[key] = err.Error()
 			} else {
@@ -305,7 +203,7 @@ func mapToString(m map[string]string, prefix string) string {
 }
 
 func (s *Storage) findIndex(name string) (ivalue, error) {
-	path := strings.Split(name, "/")
+	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
 		return nil, ErrIndexNotFound
@@ -354,30 +252,6 @@ func (s *Storage) IsIndex(name string) bool {
 	}
 }
 
-func (s *Storage) Save() error {
-	if s.dbStore == nil {
-		return nil
-	}
-
-	c := s.dbStore.Collection("map")
-	s.ramStorage.Lock()
-
-	ctx := context.Background()
-	opts := options.Update().SetUpsert(true)
-	s.ramStorage.Iter(func(key string, value string) bool {
-		filter := bson.D{{"Key", key}}
-		update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", value}}}}
-		_, err := c.UpdateOne(ctx, filter, update, opts)
-		if err != nil {
-			s.logger.Warn(err.Error())
-		}
-		return true
-	})
-
-	s.ramStorage.Unlock()
-	return s.tLogger.Clear()
-}
-
 func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Lock()
 	s.ramStorage.Delete(key)
@@ -386,13 +260,12 @@ func (s *Storage) DeleteIfExists(key string) {
 
 func (s *Storage) Delete(key string) error {
 	s.ramStorage.Lock()
+	defer s.ramStorage.Unlock()
 	if _, ok := s.ramStorage.Get(key); !ok {
-		s.ramStorage.Unlock()
 		return ErrNotFound
 	}
 
 	s.ramStorage.Delete(key)
-	s.ramStorage.Unlock()
 
 	return nil
 }

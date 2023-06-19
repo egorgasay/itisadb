@@ -12,18 +12,14 @@ var ErrNoData = errors.New("the value is not found")
 var ErrUnknownServer = errors.New("unknown server")
 
 const (
-	_ = iota * -1
-	dbOnly
-	all
-	allAndDB
+	searchEverywhere = iota * -1
+	setToAll
 )
 
-//go:generate mockgen -destination=mocks/storage/mock_storage.go -package=mocks . iStorage
+//go:generate mockgen -destination=mocks/storage/mock_storage.go -package=mocks . IStorage
 type iStorage interface {
-	Get(ctx context.Context, key string) (string, error)
-	Set(ctx context.Context, key, val string) error
-	SetUnique(ctx context.Context, key, val string) error
-	Delete(ctx context.Context, key string) error
+	RestoreIndexes(ctx context.Context) (map[string]int32, error)
+	SaveIndexLoc(ctx context.Context, index string, server int32) error
 }
 
 //go:generate mockgen -destination=mocks/servers/mock_servers.go -package=mocks . iServers
@@ -44,23 +40,28 @@ type UseCase struct {
 	logger  logger.ILogger
 	storage iStorage
 
-	// TODO: add copy to disk
 	indexes map[string]int32
 	mu      sync.RWMutex
 
 	pool chan struct{} // TODO: ADD TO CONFIG
 }
 
-func New(repository iStorage, logger logger.ILogger) (*UseCase, error) {
+func New(ctx context.Context, repository iStorage, logger logger.ILogger) (*UseCase, error) {
 	s, err := servers.New()
 	if err != nil {
 		return nil, err
 	}
+
+	indexes, err := repository.RestoreIndexes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &UseCase{
 		servers: s,
 		storage: repository,
 		logger:  logger,
-		indexes: make(map[string]int32, 10000),
-		pool:    make(chan struct{}, 30000),
+		indexes: indexes,
+		pool:    make(chan struct{}, 30000), // TODO: MOVE TO CONFIG
 	}, nil
 }

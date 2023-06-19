@@ -21,15 +21,12 @@ func New(logic usecase.IUseCase) *Handler {
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
 	ram, err := h.logic.Set(r.Key, r.Value, r.Unique)
+	resp := &api.SetResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if errors.Is(err, storage.ErrAlreadyExists) {
-		return &api.SetResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, status.Error(codes.AlreadyExists, err.Error())
+		return resp, status.Error(codes.AlreadyExists, err.Error())
 	}
 
-	return &api.SetResponse{
-		Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-	}, err
+	return resp, err
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
@@ -37,13 +34,11 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &api.GetResponse{
-				Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
-				Value: err.Error(),
+				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.NotFound, err.Error())
 		}
 		return &api.GetResponse{
-			Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
-			Value: err.Error(),
+			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
 	}
 
@@ -55,17 +50,20 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 
 func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*api.SetResponse, error) {
 	ram, err := h.logic.SetToIndex(r.Name, r.Key, r.Value, r.Unique)
+	resp := &api.SetResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrAlreadyExists) {
-			return &api.SetResponse{
-				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-			}, status.Error(codes.AlreadyExists, err.Error())
+			return resp, status.Error(codes.AlreadyExists, err.Error())
 		}
+
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return resp, status.Error(codes.ResourceExhausted, err.Error())
+		}
+
+		return resp, err
 	}
 
-	return &api.SetResponse{
-		Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-	}, err
+	return resp, nil
 }
 
 func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) (*api.GetResponse, error) {
@@ -76,7 +74,13 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.NotFound, err.Error())
 		}
-		// TODO: handle one more error here
+
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return &api.GetResponse{
+				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
+			}, status.Error(codes.ResourceExhausted, err.Error())
+		}
+
 		return &api.GetResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
@@ -91,10 +95,10 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.GetIndexResponse, error) {
 	ram, index, err := h.logic.GetIndex(r.Name)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
+		if errors.Is(err, storage.ErrIndexNotFound) {
 			return &api.GetIndexResponse{
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-			}, status.Error(codes.NotFound, err.Error())
+			}, status.Error(codes.ResourceExhausted, err.Error())
 		}
 		return &api.GetIndexResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
@@ -108,48 +112,79 @@ func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.Ge
 
 func (h *Handler) NewIndex(ctx context.Context, r *api.NewIndexRequest) (*api.NewIndexResponse, error) {
 	ram, err := h.logic.NewIndex(r.Name)
-
+	resp := &api.NewIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		return &api.NewIndexResponse{}, err
+		if errors.Is(err, storage.ErrEmptyIndexName) {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if errors.Is(err, storage.ErrSomethingExists) {
+			return resp, status.Error(codes.AlreadyExists, err.Error())
+		}
+
+		return resp, err
 	}
-	return &api.NewIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
+	return resp, nil
 }
 
 func (h *Handler) AttachToIndex(ctx context.Context, r *api.AttachToIndexRequest) (*api.AttachToIndexResponse, error) {
 	ram, err := h.logic.AttachToIndex(r.Dst, r.Src)
+	resp := &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		return &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return resp, status.Error(codes.NotFound, err.Error())
+		}
+
+		if errors.Is(err, storage.ErrCircularAttachment) {
+			return resp, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		if errors.Is(err, storage.ErrSomethingExists) {
+			return resp, status.Error(codes.AlreadyExists, err.Error())
+		}
+
+		return resp, err
 	}
-	return &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
+	return resp, nil
 }
 
 func (h *Handler) DeleteIndex(ctx context.Context, r *api.DeleteIndexRequest) (*api.DeleteIndexResponse, error) {
 	ram, err := h.logic.DeleteIndex(r.Index)
+	resp := &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		// TODO: handle error
-		// TODO: useless &api.Ram{Total: ram.Total, Available: ram.Available} ??
-		return &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return resp, status.Error(codes.ResourceExhausted, err.Error())
+		}
+		return resp, err
 	}
-	return &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
+	return resp, nil
 }
 
 func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
 	ram, err := h.logic.Delete(r.Key)
+	resp := &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, status.Error(codes.NotFound, storage.ErrNotFound.Error())
+			return resp, status.Error(codes.NotFound, storage.ErrNotFound.Error())
 		}
-		return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+		return resp, err
 	}
-	return &api.DeleteResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
+	return resp, nil
 }
 
 func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.IndexSizeResponse, error) {
 	ram, size, err := h.logic.Size(r.Name)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, status.Error(codes.NotFound, storage.ErrNotFound.Error())
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
+				status.Error(codes.ResourceExhausted, err.Error())
 		}
+
+		if errors.Is(err, storage.ErrSomethingExists) {
+			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
+				status.Error(codes.AlreadyExists, err.Error())
+		}
+
 		return &api.IndexSizeResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
@@ -162,11 +197,17 @@ func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.Index
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
 	ram, err := h.logic.DeleteAttr(r.Name, r.Key)
+	resp := &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, status.Error(codes.NotFound, storage.ErrNotFound.Error())
+			return resp, status.Error(codes.NotFound, storage.ErrNotFound.Error())
 		}
-		return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, err
+
+		if errors.Is(err, storage.ErrIndexNotFound) {
+			return resp, status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error())
+		}
+
+		return resp, err
 	}
-	return &api.DeleteAttrResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}, nil
+	return resp, nil
 }

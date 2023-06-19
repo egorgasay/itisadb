@@ -3,11 +3,11 @@ package servers
 import (
 	"context"
 	"errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"fmt"
 	"itisadb/pkg/api/storage"
 	"reflect"
 	"sync"
+	"sync/atomic"
 )
 
 // =============== server ====================== //
@@ -15,8 +15,9 @@ import (
 func NewServer(storage storage.StorageClient, number int32) *Server {
 	return &Server{
 		storage: storage,
-		number:  number,
+		number:  0,
 		mu:      &sync.RWMutex{},
+		tries:   atomic.Uint32{},
 	}
 }
 
@@ -24,7 +25,7 @@ var ErrAlreadyExists = errors.New("already exists")
 var ErrUnavailable = errors.New("server is unavailable")
 
 type Server struct {
-	tries   uint
+	tries   atomic.Uint32
 	storage storage.StorageClient
 	ram     RAM
 	number  int32
@@ -63,46 +64,12 @@ func (s *Server) setRAM(r getRAM) {
 func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) error {
 	r, err := s.storage.Set(ctx, &storage.SetRequest{Key: Key, Value: Value, Unique: unique})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-
-		if !ok {
-			return err
-		}
-
-		if ok && st.Code() == codes.AlreadyExists {
-			return ErrAlreadyExists
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-
-		return err
-	}
-
 	return err
 }
 
 func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, error) {
 	r, err := s.storage.Get(ctx, &storage.GetRequest{Key: Key})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return nil, err
-		}
-
-		if st.Code() == codes.NotFound {
-			return nil, ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return nil, ErrUnavailable
-		}
-		return nil, err
-	}
-
 	return r, err
 
 }
@@ -112,22 +79,6 @@ func (s *Server) GetIndex(ctx context.Context, name string) (*storage.GetIndexRe
 		Name: name,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return nil, err
-		}
-
-		if st.Code() == codes.NotFound {
-			return nil, ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return nil, ErrUnavailable
-		}
-		return nil, err
-	}
-
 	return r, err
 
 }
@@ -138,22 +89,6 @@ func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.G
 		Name: name,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return nil, err
-		}
-
-		if st.Code() == codes.NotFound {
-			return nil, ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return nil, ErrUnavailable
-		}
-		return nil, err
-	}
-
 	return r, err
 
 }
@@ -166,22 +101,6 @@ func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique
 		Unique: unique,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.AlreadyExists {
-			return ErrAlreadyExists
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-		return err
-	}
-
 	return err
 
 }
@@ -191,18 +110,7 @@ func (s *Server) NewIndex(ctx context.Context, name string) error {
 		Name: name,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Server) Size(ctx context.Context, name string) (*storage.IndexSizeResponse, error) {
@@ -210,22 +118,7 @@ func (s *Server) Size(ctx context.Context, name string) (*storage.IndexSizeRespo
 		Name: name,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return nil, err
-		}
-
-		if st.Code() == codes.NotFound {
-			return nil, ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return nil, ErrUnavailable
-		}
-		return nil, err
-	}
-	return r, nil
+	return r, err
 }
 
 func (s *Server) DeleteIndex(ctx context.Context, name string) error {
@@ -233,22 +126,7 @@ func (s *Server) DeleteIndex(ctx context.Context, name string) error {
 		Index: name,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Server) Delete(ctx context.Context, Key string) error {
@@ -256,23 +134,10 @@ func (s *Server) Delete(ctx context.Context, Key string) error {
 		Key: Key,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-		return err
-	}
-	return nil
+	return err
 }
+
+var ErrCircularAttachment = fmt.Errorf("circular attachment")
 
 func (s *Server) AttachToIndex(ctx context.Context, dst string, src string) error {
 	r, err := s.storage.AttachToIndex(ctx, &storage.AttachToIndexRequest{
@@ -280,43 +145,23 @@ func (s *Server) AttachToIndex(ctx context.Context, dst string, src string) erro
 		Src: src,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Server) GetNumber() int32 {
 	return s.number
 }
 
-func (s *Server) GetTries() uint {
-	return s.tries
+func (s *Server) GetTries() uint32 {
+	return s.tries.Load()
 }
 
 func (s *Server) IncTries() {
-	s.mu.Lock()
-	s.tries++ // TODO: atomic??
-	s.mu.Unlock()
+	s.tries.Add(1)
 }
 
 func (s *Server) ResetTries() {
-	s.mu.Lock()
-	s.tries = 0 // TODO: atomic??
-	s.mu.Unlock()
+	s.tries.Store(0)
 }
 
 func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) error {
@@ -325,20 +170,5 @@ func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) erro
 		Key:  attr,
 	})
 	s.setRAM(r)
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-
-		if st.Code() == codes.NotFound {
-			return ErrNotFound
-		}
-
-		if st.Code() == codes.Unavailable {
-			return ErrUnavailable
-		}
-		return err
-	}
-	return nil
+	return err
 }

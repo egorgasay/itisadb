@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"github.com/dolthub/swiss"
 	"reflect"
 	"strconv"
@@ -144,7 +145,7 @@ func TestStorage_GetFromIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index/innner/inner2",
+				name: "index.innner.inner2",
 				key:  "key2",
 			},
 			want: "val2",
@@ -211,7 +212,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name:  "index/innner/inner3",
+				name:  "index.innner.inner3",
 				key:   "key2",
 				value: "val2",
 			},
@@ -266,7 +267,7 @@ func TestStorage_AttachToIndex(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		wantErr bool
+		wantErr error
 	}{
 		{
 			name: "ok",
@@ -278,28 +279,37 @@ func TestStorage_AttachToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				dst: "index11/inner1",
+				dst: "index11.inner1",
 				src: "index22",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				dst: "index678/inner1/inner2/inner3",
-				src: "index23/inner1",
+				dst: "index678.inner1.inner2.inner3",
+				src: "index23.inner1",
 			},
 		},
 		{
-			name: "not found",
+			name: "notFound",
 			args: args{
 				dst: "index99",
 				src: "index98",
 			},
+			wantErr: ErrIndexNotFound,
+		},
+		{
+			name: "circle",
+			args: args{
+				dst: "index1.inner1",
+				src: "index1",
+			},
+			wantErr: ErrCircularAttachment,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.wantErr {
+			if !errors.Is(tt.wantErr, ErrIndexNotFound) {
 				err := s.CreateIndex(tt.args.dst)
 				if err != nil {
 					t.Fatalf("CreateIndex() error = %v", err)
@@ -310,21 +320,21 @@ func TestStorage_AttachToIndex(t *testing.T) {
 					t.Fatalf("CreateIndex() error = %v", err)
 				}
 			}
-			if err := s.AttachToIndex(tt.args.dst, tt.args.src); (err != nil) != tt.wantErr {
+			if err := s.AttachToIndex(tt.args.dst, tt.args.src); !errors.Is(err, tt.wantErr) {
 				t.Fatalf("AttachToIndex() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
 				original, err := s.findIndex(tt.args.src)
 				if err != nil {
 					t.Fatalf("findIndex() error = %v", err)
 				}
 
-				split := strings.Split(tt.args.src, "/")
+				split := strings.Split(tt.args.src, ".")
 				if len(split) == 0 {
 					t.Fatalf("index name error, fix it!")
 				}
 
-				attached, err := s.findIndex(tt.args.dst + "/" + split[len(split)-1])
+				attached, err := s.findIndex(tt.args.dst + "." + split[len(split)-1])
 				if err != nil {
 					t.Fatalf("findIndex() error = %v", err)
 				}
@@ -430,13 +440,13 @@ func TestStorage_CreateIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index/inner",
+				name: "index.inner",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index/inner/inner2/inner3/inner4",
+				name: "index.inner.inner2.inner3.inner4",
 			},
 		},
 		{
@@ -498,7 +508,7 @@ func TestStorage_GetIndex(t *testing.T) {
 		{
 			name: "ok#3",
 			args: args{
-				name: "index6/inner",
+				name: "index6.inner",
 			},
 			want: map[string]string{
 				"key":  "value",
@@ -700,7 +710,7 @@ func TestStorage_IsIndex(t *testing.T) {
 		{
 			name: "not ok",
 			args: args{
-				name: "index678/qwe",
+				name: "index678.qwe",
 			},
 			wantOk: false,
 		},
@@ -714,9 +724,9 @@ func TestStorage_IsIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			split := strings.Split(tt.args.name, "/")
+			split := strings.Split(tt.args.name, ".")
 			if !tt.wantOk && len(split) > 1 {
-				path := strings.Join(split[:len(split)-1], "/")
+				path := strings.Join(split[:len(split)-1], ".")
 				err := s.CreateIndex(path)
 				if err != nil {
 					t.Fatalf("CreateIndex() error = %v", err)

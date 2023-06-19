@@ -37,11 +37,16 @@ func main() {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
 
-	store, err := storage.NewWithTLogger(cfg, logger.New(loggerInstance))
+	store, err := storage.New(logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
-	logic := usecase.New(store, logger.New(loggerInstance))
+
+	logic, err := usecase.New(store, logger.New(loggerInstance), cfg.IsTLogger)
+	if err != nil {
+		log.Fatalf("Failed to initialize usecase layer: %v", err)
+	}
+
 	h := handler.New(logic)
 
 	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -52,12 +57,9 @@ func main() {
 
 	ram := usecase.RAMUsage()
 
-	dir := cfg.TLoggerDir
-	if dir == "" {
-		dir, err = os.Getwd()
-		if err != nil {
-			log.Fatalf("Unable to get current directory: %v", err)
-		}
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Unable to get current directory: %v", err)
 	}
 
 	cr := &balancer.BalancerConnectRequest{
@@ -74,7 +76,7 @@ func main() {
 	}
 
 	if cr.Server == 0 {
-		err := servernumber.Set(cfg.TLoggerDir, resp.ServerNumber)
+		err = servernumber.Set(resp.ServerNumber)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -102,27 +104,21 @@ func main() {
 	sc := bufio.NewScanner(os.Stdin)
 
 	fmt.Println("PRESS ENTER FOR RECONNECT")
-fl:
 	for sc.Scan() {
-		select {
-		case <-quit:
-			_, err = cl.Disconnect(context.Background(), &balancer.BalancerDisconnectRequest{ServerNumber: resp.GetServerNumber()})
-			if err != nil {
-				log.Println(err)
-			}
-			grpcServer.GracefulStop()
-			logic.Save()
-			log.Println("Shutdown Server ...")
-			break fl
-		default:
-			fmt.Print("RECONNECTING ...\n")
-			cr.Server = resp.ServerNumber
-			_, err = cl.Connect(context.Background(), cr)
-			if err != nil {
-				log.Println("Unable to connect to the balancer: %w", err)
-			}
-			fmt.Print("PRESS ENTER FOR RECONNECT")
+		fmt.Print("RECONNECTING ...\n")
+		cr.Server = resp.ServerNumber
+		_, err = cl.Connect(context.Background(), cr)
+		if err != nil {
+			log.Println("Unable to connect to the balancer: %w", err)
 		}
+		fmt.Print("PRESS ENTER FOR RECONNECT")
 	}
 
+	<-quit
+	_, err = cl.Disconnect(context.Background(), &balancer.BalancerDisconnectRequest{ServerNumber: resp.GetServerNumber()})
+	if err != nil {
+		log.Println(err)
+	}
+	grpcServer.GracefulStop()
+	log.Println("Shutdown Server ...")
 }

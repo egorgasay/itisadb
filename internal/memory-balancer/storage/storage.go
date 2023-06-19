@@ -2,79 +2,94 @@ package storage
 
 import (
 	"context"
-	"errors"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"itisadb/internal/memory-balancer/config"
-	"itisadb/internal/schema"
+	"fmt"
+	"github.com/labstack/gommon/log"
+	"os"
+	"strconv"
+	"sync"
 )
 
 type Storage struct {
-	dbStore *mongo.Database
+	mu *sync.RWMutex
 }
 
-func New(cfg *config.Config) (*Storage, error) {
-	if cfg == nil {
-		return nil, errors.New("empty configuration")
-	}
-
-	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI))
-	if err != nil {
-		return nil, err
-	}
-
+func New() (*Storage, error) {
 	return &Storage{
-		dbStore: client.Database("grpc-server"),
+		mu: &sync.RWMutex{},
 	}, nil
 }
 
-// Set adds key:value pair to db.
-func (s *Storage) Set(ctx context.Context, key string, val string) error {
-	c := s.dbStore.Collection("map")
-	opts := options.Update().SetUpsert(true)
-
-	filter := bson.D{{"Key", key}}
-	update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", val}}}}
-
-	_, err := c.UpdateOne(ctx, filter, update, opts)
-	return err
-}
-
-// SetUnique adds key:value pair to db and returns an error if it already exists.
-func (s *Storage) SetUnique(ctx context.Context, key string, val string) error {
-	c := s.dbStore.Collection("map")
-	opts := options.Update().SetUpsert(true)
-	filter := bson.D{{"Key", key}}
-	update := bson.D{{"$set", bson.D{{"Key", key}, {"Value", val}}}}
-	_, err := c.UpdateOne(ctx, filter, update, opts)
-	return err
-}
-
-var ErrNotFound = errors.New("not found")
-
-// Get gets value by key from db.
-func (s *Storage) Get(ctx context.Context, key string) (string, error) {
-	c := s.dbStore.Collection("map")
-	filter := bson.D{{"Key", key}}
-
-	var kv schema.KeyValue
-	err := c.FindOne(ctx, filter).Decode(&kv)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return "", ErrNotFound
-		}
+// RestoreIndexes restores index names.
+func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) {
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
 	}
-	return kv.Value, err
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	err := os.MkdirAll(".indexes", 0755)
+	if err != nil && !os.IsExist(err) {
+		return nil, fmt.Errorf("failed to create indexes dir: %w", err)
+	}
+
+	entry := make(map[string]int32)
+
+	dir, err := os.ReadDir(".indexes")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read indexes dir: %w", err)
+	}
+
+	for _, fe := range dir {
+		if fe.IsDir() {
+			continue
+		}
+
+		f, err := os.OpenFile(fmt.Sprintf(".indexes/%s", fe.Name()), os.O_RDONLY, 0644)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open indexes: %w", err)
+		}
+
+		for {
+			var index string
+			_, err = fmt.Fscanln(f, &index)
+			if err != nil {
+				break
+			}
+
+			num, err := strconv.Atoi(fe.Name())
+			if err != nil {
+				log.Errorf("failed to convert server number: %v", err)
+			} else {
+				entry[index] = int32(num)
+			}
+		}
+
+		f.Close()
+	}
+
+	return entry, nil
 }
 
-func (s *Storage) Delete(ctx context.Context, key string) error {
-	c := s.dbStore.Collection("map")
-	filter := bson.D{{"Key", key}}
+// SaveIndexLoc saves index location.
+func (s *Storage) SaveIndexLoc(ctx context.Context, index string, server int32) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
-	_, err := c.DeleteOne(ctx, filter)
-	return err
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	f, err := os.OpenFile(fmt.Sprintf(".indexes/%d", server), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil && !os.IsExist(err) {
+		return fmt.Errorf("failed to open indexes: %w", err)
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(index + "\n")
+	if err != nil {
+		return fmt.Errorf("failed to write to indexes: %w", err)
+	}
+
+	return nil
 }
