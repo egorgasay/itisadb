@@ -76,10 +76,6 @@ func (t *TransactionLogger) countWatcher(done chan struct{}) {
 			if t.currentCOL < 100_000 {
 				continue
 			}
-
-			t.Lock()
-			t.currentCOL = 0
-			t.file.Close()
 			t.currentName++
 
 			t.pathToFile = fmt.Sprintf("%s/%d", PATH, t.currentName)
@@ -88,22 +84,12 @@ func (t *TransactionLogger) countWatcher(done chan struct{}) {
 				t.errors <- err
 			}
 
+			t.Lock()
+			t.currentCOL = 0
+			t.file.Close()
 			t.file = f
 			t.Unlock()
 		}
-	}
-}
-
-// flash grabs 20 events and saves them to the storage.
-func (t *TransactionLogger) flash(data string) {
-	t.RLock() // may be LOCK???
-	defer t.RUnlock()
-
-	_, err := t.file.WriteString(data)
-	if err != nil {
-		log.Println("flash: ", err)
-		t.errors <- err
-		return
 	}
 }
 

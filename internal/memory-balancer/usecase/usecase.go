@@ -47,7 +47,14 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 var ErrNoServers = errors.New("no servers available")
 var ErrNotFound = errors.New("key not found")
 
-func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (string, error) {
+func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (val string, err error) {
+	return val, uc.withContext(ctx, func() error {
+		val, err = uc.get(ctx, key, serverNumber)
+		return nil
+	})
+}
+
+func (uc *UseCase) get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
 		return "", ErrNoServers
 	}
@@ -99,34 +106,24 @@ func (uc *UseCase) Connect(address string, available, total uint64, server int32
 }
 
 func (uc *UseCase) Disconnect(ctx context.Context, number int32) error {
-	ch := make(chan struct{})
-	uc.pool <- struct{}{}
-	go func() { // TODO: add pool
+	return uc.withContext(ctx, func() error {
 		uc.servers.Disconnect(number)
-		close(ch)
-		<-uc.pool
-	}()
-
-	select {
-	case <-ch:
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	})
 }
 
 func (uc *UseCase) Servers() []string {
 	return uc.servers.GetServers()
 }
 
-func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
+func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error) {
 	once := sync.Once{}
 	ch := make(chan struct{})
 	done := func() { close(ch) }
 
 	uc.pool <- struct{}{}
 	go func() {
-		err = uc.delete(ctx, key, num)
+		err = fn()
 		once.Do(done)
 		<-uc.pool
 	}()
@@ -138,6 +135,12 @@ func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error
 		once.Do(done)
 		return ctx.Err()
 	}
+}
+
+func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
+	return uc.withContext(ctx, func() error {
+		return uc.delete(ctx, key, num)
+	})
 }
 
 func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
