@@ -26,6 +26,10 @@ type Event struct {
 type TransactionLogger struct {
 	pathToDir  string
 	pathToFile string
+	file       *os.File
+
+	currentCOL  int32
+	currentName int32
 
 	events chan Event
 	errors chan error
@@ -44,8 +48,15 @@ func New() (*TransactionLogger, error) {
 	}
 	f.Close()
 
+	f, err = os.OpenFile(PATH+"/1", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TransactionLogger{
-		pathToDir:  PATH,
-		pathToFile: PATH + "/1",
+		pathToDir:   PATH,
+		pathToFile:  PATH + "/1",
+		file:        f,
+		currentName: 1,
 	}, nil
 }

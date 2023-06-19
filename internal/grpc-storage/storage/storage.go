@@ -54,7 +54,7 @@ type indexes struct {
 
 func New(logger logger.ILogger) (*Storage, error) {
 	st := &Storage{
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		logger:     logger,
 	}

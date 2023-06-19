@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
 
-	store, err := storage.New(cfg, logger.New(loggerInstance))
+	store, err := storage.New(logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
