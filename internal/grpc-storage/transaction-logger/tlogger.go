@@ -14,6 +14,9 @@ import (
 
 var PATH = "transaction-logger"
 
+const MaxBufferSize = 20
+const MaxCOL = 100_000
+
 type limitedBuffer struct {
 	sb      strings.Builder
 	counter int16
@@ -49,7 +52,7 @@ func (t *TransactionLogger) Run() {
 			op.counter++
 			t.currentCOL++
 
-			if op.counter == 200 {
+			if op.counter == MaxBufferSize {
 				t.RLock()
 				_, err := t.file.WriteString(op.sb.String())
 				//t.file.Sync() TODO: ???
@@ -73,7 +76,7 @@ func (t *TransactionLogger) countWatcher(done chan struct{}) {
 		case <-done:
 			return
 		case <-ticker.C:
-			if t.currentCOL < 100_000 {
+			if t.currentCOL < MaxCOL {
 				continue
 			}
 			t.currentName++
@@ -170,5 +173,5 @@ func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
 
 func (t *TransactionLogger) Stop() error {
 	close(t.events)
-	return nil
+	return t.file.Close()
 }

@@ -23,9 +23,10 @@ func (t *TransactionLogger) handleEvents(r restorer, events <-chan Event, errs <
 	for ok && err == nil {
 		select {
 		case err, ok = <-errs:
-			if err != nil {
+			if ok && err != nil {
 				return err
 			}
+			ok = true
 		case e, ok = <-events:
 			switch e.EventType {
 			case Set:
