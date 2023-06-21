@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/grpc-storage/storage"
-	mockusecase "itisadb/internal/memory-balancer/handler/grpc/mocks/usecase"
+	mockusecase "itisadb/internal/memory-balancer/handler/mocks/usecase"
 	"itisadb/internal/memory-balancer/servers"
 	"itisadb/internal/memory-balancer/usecase"
 	api "itisadb/pkg/api/balancer"
