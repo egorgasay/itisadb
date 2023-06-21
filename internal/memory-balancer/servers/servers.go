@@ -96,6 +96,8 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 
 	cl := storage.NewStorageClient(conn)
 
+	// add test connection
+
 	var stClient = &Server{
 		storage: cl,
 		ram:     RAM{available: available, total: total},

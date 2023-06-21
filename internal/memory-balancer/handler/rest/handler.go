@@ -251,6 +251,7 @@ func (h *Handler) getIndex(ctx *fasthttp.RequestCtx) {
 	}
 
 	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Response.Header.Set("Content-Type", "application/json")
 
 	v, err := json.Marshal(value)
 	if err != nil {
@@ -263,27 +264,141 @@ func (h *Handler) getIndex(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) index(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.GetIndexRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	_, err = h.logic.Index(ctx, r.Index)
+	if err != nil {
+		err = converterr.Index(err)
+		if errors.Is(err, converterr.ErrExists) {
+			ctx.Error(err.Error(), fasthttp.StatusConflict)
+		} else if errors.Is(err, converterr.ErrInvalidName) {
+			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		} else if errors.Is(err, converterr.ErrUnavailable) {
+			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
+		} else {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
 func (h *Handler) delIndex(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.DelIndexRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	err = h.logic.DeleteIndex(ctx, r.Index)
+	if err != nil {
+		err = converterr.DelIndex(err)
+		if errors.Is(err, converterr.ErrIndexNotFound) {
+			ctx.Error(err.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrUnavailable) {
+			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
+		} else {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
 func (h *Handler) indexSize(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.SizeIndexRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	size, err := h.logic.Size(ctx, r.Index)
+	if err != nil {
+		err = converterr.SizeIndex(err)
+		if errors.Is(err, converterr.ErrIndexNotFound) {
+			ctx.Error(err.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrUnavailable) {
+			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
+		} else {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Write([]byte(fmt.Sprint(size)))
 }
 
 func (h *Handler) isIndex(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.IsIndexRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	is, err := h.logic.IsIndex(ctx, r.Name)
+	if err != nil {
+		err = converterr.IsIndex(err)
+		if errors.Is(err, converterr.ErrIndexNotFound) {
+			ctx.Error(err.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrUnavailable) {
+			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
+		} else {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	ctx.Write([]byte(fmt.Sprintf(`{"isIndex":%v}`, is)))
 }
 
 func (h *Handler) attachIndex(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.AttachRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	err = h.logic.AttachToIndex(ctx, r.Dst, r.Src)
+	if err != nil {
+		err = converterr.AttachIndex(err)
+		if errors.Is(err, converterr.ErrIndexNotFound) {
+			ctx.Error(err.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrUnavailable) {
+			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
+		} else if errors.Is(err, converterr.ErrCircularAttachment) {
+			ctx.Error(err.Error(), fasthttp.StatusForbidden)
+		} else {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
 func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.ConnectRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	snum, err := h.logic.Connect(r.Address, r.Available, r.Total, r.Server)
+	if err != nil {
+
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Write([]byte(fmt.Sprint(snum)))
 }
 
 func (h *Handler) disconnect(ctx *fasthttp.RequestCtx) {

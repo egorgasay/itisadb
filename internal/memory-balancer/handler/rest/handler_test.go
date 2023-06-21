@@ -463,3 +463,502 @@ func TestHandler_setToIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_getIndex(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
+					Return(map[string]string{"i": "1", "v": "2"}, nil)
+			},
+			rJSON:    `{"index":"qwe"}`,
+			want:     `{"i":"1","v":"2"}`,
+			wantCode: 200,
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
+					Return(map[string]string{}, status.Error(codes.ResourceExhausted, "index not found"))
+			},
+			rJSON:    `{"index":"qwe2"}`,
+			wantCode: 410,
+		},
+		{
+			name: "unavailable",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
+					Return(map[string]string{}, status.Error(codes.Unavailable, "service unavailable"))
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 503,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"key":"qwe1"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.getIndex(tt.args.ctx)
+
+			if tt.want != "" {
+				if b := string(tt.args.ctx.Response.Body()); b != tt.want {
+					t.Errorf("Want {%s} got {%s}", tt.want, b)
+				}
+			}
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_index(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Index(gomock.Any(), gomock.Any()).
+					Return(int32(1), nil)
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 200,
+		},
+		{
+			name: "somethingExists",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Index(gomock.Any(), gomock.Any()).
+					Return(int32(0), status.Error(codes.AlreadyExists, "something exists"))
+			},
+			rJSON:    `{"index":"qwe2"}`,
+			wantCode: 409,
+		},
+		{
+			name: "invalidName",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Index(gomock.Any(), gomock.Any()).
+					Return(int32(0), status.Error(codes.InvalidArgument, "invalid name"))
+			},
+			rJSON:    `{"index":""}`,
+			wantCode: 400,
+		},
+		{
+			name: "unavailable",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Index(gomock.Any(), gomock.Any()).
+					Return(int32(0), status.Error(codes.Unavailable, "service unavailable"))
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 503,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"key":"qwe1"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.index(tt.args.ctx)
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_delIndex(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).
+					Return(nil)
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 200,
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.ResourceExhausted, "not found"))
+			},
+			rJSON:    `{"index":""}`,
+			wantCode: 410,
+		},
+		{
+			name: "unavailable",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.Unavailable, "service unavailable"))
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 503,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"key":"qwe1"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.delIndex(tt.args.ctx)
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_sizeIndex(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Size(gomock.Any(), gomock.Any()).
+					Return(uint64(33), nil)
+			},
+			rJSON:    `{"index":"qwe"}`,
+			want:     "33",
+			wantCode: 200,
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Size(gomock.Any(), gomock.Any()).
+					Return(uint64(0), status.Error(codes.ResourceExhausted, "not found"))
+			},
+			rJSON:    `{"index":""}`,
+			wantCode: 410,
+		},
+		{
+			name: "unavailable",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Size(gomock.Any(), gomock.Any()).
+					Return(uint64(0), status.Error(codes.Unavailable, "service unavailable"))
+			},
+			rJSON:    `{"index":"qwe"}`,
+			wantCode: 503,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"key":"qwe1"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.indexSize(tt.args.ctx)
+
+			if tt.want != "" {
+				if b := string(tt.args.ctx.Response.Body()); b != tt.want {
+					t.Errorf("Want {%s} got {%s}", tt.want, b)
+				}
+			}
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_isIndex(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().IsIndex(gomock.Any(), gomock.Any()).
+					Return(true, nil)
+			},
+			rJSON:    `{"name":"qwe"}`,
+			want:     `{"isIndex":true}`,
+			wantCode: 200,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"key":"qwe1"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.isIndex(tt.args.ctx)
+
+			if tt.want != "" {
+				if b := string(tt.args.ctx.Response.Body()); b != tt.want {
+					t.Errorf("Want {%s} got {%s}", tt.want, b)
+				}
+			}
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_attachIndex(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil)
+			},
+			rJSON:    `{"dst":"qwe", "src":"qwe3"}`,
+			wantCode: 200,
+		},
+		{
+			name: "indexNotFound",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.ResourceExhausted, "not found"))
+			},
+			rJSON:    `{"dst":"qwe2", "src":"qwe"}`,
+			wantCode: 410,
+		},
+		{
+			name: "circularAttachment",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.PermissionDenied, "circular attachment not allowed"))
+			},
+			rJSON:    `{"dst":"qwe", "src":"qwe"}`,
+			wantCode: 403,
+		},
+		{
+			name: "unavailable",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.Unavailable, "service unavailable"))
+			},
+			rJSON:    `{"dst":"qwe", "src":"qwe"}`,
+			wantCode: 503,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"dst":"qwe", "src":"qwe"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.attachIndex(tt.args.ctx)
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}

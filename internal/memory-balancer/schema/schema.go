@@ -40,3 +40,31 @@ type DelFromIndexRequest struct {
 type GetIndexRequest struct {
 	Index string `json:"index"`
 }
+
+type DelIndexRequest struct {
+	Index string `json:"index"`
+}
+
+type SizeIndexRequest struct {
+	Index string `json:"index"`
+}
+
+type IsIndexRequest struct {
+	Name string `json:"name"`
+}
+
+type AttachRequest struct {
+	Dst string `json:"dst"`
+	Src string `json:"src"`
+}
+
+type ConnectRequest struct {
+	Address   string `json:"address"`
+	Total     uint64 `json:"total"`
+	Available uint64 `json:"available"`
+	Server    int32  `json:"server"`
+}
+
+type DisconnectRequest struct {
+	Server int32 `json:"server"`
+}
