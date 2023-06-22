@@ -649,11 +649,11 @@ func TestHandler_GetIndex(t *testing.T) {
 
 			got, err := h.GetIndex(tt.args.ctx, tt.args.request)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

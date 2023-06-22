@@ -100,7 +100,7 @@ message IsIndexResponse {
 }
 
 message GetIndexResponse {
-  map<string, string> index = 1;
+  string index = 1;
   Ram ram = 2;
 }
 

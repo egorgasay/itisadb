@@ -112,7 +112,7 @@ message BalancerIsIndexResponse {
 }
 
 message BalancerGetIndexResponse {
-  map<string, string> index = 1;
+  string index = 1;
 }
 
 message BalancerSetResponse {

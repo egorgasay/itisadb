@@ -550,7 +550,7 @@ func TestServer_GetIndex(t *testing.T) {
 			}
 			got, err := s.GetIndex(tt.args.ctx, tt.args.name)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("GetIndex() error = %v, wantCode %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr != nil {
@@ -559,10 +559,10 @@ func TestServer_GetIndex(t *testing.T) {
 
 			if got != nil && tt.want != nil {
 				if !reflect.DeepEqual(*got, *tt.want) {
-					t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+					t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 				}
 			} else {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 
 		})

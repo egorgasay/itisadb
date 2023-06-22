@@ -93,7 +93,7 @@ func (c *storageClient) GetFromIndex(ctx context.Context, in *GetFromIndexReques
 
 func (c *storageClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error) {
 	out := new(GetIndexResponse)
-	err := c.cc.Invoke(ctx, "/api.Storage/GetIndex", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.Storage/IndexToJSON", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (UnimplementedStorageServer) GetFromIndex(context.Context, *GetFromIndexReq
 	return nil, status.Errorf(codes.Unimplemented, "method GetFromIndex not implemented")
 }
 func (UnimplementedStorageServer) GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method IndexToJSON not implemented")
 }
 func (UnimplementedStorageServer) IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
@@ -326,7 +326,7 @@ func _Storage_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Storage/GetIndex",
+		FullMethod: "/api.Storage/IndexToJSON",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StorageServer).GetIndex(ctx, req.(*GetIndexRequest))
@@ -470,7 +470,7 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Storage_GetFromIndex_Handler,
 		},
 		{
-			MethodName: "GetIndex",
+			MethodName: "IndexToJSON",
 			Handler:    _Storage_GetIndex_Handler,
 		},
 		{

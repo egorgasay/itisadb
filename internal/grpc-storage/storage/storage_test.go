@@ -550,14 +550,48 @@ func TestStorage_GetIndex(t *testing.T) {
 			}
 			got, err := s.GetIndex(tt.args.name, "")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
+}
+
+func TestStorage_GetIndex2(t *testing.T) {
+	s := Storage{
+		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+	}
+
+	err := s.CreateIndex("qwe")
+	if err != nil {
+		t.Fatalf("CreateIndex() error = %v", err)
+	}
+
+	err = s.CreateIndex("qwe.edc")
+	if err != nil {
+		t.Fatalf("CreateIndex() error = %v", err)
+	}
+
+	err = s.SetToIndex("qwe", "rfg", "gwf", false)
+	if err != nil {
+		t.Fatalf("SetToIndex() error = %v", err)
+	}
+
+	err = s.SetToIndex("qwe.edc", "3g", "3f", false)
+	if err != nil {
+		t.Fatalf("SetToIndex() error = %v", err)
+	}
+
+	_, err = s.GetIndex("qwe", "")
+	if err != nil {
+		t.Errorf("IndexToJSON() error = %v, wantErr false", err)
+		return
+	}
+
+	//log.Println(got)
 }
 
 func TestStorage_findIndex(t *testing.T) {

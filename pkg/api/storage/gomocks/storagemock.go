@@ -163,7 +163,7 @@ func (m *MockStorageClient) GetIndex(ctx context.Context, in *storage.GetIndexRe
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetIndex", varargs...)
+	ret := m.ctrl.Call(m, "IndexToJSON", varargs...)
 	ret0, _ := ret[0].(*storage.GetIndexResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -173,7 +173,7 @@ func (m *MockStorageClient) GetIndex(ctx context.Context, in *storage.GetIndexRe
 func (mr *MockStorageClientMockRecorder) GetIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIndex", reflect.TypeOf((*MockStorageClient)(nil).GetIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockStorageClient)(nil).GetIndex), varargs...)
 }
 
 // IsIndex mocks base method.
@@ -392,7 +392,7 @@ func (mr *MockStorageServerMockRecorder) GetFromIndex(arg0, arg1 interface{}) *g
 // GetIndex mocks base method.
 func (m *MockStorageServer) GetIndex(arg0 context.Context, arg1 *storage.GetIndexRequest) (*storage.GetIndexResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIndex", arg0, arg1)
+	ret := m.ctrl.Call(m, "IndexToJSON", arg0, arg1)
 	ret0, _ := ret[0].(*storage.GetIndexResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -401,7 +401,7 @@ func (m *MockStorageServer) GetIndex(arg0 context.Context, arg1 *storage.GetInde
 // GetIndex indicates an expected call of GetIndex.
 func (mr *MockStorageServerMockRecorder) GetIndex(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIndex", reflect.TypeOf((*MockStorageServer)(nil).GetIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockStorageServer)(nil).GetIndex), arg0, arg1)
 }
 
 // IsIndex mocks base method.

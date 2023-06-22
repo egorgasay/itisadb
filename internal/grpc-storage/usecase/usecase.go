@@ -21,7 +21,7 @@ type IUseCase interface {
 	SetToIndex(name string, key string, val string, uniques bool) (RAM, error)
 	Get(key string) (RAM, string, error)
 	GetFromIndex(name string, key string) (RAM, string, error)
-	GetIndex(name string) (RAM, map[string]string, error)
+	IndexToJSON(name string) (RAM, string, error)
 	NewIndex(name string) (RAM, error)
 	Size(name string) (RAM, uint64, error)
 	DeleteIndex(name string) (RAM, error)
@@ -104,8 +104,8 @@ func (uc *UseCase) GetFromIndex(name, key string) (RAM, string, error) {
 	return RAMUsage(), s, err
 }
 
-func (uc *UseCase) GetIndex(name string) (RAM, map[string]string, error) {
-	index, err := uc.storage.GetIndex(name, "")
+func (uc *UseCase) IndexToJSON(name string) (RAM, string, error) {
+	index, err := uc.storage.IndexToJSON(name)
 	return RAMUsage(), index, err
 }
 

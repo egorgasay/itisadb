@@ -93,7 +93,7 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 }
 
 func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.GetIndexResponse, error) {
-	ram, index, err := h.logic.GetIndex(r.Name)
+	ram, index, err := h.logic.IndexToJSON(r.Name)
 	if err != nil {
 		if errors.Is(err, storage.ErrIndexNotFound) {
 			return &api.GetIndexResponse{

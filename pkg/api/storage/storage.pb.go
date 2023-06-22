@@ -1398,7 +1398,7 @@ var file_api_proto_storage_proto_depIdxs = []int32{
 	8,  // 13: api.Storage.SetToIndex:input_type -> api.SetToIndexRequest
 	9,  // 14: api.Storage.AttachToIndex:input_type -> api.AttachToIndexRequest
 	10, // 15: api.Storage.GetFromIndex:input_type -> api.GetFromIndexRequest
-	4,  // 16: api.Storage.GetIndex:input_type -> api.GetIndexRequest
+	4,  // 16: api.Storage.IndexToJSON:input_type -> api.GetIndexRequest
 	5,  // 17: api.Storage.IsIndex:input_type -> api.IsIndexRequest
 	6,  // 18: api.Storage.NewIndex:input_type -> api.NewIndexRequest
 	7,  // 19: api.Storage.Size:input_type -> api.IndexSizeRequest
@@ -1410,7 +1410,7 @@ var file_api_proto_storage_proto_depIdxs = []int32{
 	18, // 25: api.Storage.SetToIndex:output_type -> api.SetResponse
 	21, // 26: api.Storage.AttachToIndex:output_type -> api.AttachToIndexResponse
 	13, // 27: api.Storage.GetFromIndex:output_type -> api.GetResponse
-	16, // 28: api.Storage.GetIndex:output_type -> api.GetIndexResponse
+	16, // 28: api.Storage.IndexToJSON:output_type -> api.GetIndexResponse
 	15, // 29: api.Storage.IsIndex:output_type -> api.IsIndexResponse
 	17, // 30: api.Storage.NewIndex:output_type -> api.NewIndexResponse
 	22, // 31: api.Storage.Size:output_type -> api.IndexSizeResponse

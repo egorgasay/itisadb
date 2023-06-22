@@ -1810,7 +1810,7 @@ var file_api_proto_balancer_proto_depIdxs = []int32{
 	11, // 7: api.Balancer.Connect:input_type -> api.BalancerConnectRequest
 	14, // 8: api.Balancer.Disconnect:input_type -> api.BalancerDisconnectRequest
 	15, // 9: api.Balancer.Servers:input_type -> api.BalancerServersRequest
-	2,  // 10: api.Balancer.GetIndex:input_type -> api.BalancerGetIndexRequest
+	2,  // 10: api.Balancer.IndexToJSON:input_type -> api.BalancerGetIndexRequest
 	13, // 11: api.Balancer.IsIndex:input_type -> api.BalancerIsIndexRequest
 	1,  // 12: api.Balancer.Size:input_type -> api.BalancerIndexSizeRequest
 	3,  // 13: api.Balancer.Delete:input_type -> api.BalancerDeleteRequest
@@ -1826,7 +1826,7 @@ var file_api_proto_balancer_proto_depIdxs = []int32{
 	20, // 23: api.Balancer.Connect:output_type -> api.BalancerConnectResponse
 	24, // 24: api.Balancer.Disconnect:output_type -> api.BalancerDisconnectResponse
 	30, // 25: api.Balancer.Servers:output_type -> api.BalancerServersResponse
-	18, // 26: api.Balancer.GetIndex:output_type -> api.BalancerGetIndexResponse
+	18, // 26: api.Balancer.IndexToJSON:output_type -> api.BalancerGetIndexResponse
 	17, // 27: api.Balancer.IsIndex:output_type -> api.BalancerIsIndexResponse
 	26, // 28: api.Balancer.Size:output_type -> api.BalancerIndexSizeResponse
 	22, // 29: api.Balancer.Delete:output_type -> api.BalancerDeleteResponse

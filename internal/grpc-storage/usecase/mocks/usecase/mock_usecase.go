@@ -143,7 +143,7 @@ func (mr *MockIUseCaseMockRecorder) GetFromIndex(arg0, arg1 interface{}) *gomock
 // GetIndex mocks base method.
 func (m *MockIUseCase) GetIndex(arg0 string) (usecase.RAM, map[string]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIndex", arg0)
+	ret := m.ctrl.Call(m, "IndexToJSON", arg0)
 	ret0, _ := ret[0].(usecase.RAM)
 	ret1, _ := ret[1].(map[string]string)
 	ret2, _ := ret[2].(error)
@@ -153,7 +153,7 @@ func (m *MockIUseCase) GetIndex(arg0 string) (usecase.RAM, map[string]string, er
 // GetIndex indicates an expected call of GetIndex.
 func (mr *MockIUseCaseMockRecorder) GetIndex(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIndex", reflect.TypeOf((*MockIUseCase)(nil).GetIndex), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockIUseCase)(nil).GetIndex), arg0)
 }
 
 // NewIndex mocks base method.

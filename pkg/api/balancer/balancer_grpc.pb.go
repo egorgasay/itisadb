@@ -131,7 +131,7 @@ func (c *balancerClient) Servers(ctx context.Context, in *BalancerServersRequest
 
 func (c *balancerClient) GetIndex(ctx context.Context, in *BalancerGetIndexRequest, opts ...grpc.CallOption) (*BalancerGetIndexResponse, error) {
 	out := new(BalancerGetIndexResponse)
-	err := c.cc.Invoke(ctx, "/api.Balancer/GetIndex", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.Balancer/IndexToJSON", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func (UnimplementedBalancerServer) Servers(context.Context, *BalancerServersRequ
 	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
 }
 func (UnimplementedBalancerServer) GetIndex(context.Context, *BalancerGetIndexRequest) (*BalancerGetIndexResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method IndexToJSON not implemented")
 }
 func (UnimplementedBalancerServer) IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
@@ -452,7 +452,7 @@ func _Balancer_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Balancer/GetIndex",
+		FullMethod: "/api.Balancer/IndexToJSON",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BalancerServer).GetIndex(ctx, req.(*BalancerGetIndexRequest))
@@ -612,7 +612,7 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Balancer_Servers_Handler,
 		},
 		{
-			MethodName: "GetIndex",
+			MethodName: "IndexToJSON",
 			Handler:    _Balancer_GetIndex_Handler,
 		},
 		{

@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
 	"itisadb/pkg/logger"
 	"strings"
@@ -28,7 +30,7 @@ type IStorage interface {
 	AttachToIndex(dst string, src string) error
 	DeleteIndex(name string) error
 	CreateIndex(name string) (err error)
-	GetIndex(name string, prefix string) (map[string]string, error)
+	IndexToJSON(name string) (string, error)
 	Size(name string) (uint64, error)
 	IsIndex(name string) bool
 	DeleteAttr(name string, key string) error
@@ -165,41 +167,47 @@ func (s *Storage) CreateIndex(name string) (err error) {
 	return nil
 }
 
-func (s *Storage) GetIndex(name string, prefix string) (map[string]string, error) {
+// TODO: JSONToIndex
+func (s *Storage) IndexToJSON(name string) (string, error) {
 	index, err := s.findIndex(name)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	result := make(map[string]string)
-
-	index.Iter(func(key string, value ivalue) bool {
-		if value.IsIndex() {
-			prefix = prefix + "\t"
-			m, err := s.GetIndex(name+"."+key, prefix)
-			if err != nil {
-				result[key] = err.Error()
-			} else {
-				result[key] = mapToString(m, prefix)
-			}
-		} else {
-			result[key] = value.GetValue()
-		}
-		return false
-	})
-	return result, nil
+	en, err := json.MarshalIndent(index, "", "\t")
+	return string(en), err
 }
 
-func mapToString(m map[string]string, prefix string) string {
-	b := strings.Builder{}
-	for k, v := range m {
-		b.WriteString("\n")
-		b.WriteString(prefix)
-		b.WriteString(k)
-		b.WriteString(": ")
-		b.WriteString(v)
+func (v *value) MarshalJSON() ([]byte, error) {
+	fmt.Println("Hi")
+
+	arr := make([]any, 0, 100)
+	var data map[string]interface{}
+
+	if v.Next != nil {
+		v.Next.Iter(func(k string, v ivalue) bool {
+			val := v.(*value)
+			if val != nil {
+				arr = append(arr, v.(*value))
+			}
+
+			return false
+		})
+
+		data = map[string]interface{}{
+			"index":  true,
+			"name":   v.Name(),
+			"values": arr,
+		}
+	} else {
+		data = map[string]interface{}{
+			"index": false,
+			"name":  v.Name(),
+			"value": v.value,
+		}
 	}
-	return b.String()
+
+	return json.MarshalIndent(data, "", "\t")
 }
 
 func (s *Storage) findIndex(name string) (ivalue, error) {
@@ -219,7 +227,7 @@ func (s *Storage) findIndex(name string) (ivalue, error) {
 	for _, indexName := range path {
 		switch val.IsIndex() {
 		case true:
-			val, ok = val.Next(indexName)
+			val, ok = val.GetIValue(indexName)
 			if !ok {
 				return nil, ErrIndexNotFound
 			}
