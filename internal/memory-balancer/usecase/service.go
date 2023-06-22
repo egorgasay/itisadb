@@ -16,6 +16,10 @@ const (
 	setToAll
 )
 
+const (
+	deleteFromAll = -1
+)
+
 //go:generate mockgen -destination=mocks/storage/mock_storage.go -package=mocks . IStorage
 type iStorage interface {
 	RestoreIndexes(ctx context.Context) (map[string]int32, error)
@@ -33,6 +37,7 @@ type iServers interface {
 	GetServerByID(number int32) (*servers.Server, bool)
 	Exists(number int32) bool
 	SetToAll(ctx context.Context, key string, val string, uniques bool) []int32
+	DelFromAll(ctx context.Context, key string) (atLeastOnce bool)
 }
 
 type UseCase struct {

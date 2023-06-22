@@ -115,7 +115,8 @@ func TestUseCase_AttachToIndex(t *testing.T) {
 					"test1": 1,
 					"test2": 2,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			if err = uc.AttachToIndex(tt.args.ctx, tt.args.dst, tt.args.src); (err != nil) != tt.wantErr {
@@ -219,7 +220,8 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			if err = uc.DeleteAttr(tt.args.ctx, tt.args.attr, tt.args.index); (err != nil) != tt.wantErr {
@@ -319,7 +321,8 @@ func TestUseCase_DeleteIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			if err := uc.DeleteIndex(tt.args.ctx, tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
@@ -434,7 +437,8 @@ func TestUseCase_GetFromIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.GetFromIndex(tt.args.ctx, tt.args.index, tt.args.key, tt.args.serverNumber)
@@ -552,7 +556,8 @@ func TestUseCase_GetIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.GetIndex(tt.args.ctx, tt.args.name)
@@ -593,8 +598,11 @@ func TestUseCase_Index(t *testing.T) {
 			serversBehavior: func(cl *serversmock.MockIServers) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
-			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
-			want:                1,
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
+					&storage.NewIndexResponse{}, nil)
+			},
+			want: 0,
 		},
 		{
 			name: "create",
@@ -652,7 +660,8 @@ func TestUseCase_Index(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			got, err := uc.Index(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -719,7 +728,8 @@ func TestUseCase_IsIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			got, err := uc.IsIndex(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -842,7 +852,8 @@ func TestUseCase_SetToIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.SetToIndex(tt.args.ctx, tt.args.index, tt.args.key, tt.args.val, tt.args.uniques)
@@ -951,7 +962,8 @@ func TestUseCase_Size(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.Size(tt.args.ctx, tt.args.name)

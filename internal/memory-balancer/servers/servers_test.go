@@ -130,7 +130,7 @@ func TestServers_AddClient(t *testing.T) {
 
 			s := &Servers{
 				servers: map[int32]*Server{},
-				freeID:  2,
+				freeID:  1,
 				RWMutex: sync.RWMutex{},
 			}
 

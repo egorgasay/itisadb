@@ -50,7 +50,7 @@ var ErrNotFound = errors.New("key not found")
 func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (val string, err error) {
 	return val, uc.withContext(ctx, func() error {
 		val, err = uc.get(ctx, key, serverNumber)
-		return nil
+		return err
 	})
 }
 
@@ -154,9 +154,12 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 		num = setToAll
 	}
 
-	switch num {
-	case setToAll:
-		// TODO: delete from setToAll servers
+	if num == deleteFromAll {
+		atLeastOnce := uc.servers.DelFromAll(ctx, key)
+		if !atLeastOnce {
+			return ErrNotFound
+		}
+		return nil
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)

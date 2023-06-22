@@ -88,6 +88,10 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	s.Lock()
 	defer s.Unlock()
 
+	if server < s.freeID {
+		return 0, fmt.Errorf("%w. can't add server, beacause number is smaller then last was", ErrInternal)
+	}
+
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return 0, errors.Wrap(ErrInternal, err.Error())
@@ -106,10 +110,6 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	if server != 0 {
 		if _, ok := s.servers[server]; ok {
 			return 0, ErrAlreadyExists
-		}
-
-		if server < s.freeID {
-			return 0, fmt.Errorf("%w. can't add server, beacause number is smaller then last was", ErrInternal)
 		}
 
 		stClient.number = server
@@ -260,4 +260,42 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 	wg.Wait()
 
 	return failedServers
+}
+
+func (s *Servers) DelFromAll(ctx context.Context, key string) (atLeastOnce bool) {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	s.RLock()
+	defer s.RUnlock()
+
+	wg.Add(len(s.servers))
+
+	del := func(server *Server, number int32) {
+		defer wg.Done()
+		err := server.Delete(ctx, key)
+		if err != nil {
+			if server.GetTries() > 2 {
+				delete(s.servers, number)
+			}
+			server.IncTries()
+			mu.Lock()
+			mu.Unlock()
+			return
+		}
+		atLeastOnce = true
+
+		server.ResetTries()
+	}
+
+	for n, serv := range s.servers {
+		s.poolCh <- struct{}{}
+		go func(serv *Server, n int32) {
+			del(serv, n)
+			<-s.poolCh
+		}(serv, n)
+	}
+	wg.Wait()
+
+	return atLeastOnce
 }
