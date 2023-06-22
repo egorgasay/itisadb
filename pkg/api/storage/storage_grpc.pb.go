@@ -21,15 +21,13 @@ const _ = grpc.SupportPackageIsVersion7
 // StorageClient is the client API for Storage service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-//go:generate mockgen -source storage_grpc.pb.go -destination gomocks/storagemock.go -package storagemock
 type StorageClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	SetToIndex(ctx context.Context, in *SetToIndexRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	AttachToIndex(ctx context.Context, in *AttachToIndexRequest, opts ...grpc.CallOption) (*AttachToIndexResponse, error)
 	GetFromIndex(ctx context.Context, in *GetFromIndexRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error)
+	IndexToJSON(ctx context.Context, in *IndexToJSONRequest, opts ...grpc.CallOption) (*IndexToJSONResponse, error)
 	IsIndex(ctx context.Context, in *IsIndexRequest, opts ...grpc.CallOption) (*IsIndexResponse, error)
 	NewIndex(ctx context.Context, in *NewIndexRequest, opts ...grpc.CallOption) (*NewIndexResponse, error)
 	Size(ctx context.Context, in *IndexSizeRequest, opts ...grpc.CallOption) (*IndexSizeResponse, error)
@@ -91,9 +89,9 @@ func (c *storageClient) GetFromIndex(ctx context.Context, in *GetFromIndexReques
 	return out, nil
 }
 
-func (c *storageClient) GetIndex(ctx context.Context, in *GetIndexRequest, opts ...grpc.CallOption) (*GetIndexResponse, error) {
-	out := new(GetIndexResponse)
-	err := c.cc.Invoke(ctx, "/api.Storage/GetIndex", in, out, opts...)
+func (c *storageClient) IndexToJSON(ctx context.Context, in *IndexToJSONRequest, opts ...grpc.CallOption) (*IndexToJSONResponse, error) {
+	out := new(IndexToJSONResponse)
+	err := c.cc.Invoke(ctx, "/api.Storage/IndexToJSON", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +161,7 @@ type StorageServer interface {
 	SetToIndex(context.Context, *SetToIndexRequest) (*SetResponse, error)
 	AttachToIndex(context.Context, *AttachToIndexRequest) (*AttachToIndexResponse, error)
 	GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error)
-	GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error)
+	IndexToJSON(context.Context, *IndexToJSONRequest) (*IndexToJSONResponse, error)
 	IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error)
 	NewIndex(context.Context, *NewIndexRequest) (*NewIndexResponse, error)
 	Size(context.Context, *IndexSizeRequest) (*IndexSizeResponse, error)
@@ -192,8 +190,8 @@ func (UnimplementedStorageServer) AttachToIndex(context.Context, *AttachToIndexR
 func (UnimplementedStorageServer) GetFromIndex(context.Context, *GetFromIndexRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFromIndex not implemented")
 }
-func (UnimplementedStorageServer) GetIndex(context.Context, *GetIndexRequest) (*GetIndexResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetIndex not implemented")
+func (UnimplementedStorageServer) IndexToJSON(context.Context, *IndexToJSONRequest) (*IndexToJSONResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IndexToJSON not implemented")
 }
 func (UnimplementedStorageServer) IsIndex(context.Context, *IsIndexRequest) (*IsIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsIndex not implemented")
@@ -316,20 +314,20 @@ func _Storage_GetFromIndex_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Storage_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetIndexRequest)
+func _Storage_IndexToJSON_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IndexToJSONRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StorageServer).GetIndex(ctx, in)
+		return srv.(StorageServer).IndexToJSON(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Storage/GetIndex",
+		FullMethod: "/api.Storage/IndexToJSON",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).GetIndex(ctx, req.(*GetIndexRequest))
+		return srv.(StorageServer).IndexToJSON(ctx, req.(*IndexToJSONRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -470,8 +468,8 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Storage_GetFromIndex_Handler,
 		},
 		{
-			MethodName: "GetIndex",
-			Handler:    _Storage_GetIndex_Handler,
+			MethodName: "IndexToJSON",
+			Handler:    _Storage_IndexToJSON_Handler,
 		},
 		{
 			MethodName: "IsIndex",

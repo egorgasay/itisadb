@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
 
-	store, err := storage.New(logger.New(loggerInstance))
+	store, err := storage.New()
 	if err != nil {
 		log.Fatalf("Failed to initialize: %v", err)
 	}
@@ -62,11 +62,16 @@ func main() {
 		log.Fatalf("Unable to get current directory: %v", err)
 	}
 
+	snum, err := servernumber.Get(dir)
+	if err != nil {
+		log.Fatalf("Unable to get server number: %v", err)
+	}
+
 	cr := &balancer.BalancerConnectRequest{
 		Address:   cfg.Host,
 		Total:     ram.Total,
 		Available: ram.Available,
-		Server:    servernumber.Get(dir),
+		Server:    snum,
 	}
 
 	cl := balancer.NewBalancerClient(conn)

@@ -1,7 +1,9 @@
 package transactionlogger
 
 import (
+	"fmt"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -42,21 +44,44 @@ func New() (*TransactionLogger, error) {
 		return nil, err
 	}
 
-	f, err := os.Create(PATH + "/1")
+	files, err := os.ReadDir(PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	maxNumber := 0
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
+		if n, err := strconv.Atoi(f.Name()); err != nil {
+			continue
+		} else if n > maxNumber {
+			maxNumber = n
+		}
+	}
+
+	if maxNumber == 0 {
+		maxNumber = 1
+	}
+
+	filename := fmt.Sprint(PATH, "/", maxNumber)
+	f, err := os.Create(filename)
 	if err != nil {
 		return nil, err
 	}
 	f.Close()
 
-	f, err = os.OpenFile(PATH+"/1", os.O_APPEND|os.O_WRONLY, 0644)
+	f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
 
 	return &TransactionLogger{
 		pathToDir:   PATH,
-		pathToFile:  PATH + "/1",
+		pathToFile:  filename,
 		file:        f,
-		currentName: 1,
+		currentName: int32(maxNumber),
 	}, nil
 }

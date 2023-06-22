@@ -3,7 +3,6 @@ package storage
 import (
 	"errors"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"itisadb/pkg/logger"
 	"strings"
 	"sync"
 
@@ -37,7 +36,6 @@ type IStorage interface {
 type Storage struct {
 	ramStorage ramStorage
 	indexes    indexes
-	logger     logger.ILogger
 }
 
 type ramStorage struct {
@@ -52,11 +50,10 @@ type indexes struct {
 	path string
 }
 
-func New(logger logger.ILogger) (*Storage, error) {
+func New() (*Storage, error) {
 	st := &Storage{
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
-		logger:     logger,
 	}
 
 	return st, nil
