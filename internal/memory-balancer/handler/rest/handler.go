@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -8,6 +9,7 @@ import (
 	"itisadb/internal/memory-balancer/handler/converterr"
 	mocks "itisadb/internal/memory-balancer/handler/mocks/usecase"
 	"itisadb/internal/memory-balancer/schema"
+	"itisadb/internal/memory-balancer/servers"
 	"strings"
 )
 
@@ -394,7 +396,13 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 
 	snum, err := h.logic.Connect(r.Address, r.Available, r.Total, r.Server)
 	if err != nil {
-
+		if errors.Is(err, servers.ErrAlreadyExists) {
+			ctx.Error(err.Error(), fasthttp.StatusConflict)
+		}
+		if errors.Is(err, servers.ErrInternal) {
+			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		}
+		return
 	}
 
 	ctx.SetStatusCode(fasthttp.StatusOK)
@@ -402,5 +410,19 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) disconnect(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.DisconnectRequest](&ctx.Request)
+	if err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
 
+	err = h.logic.Disconnect(ctx, r.Server)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			ctx.Error(err.Error(), fasthttp.StatusRequestTimeout)
+		}
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }

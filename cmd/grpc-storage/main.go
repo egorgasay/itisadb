@@ -31,6 +31,7 @@ func main() {
 	}
 
 	cfg := config.New(gc.Storage)
+	log.Printf("Starting Storage on %s\n", cfg.Host)
 
 	loggerInstance, err := zap.NewProduction()
 	if err != nil {
@@ -85,7 +86,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 
 	go func() {
-		log.Println("Starting Server ...")
+		log.Printf("gRPC: %s\n", cfg.Host)
 		lis, err := net.Listen("tcp", fmt.Sprintf(cfg.Host))
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)

@@ -1,11 +1,13 @@
 package rest
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/valyala/fasthttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	mocks "itisadb/internal/memory-balancer/handler/mocks/usecase"
+	"itisadb/internal/memory-balancer/servers"
 	"testing"
 )
 
@@ -955,6 +957,154 @@ func TestHandler_attachIndex(t *testing.T) {
 			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
 
 			h.attachIndex(tt.args.ctx)
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_connect(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(0), nil)
+			},
+			rJSON:    `{"address":"127.0.0.1:897", "total":100, "available":100, "server":1}`,
+			wantCode: 200,
+		},
+		{
+			name: "Exists",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(0), servers.ErrAlreadyExists)
+			},
+			rJSON:    `{"address":"127.0.0.1:897", "total":100, "available":100, "server":1}`,
+			wantCode: 409,
+		},
+		{
+			name: "internal",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(int32(0), servers.ErrInternal)
+			},
+			rJSON:    `{"address":"127.0.0.1:897", "total":100, "available":100, "server":1}`,
+			wantCode: 500,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"dst":"qwe", "src":"qwe"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.connect(tt.args.ctx)
+
+			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
+				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
+			}
+		})
+	}
+}
+
+func TestHandler_disconnect(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+	logicmock := mocks.NewMockIUseCase(c)
+	h := New(logicmock)
+
+	type args struct {
+		ctx *fasthttp.RequestCtx
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		mockUseCase mockUseCase
+		rJSON       string
+		want        string
+		wantCode    int
+	}{
+		{
+			name: "ok",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Disconnect(gomock.Any(), gomock.Any()).
+					Return(nil)
+			},
+			rJSON:    `{"server":1}`,
+			wantCode: 200,
+		},
+		{
+			name: "contextDeadlineExceed",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {
+				c.EXPECT().Disconnect(gomock.Any(), gomock.Any()).
+					Return(context.DeadlineExceeded)
+			},
+			rJSON:    `{"server":2}`,
+			wantCode: fasthttp.StatusRequestTimeout,
+		},
+		{
+			name: "badRequest",
+			args: args{
+				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
+			},
+			mockUseCase: func(c *mocks.MockIUseCase) {},
+			rJSON:       `{"dst":"qwe", "src":"qwe"}"`,
+			wantCode:    400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockUseCase(logicmock)
+
+			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
+
+			h.disconnect(tt.args.ctx)
 
 			if code := tt.args.ctx.Response.StatusCode(); code != tt.wantCode {
 				t.Errorf("Want code {%d} got {%d}", tt.wantCode, code)
