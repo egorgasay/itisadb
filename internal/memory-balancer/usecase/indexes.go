@@ -125,9 +125,9 @@ func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniqu
 	return num, nil
 }
 
-func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string, error) {
+func (uc *UseCase) GetIndex(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
-		return nil, ctx.Err()
+		return "", ctx.Err()
 	}
 
 	uc.mu.RLock()
@@ -135,17 +135,17 @@ func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string
 	uc.mu.RUnlock()
 
 	if !ok {
-		return nil, ErrIndexNotFound
+		return "", ErrIndexNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return nil, ErrServerNotFound
+		return "", ErrServerNotFound
 	}
 
 	res, err := cl.GetIndex(ctx, name)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return res.Index, nil
