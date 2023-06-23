@@ -486,50 +486,53 @@ func TestHandler_GetFromIndex(t *testing.T) {
 	}
 }
 
-func TestHandler_GetIndex(t *testing.T) {
+func TestHandler_IndexToJSON(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx context.Context
-		r   *api.GetIndexRequest
+		r   *api.IndexToJSONRequest
 	}
 	tests := []struct {
 		name        string
 		args        args
 		useCaseMock useCaseMock
-		want        *api.GetIndexResponse
+		want        *api.IndexToJSONResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				r: &api.GetIndexRequest{
+				r: &api.IndexToJSONRequest{
 					Name: "index",
 				},
 			},
 			useCaseMock: func(usecase.IUseCase) {
-				logicmock.EXPECT().GetIndex(gomock.Any()).Return(ram, map[string]string{"test": "test"}, nil)
+				logicmock.EXPECT().IndexToJSON(gomock.Any()).
+					Return(ram,
+						"{\n\t\"isIndex\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
+						nil)
 			},
-			want: &api.GetIndexResponse{
+			want: &api.IndexToJSONResponse{
 				Ram:   apiRam,
-				Index: map[string]string{"test": "test"},
+				Index: "{\n\t\"isIndex\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
 			},
 		},
 		{
 			name: "indexNotFound",
 			args: args{
 				ctx: context.Background(),
-				r: &api.GetIndexRequest{
+				r: &api.IndexToJSONRequest{
 					Name: "index",
 				},
 			},
 			useCaseMock: func(usecase.IUseCase) {
-				logicmock.EXPECT().GetIndex(gomock.Any()).Return(ram, nil, storage.ErrIndexNotFound)
+				logicmock.EXPECT().IndexToJSON(gomock.Any()).Return(ram, "", storage.ErrIndexNotFound)
 			},
-			want: &api.GetIndexResponse{
+			want: &api.IndexToJSONResponse{
 				Ram: apiRam,
 			},
 			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
@@ -539,7 +542,7 @@ func TestHandler_GetIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.useCaseMock(logicmock)
 
-			got, err := h.GetIndex(tt.args.ctx, tt.args.r)
+			got, err := h.IndexToJSON(tt.args.ctx, tt.args.r)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return

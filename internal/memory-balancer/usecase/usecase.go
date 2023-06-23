@@ -117,10 +117,10 @@ func (uc *UseCase) Servers() []string {
 }
 
 func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error) {
-	once := sync.Once{}
 	ch := make(chan struct{})
 	done := func() { close(ch) }
 
+	once := sync.Once{}
 	uc.pool <- struct{}{}
 	go func() {
 		err = fn()

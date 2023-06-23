@@ -517,7 +517,7 @@ func Test_Restore(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	st, err := storage.New(nil)
+	st, err := storage.New()
 	if err != nil {
 		t.Error(err)
 		return

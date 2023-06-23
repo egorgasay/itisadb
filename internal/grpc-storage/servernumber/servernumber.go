@@ -1,39 +1,33 @@
 package servernumber
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 )
 
-var ErrNotFound = errors.New("server_number was not found")
-
-func Get(dir string) int32 {
+func Get(dir string) (int32, error) {
 	f, err := os.Open(dir + "/server_number")
 	if err != nil {
-		log.Println(err)
-		return 0
+		return 0, err
 	}
 	defer f.Close()
 
 	var b = make([]byte, 100)
 	r, err := f.Read(b)
 	if err != nil {
-		log.Println(err)
-		return 0
+		return 0, err
 	}
 
 	b = b[:r]
 
 	num, err := strconv.Atoi(string(b))
 	if err != nil {
-		log.Println(err)
-		return 0
+		return 0, err
 	}
 
-	return int32(num)
+	return int32(num), nil
 }
 
 func Set(server int32) error {

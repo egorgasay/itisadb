@@ -31,7 +31,7 @@ type BalancerClient interface {
 	Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error)
 	Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error)
 	Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error)
-	GetIndex(ctx context.Context, in *BalancerGetIndexRequest, opts ...grpc.CallOption) (*BalancerGetIndexResponse, error)
+	IndexToJSON(ctx context.Context, in *BalancerIndexToJSONRequest, opts ...grpc.CallOption) (*BalancerIndexToJSONResponse, error)
 	IsIndex(ctx context.Context, in *BalancerIsIndexRequest, opts ...grpc.CallOption) (*BalancerIsIndexResponse, error)
 	Size(ctx context.Context, in *BalancerIndexSizeRequest, opts ...grpc.CallOption) (*BalancerIndexSizeResponse, error)
 	Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
@@ -129,8 +129,8 @@ func (c *balancerClient) Servers(ctx context.Context, in *BalancerServersRequest
 	return out, nil
 }
 
-func (c *balancerClient) GetIndex(ctx context.Context, in *BalancerGetIndexRequest, opts ...grpc.CallOption) (*BalancerGetIndexResponse, error) {
-	out := new(BalancerGetIndexResponse)
+func (c *balancerClient) IndexToJSON(ctx context.Context, in *BalancerIndexToJSONRequest, opts ...grpc.CallOption) (*BalancerIndexToJSONResponse, error) {
+	out := new(BalancerIndexToJSONResponse)
 	err := c.cc.Invoke(ctx, "/api.Balancer/IndexToJSON", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ type BalancerServer interface {
 	Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error)
 	Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error)
 	Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error)
-	GetIndex(context.Context, *BalancerGetIndexRequest) (*BalancerGetIndexResponse, error)
+	IndexToJSON(context.Context, *BalancerIndexToJSONRequest) (*BalancerIndexToJSONResponse, error)
 	IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error)
 	Size(context.Context, *BalancerIndexSizeRequest) (*BalancerIndexSizeResponse, error)
 	Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
@@ -246,7 +246,7 @@ func (UnimplementedBalancerServer) Disconnect(context.Context, *BalancerDisconne
 func (UnimplementedBalancerServer) Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
 }
-func (UnimplementedBalancerServer) GetIndex(context.Context, *BalancerGetIndexRequest) (*BalancerGetIndexResponse, error) {
+func (UnimplementedBalancerServer) IndexToJSON(context.Context, *BalancerIndexToJSONRequest) (*BalancerIndexToJSONResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IndexToJSON not implemented")
 }
 func (UnimplementedBalancerServer) IsIndex(context.Context, *BalancerIsIndexRequest) (*BalancerIsIndexResponse, error) {
@@ -442,20 +442,20 @@ func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Balancer_GetIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerGetIndexRequest)
+func _Balancer_IndexToJSON_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerIndexToJSONRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BalancerServer).GetIndex(ctx, in)
+		return srv.(BalancerServer).IndexToJSON(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
 		FullMethod: "/api.Balancer/IndexToJSON",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).GetIndex(ctx, req.(*BalancerGetIndexRequest))
+		return srv.(BalancerServer).IndexToJSON(ctx, req.(*BalancerIndexToJSONRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -613,7 +613,7 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 		},
 		{
 			MethodName: "IndexToJSON",
-			Handler:    _Balancer_GetIndex_Handler,
+			Handler:    _Balancer_IndexToJSON_Handler,
 		},
 		{
 			MethodName: "IsIndex",

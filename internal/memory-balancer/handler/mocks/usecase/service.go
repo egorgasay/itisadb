@@ -2,14 +2,14 @@ package mocks
 
 import "context"
 
-//go:generate mockgen -destination=mocks/usecase/mock_usecase.go -package=mocks . IUseCase
+//go:generate mockgen -destination=mock_usecase.go -package=mocks . IUseCase
 type IUseCase interface {
 	Get(ctx context.Context, key string, serverNumber int32) (string, error)
 	Set(ctx context.Context, key string, val string, serverNumber int32, uniques bool) (int32, error)
 	Delete(ctx context.Context, key string, num int32) error
 
 	Index(ctx context.Context, name string) (int32, error)
-	GetIndex(ctx context.Context, name string) (map[string]string, error)
+	IndexToJSON(ctx context.Context, name string) (string, error)
 	DeleteIndex(ctx context.Context, name string) error
 	IsIndex(ctx context.Context, name string) (bool, error)
 	Size(ctx context.Context, name string) (uint64, error)

@@ -92,19 +92,19 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 	}, nil
 }
 
-func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.GetIndexResponse, error) {
+func (h *Handler) IndexToJSON(ctx context.Context, r *api.IndexToJSONRequest) (*api.IndexToJSONResponse, error) {
 	ram, index, err := h.logic.IndexToJSON(r.Name)
 	if err != nil {
 		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.GetIndexResponse{
+			return &api.IndexToJSONResponse{
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.ResourceExhausted, err.Error())
 		}
-		return &api.GetIndexResponse{
+		return &api.IndexToJSONResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
 	}
-	return &api.GetIndexResponse{
+	return &api.IndexToJSONResponse{
 		Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
 		Index: index,
 	}, nil
@@ -174,25 +174,20 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 
 func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.IndexSizeResponse, error) {
 	ram, size, err := h.logic.Size(r.Name)
+	resp := &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
-				status.Error(codes.ResourceExhausted, err.Error())
+			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 
 		if errors.Is(err, storage.ErrSomethingExists) {
-			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
-				status.Error(codes.AlreadyExists, err.Error())
+			return resp, status.Error(codes.AlreadyExists, err.Error())
 		}
 
-		return &api.IndexSizeResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, err
+		return resp, err
 	}
-	return &api.IndexSizeResponse{
-		Ram:  &api.Ram{Total: ram.Total, Available: ram.Available},
-		Size: size,
-	}, nil
+	resp.Size = size
+	return resp, nil
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {

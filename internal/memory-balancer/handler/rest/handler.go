@@ -39,7 +39,7 @@ func (h *Handler) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	case "/index": // handle index endpoint
 		switch string(ctx.Method()) {
 		case fasthttp.MethodGet: // get index
-			h.getIndex(ctx)
+			h.IndexToJSON(ctx)
 		case fasthttp.MethodPost: // create index if not exists
 			h.index(ctx)
 		case fasthttp.MethodDelete: // delete index
@@ -232,16 +232,16 @@ func (h *Handler) servers(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody([]byte(strings.Join(servers, "<br>")))
 }
 
-func (h *Handler) getIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.GetIndexRequest](&ctx.Request)
+func (h *Handler) IndexToJSON(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.IndexToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	value, err := h.logic.GetIndex(ctx, r.Index)
+	value, err := h.logic.IndexToJSON(ctx, r.Index)
 	if err != nil {
-		err = converterr.GetIndex(err)
+		err = converterr.IndexToJSON(err)
 		if errors.Is(err, converterr.ErrIndexNotFound) {
 			ctx.Error(converterr.ErrIndexNotFound.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
@@ -266,7 +266,7 @@ func (h *Handler) getIndex(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) index(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.GetIndexRequest](&ctx.Request)
+	r, err := dataFromRequest[schema.IndexToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return

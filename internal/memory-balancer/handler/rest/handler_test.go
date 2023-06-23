@@ -490,11 +490,11 @@ func TestHandler_getIndex(t *testing.T) {
 				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
 			},
 			mockUseCase: func(c *mocks.MockIUseCase) {
-				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
-					Return(map[string]string{"i": "1", "v": "2"}, nil)
+				c.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
+					Return(`{"index":"qwe","values":"2"}`, nil)
 			},
 			rJSON:    `{"index":"qwe"}`,
-			want:     `{"i":"1","v":"2"}`,
+			want:     `"{\"index\":\"qwe\",\"values\":\"2\"}"`,
 			wantCode: 200,
 		},
 		{
@@ -503,8 +503,8 @@ func TestHandler_getIndex(t *testing.T) {
 				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
 			},
 			mockUseCase: func(c *mocks.MockIUseCase) {
-				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
-					Return(map[string]string{}, status.Error(codes.ResourceExhausted, "index not found"))
+				c.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
+					Return("", status.Error(codes.ResourceExhausted, "index not found"))
 			},
 			rJSON:    `{"index":"qwe2"}`,
 			wantCode: 410,
@@ -515,8 +515,8 @@ func TestHandler_getIndex(t *testing.T) {
 				ctx: &fasthttp.RequestCtx{Request: fasthttp.Request{}},
 			},
 			mockUseCase: func(c *mocks.MockIUseCase) {
-				c.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
-					Return(map[string]string{}, status.Error(codes.Unavailable, "service unavailable"))
+				c.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
+					Return("", status.Error(codes.Unavailable, "service unavailable"))
 			},
 			rJSON:    `{"index":"qwe"}`,
 			wantCode: 503,
@@ -538,7 +538,7 @@ func TestHandler_getIndex(t *testing.T) {
 
 			tt.args.ctx.Request.AppendBodyString(tt.rJSON)
 
-			h.getIndex(tt.args.ctx)
+			h.IndexToJSON(tt.args.ctx)
 
 			if tt.want != "" {
 				if b := string(tt.args.ctx.Response.Body()); b != tt.want {

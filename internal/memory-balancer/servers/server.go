@@ -74,13 +74,12 @@ func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, err
 
 }
 
-func (s *Server) GetIndex(ctx context.Context, name string) (*storage.GetIndexResponse, error) {
-	r, err := s.storage.GetIndex(ctx, &storage.GetIndexRequest{
+func (s *Server) IndexToJSON(ctx context.Context, name string) (*storage.IndexToJSONResponse, error) {
+	r, err := s.storage.IndexToJSON(ctx, &storage.IndexToJSONRequest{
 		Name: name,
 	})
 	s.setRAM(r)
 	return r, err
-
 }
 
 func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.GetResponse, error) {

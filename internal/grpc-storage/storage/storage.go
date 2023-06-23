@@ -3,9 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
-	"itisadb/pkg/logger"
 	"strings"
 	"sync"
 
@@ -39,7 +37,6 @@ type IStorage interface {
 type Storage struct {
 	ramStorage ramStorage
 	indexes    indexes
-	logger     logger.ILogger
 }
 
 type ramStorage struct {
@@ -54,11 +51,10 @@ type indexes struct {
 	path string
 }
 
-func New(logger logger.ILogger) (*Storage, error) {
+func New() (*Storage, error) {
 	st := &Storage{
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
-		logger:     logger,
 	}
 
 	return st, nil
@@ -179,13 +175,11 @@ func (s *Storage) IndexToJSON(name string) (string, error) {
 }
 
 func (v *value) MarshalJSON() ([]byte, error) {
-	fmt.Println("Hi")
-
 	arr := make([]any, 0, 100)
 	var data map[string]interface{}
 
-	if v.Next != nil {
-		v.Next.Iter(func(k string, v ivalue) bool {
+	if v.values != nil {
+		v.values.Iter(func(k string, v ivalue) bool {
 			val := v.(*value)
 			if val != nil {
 				arr = append(arr, v.(*value))
@@ -195,15 +189,15 @@ func (v *value) MarshalJSON() ([]byte, error) {
 		})
 
 		data = map[string]interface{}{
-			"index":  true,
-			"name":   v.Name(),
-			"values": arr,
+			"isIndex": true,
+			"name":    v.Name(),
+			"values":  arr,
 		}
 	} else {
 		data = map[string]interface{}{
-			"index": false,
-			"name":  v.Name(),
-			"value": v.value,
+			"isIndex": false,
+			"name":    v.Name(),
+			"value":   v.value,
 		}
 	}
 

@@ -115,7 +115,7 @@ func SetToIndex(err error) error {
 	return err
 }
 
-func GetIndex(err error) error {
+func IndexToJSON(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err

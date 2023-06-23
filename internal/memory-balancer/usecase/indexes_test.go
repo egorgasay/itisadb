@@ -453,7 +453,7 @@ func TestUseCase_GetFromIndex(t *testing.T) {
 	}
 }
 
-func TestUseCase_GetIndex(t *testing.T) {
+func TestUseCase_IndexToJSON(t *testing.T) {
 	srv := struct {
 		serv *servers.Server
 	}{}
@@ -467,7 +467,7 @@ func TestUseCase_GetIndex(t *testing.T) {
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
-		want                map[string]string
+		want                string
 		wantErr             bool
 	}{
 		{
@@ -480,18 +480,12 @@ func TestUseCase_GetIndex(t *testing.T) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
 			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					&storage.GetIndexResponse{
-						Index: map[string]string{
-							"test1": "test1",
-							"test2": "test2",
-						},
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexToJSONResponse{
+						Index: "[\n  {\n    \"name\": \"index1\",\n    \"isIndex\": true,\n    \"values\": [\n      {\n        \"name\": \"key1\",\n        \"value\": \"value1\"\n      },\n      {\n        \"name\": \"key2\",\n        \"value\": \"value2\"\n      }\n    ]\n  }\n]",
 					}, nil)
 			},
-			want: map[string]string{
-				"test1": "test1",
-				"test2": "test2",
-			},
+			want: "[\n  {\n    \"name\": \"index1\",\n    \"isIndex\": true,\n    \"values\": [\n      {\n        \"name\": \"key1\",\n        \"value\": \"value1\"\n      },\n      {\n        \"name\": \"key2\",\n        \"value\": \"value2\"\n      }\n    ]\n  }\n]",
 		},
 		{
 			name: "indexNotFound",
@@ -515,8 +509,8 @@ func TestUseCase_GetIndex(t *testing.T) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
 			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					&storage.GetIndexResponse{}, status.Error(codes.NotFound, "index not found"))
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexToJSONResponse{}, status.Error(codes.NotFound, "index not found"))
 			},
 			wantErr: true,
 		},
@@ -560,7 +554,7 @@ func TestUseCase_GetIndex(t *testing.T) {
 				pool: make(chan struct{}, 30000),
 			}
 
-			got, err := uc.GetIndex(tt.args.ctx, tt.args.name)
+			got, err := uc.IndexToJSON(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return

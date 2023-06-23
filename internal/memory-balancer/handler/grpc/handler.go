@@ -135,13 +135,13 @@ func (h *Handler) Index(ctx context.Context, request *api.BalancerIndexRequest) 
 	return &api.BalancerIndexResponse{}, nil
 }
 
-func (h *Handler) GetIndex(ctx context.Context, request *api.BalancerGetIndexRequest) (*api.BalancerGetIndexResponse, error) {
-	m, err := h.logic.GetIndex(ctx, request.GetName())
+func (h *Handler) IndexToJSON(ctx context.Context, request *api.BalancerIndexToJSONRequest) (*api.BalancerIndexToJSONResponse, error) {
+	m, err := h.logic.IndexToJSON(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerGetIndexResponse{
+	return &api.BalancerIndexToJSONResponse{
 		Index: m,
 	}, nil
 }

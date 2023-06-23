@@ -125,7 +125,7 @@ func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniqu
 	return num, nil
 }
 
-func (uc *UseCase) GetIndex(ctx context.Context, name string) (string, error) {
+func (uc *UseCase) IndexToJSON(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -143,7 +143,7 @@ func (uc *UseCase) GetIndex(ctx context.Context, name string) (string, error) {
 		return "", ErrServerNotFound
 	}
 
-	res, err := cl.GetIndex(ctx, name)
+	res, err := cl.IndexToJSON(ctx, name)
 	if err != nil {
 		return "", err
 	}

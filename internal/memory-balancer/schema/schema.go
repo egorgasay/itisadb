@@ -37,7 +37,7 @@ type DelFromIndexRequest struct {
 	Server int32  `json:"server,omitempty"`
 }
 
-type GetIndexRequest struct {
+type IndexToJSONRequest struct {
 	Index string `json:"index"`
 }
 

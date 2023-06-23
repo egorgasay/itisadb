@@ -8,7 +8,7 @@ import (
 type value struct {
 	value      string
 	name       string
-	Next       *swiss.Map[string, ivalue]
+	values     *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
 	isIndex    bool
 	attachedTo map[string]bool
@@ -43,7 +43,7 @@ func NewIndex(name string, attachedTo map[string]bool) *value {
 	attachedTo[name] = true
 	return &value{
 		mutex:      &sync.RWMutex{},
-		Next:       swiss.NewMap[string, ivalue](10),
+		values:     swiss.NewMap[string, ivalue](10),
 		attachedTo: attachedTo,
 		isIndex:    true,
 		name:       name,
@@ -65,12 +65,12 @@ func (v *value) IsEmpty() bool {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
 
-	return v.Next == nil
+	return v.values == nil
 }
 
 func (v *value) Get(name string) (string, error) {
 	v.mutex.RLock()
-	val, ok := v.Next.Get(name)
+	val, ok := v.values.Get(name)
 	v.mutex.RUnlock()
 	if !ok {
 		return "", ErrNotFound
@@ -82,7 +82,7 @@ func (v *value) Get(name string) (string, error) {
 func (v *value) Size() int {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	return v.Next.Count()
+	return v.values.Count()
 }
 
 func (v *value) IsIndex() bool {
@@ -109,36 +109,36 @@ func (v *value) AttachIndex(src ivalue) (err error) {
 			src.setAttached(v.attachedTo)
 		}
 	}()
-	if v.Next == nil {
-		v.Next = swiss.NewMap[string, ivalue](10)
-		v.Next.Put(src.Name(), src)
+	if v.values == nil {
+		v.values = swiss.NewMap[string, ivalue](10)
+		v.values.Put(src.Name(), src)
 		return nil
 	}
-	if v.Next.Has(src.Name()) {
+	if v.values.Has(src.Name()) {
 		return nil
 	}
 	v.isIndex = true
-	v.Next.Put(src.Name(), src)
+	v.values.Put(src.Name(), src)
 	return nil
 }
 
 func (v *value) Iter(f func(k string, v ivalue) bool) {
-	v.Next.Iter(f)
+	v.values.Iter(f)
 }
 
 func (v *value) DeleteIndex() {
 	v.mutex.Lock()
-	v.Next = nil
+	v.values = nil
 	v.mutex.Unlock()
 }
 
 func (v *value) NextOrCreate(name string) ivalue {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	val, ok := v.Next.Get(name)
+	val, ok := v.values.Get(name)
 	if !ok {
 		blank := NewIndex(name, v.attachedTo)
-		v.Next.Put(name, blank)
+		v.values.Put(name, blank)
 		return blank
 	}
 
@@ -148,7 +148,7 @@ func (v *value) NextOrCreate(name string) ivalue {
 func (v *value) GetIValue(name string) (ivalue, bool) {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	val, ok := v.Next.Get(name)
+	val, ok := v.values.Get(name)
 	if !ok {
 		return nil, false
 	}
@@ -159,14 +159,14 @@ func (v *value) GetIValue(name string) (ivalue, bool) {
 func (v *value) Set(key, val string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	v.Next.Put(key, &value{value: val, mutex: &sync.RWMutex{}, name: key})
+	v.values.Put(key, &value{value: val, mutex: &sync.RWMutex{}, name: key})
 }
 
 func (v *value) SetValueUnique(val string) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	if v.Next.Has(val) {
+	if v.values.Has(val) {
 		return ErrAlreadyExists
 	}
 
@@ -177,33 +177,33 @@ func (v *value) SetValueUnique(val string) error {
 func (v *value) CreateIndex(name string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	if v.Next.Has(name) {
+	if v.values.Has(name) {
 		return
 	}
 
-	v.Next.Put(name, &value{Next: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
+	v.values.Put(name, &value{values: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
 }
 
 func (v *value) RecreateIndex() {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	v.Next = swiss.NewMap[string, ivalue](10000)
+	v.values = swiss.NewMap[string, ivalue](10000)
 }
 
 func (v *value) Delete(key string) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	if !v.Next.Has(key) {
+	if !v.values.Has(key) {
 		return ErrNotFound
 	}
 
-	v.Next.Delete(key)
+	v.values.Delete(key)
 	return nil
 }
 
 func (v *value) Has(key string) bool {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	return v.Next.Has(key)
+	return v.values.Has(key)
 }
