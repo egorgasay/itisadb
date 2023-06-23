@@ -595,8 +595,7 @@ func TestStorage_GetIndex2(t *testing.T) {
 		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 
-	var want = "{\n\t\"isIndex\": true,\n\t\"name\": \"qwe\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": true,\n\t\t\t\"name\": \"edc\",\n\t\t\t\"values\": [\n\t\t\t\t{\n\t\t\t\t\t\"isIndex\": false,\n\t\t\t\t\t\"name\": \"3g\",\n\t\t\t\t\t\"value\": \"3f\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"rfg\",\n\t\t\t\"value\": \"gwf\"\n\t\t}\n\t]\n}"
-
+	var want = "{\n\t\"isIndex\": true,\n\t\"name\": \"qwe\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": true,\n\t\t\t\"name\": \"edc\",\n\t\t\t\"values\": [\n\t\t\t\t{\n\t\t\t\t\t\"isIndex\": true,\n\t\t\t\t\t\"name\": \"rty\",\n\t\t\t\t\t\"values\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"isIndex\": false,\n\t\t\t\t\t\t\t\"name\": \"r3g\",\n\t\t\t\t\t\t\t\"value\": \"g3f\"\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"isIndex\": false,\n\t\t\t\t\t\"name\": \"3g\",\n\t\t\t\t\t\"value\": \"3f\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"rfg\",\n\t\t\t\"value\": \"gwf\"\n\t\t}\n\t]\n}"
 	err := s.CreateIndex("qwe")
 	if err != nil {
 		t.Fatalf("CreateIndex() error = %v", err)
@@ -608,6 +607,16 @@ func TestStorage_GetIndex2(t *testing.T) {
 	}
 
 	err = s.SetToIndex("qwe", "rfg", "gwf", false)
+	if err != nil {
+		t.Fatalf("SetToIndex() error = %v", err)
+	}
+
+	err = s.CreateIndex("qwe.edc.rty")
+	if err != nil {
+		t.Fatalf("CreateIndex() error = %v", err)
+	}
+
+	err = s.SetToIndex("qwe.edc.rty", "r3g", "g3f", false)
 	if err != nil {
 		t.Fatalf("SetToIndex() error = %v", err)
 	}
