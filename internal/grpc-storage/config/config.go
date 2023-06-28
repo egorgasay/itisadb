@@ -47,7 +47,7 @@ func chooseLeftIfSet[C any](l, r *C) C {
 	left := reflect.ValueOf(l)
 	right := reflect.ValueOf(r)
 
-	if left.IsNil() || left.IsZero() {
+	if left.IsNil() || left.Elem().IsZero() {
 		return right.Elem().Interface().(C)
 	}
 	return left.Elem().Interface().(C)
