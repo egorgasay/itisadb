@@ -118,6 +118,8 @@ func (uc *UseCase) Servers() []string {
 
 func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error) {
 	ch := make(chan struct{})
+
+	once := sync.Once{}
 	done := func() { close(ch) }
 
 	once := sync.Once{}

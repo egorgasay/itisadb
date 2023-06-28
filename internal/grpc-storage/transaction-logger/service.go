@@ -39,6 +39,7 @@ type TransactionLogger struct {
 	sync.RWMutex
 }
 
+
 func New() (*TransactionLogger, error) {
 	if err := os.MkdirAll(PATH, 0755); err != nil {
 		return nil, err
