@@ -122,7 +122,6 @@ func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error)
 	once := sync.Once{}
 	done := func() { close(ch) }
 
-	once := sync.Once{}
 	uc.pool <- struct{}{}
 	go func() {
 		err = fn()
