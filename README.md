@@ -17,7 +17,7 @@ By default, the value is saved to the minimally loaded server and returns its nu
   
 Instead of the usual tables, a model close to object orientation is used here. An index is a kind of instance of a class. Each "Index" has attributes and can have nested "Index". When creating an "Index", the server with the lowest load will be selected, but nested indexes can only be created on its parent index server, this allows you to be sure that setToAll data in one index is always available.
 
-<img src="https://user-images.githubusercontent.com/102957432/235522411-dfdf5dae-5536-475e-b0a3-69fbb53c1884.png"  width="1000" />
+<img src="https://github.com/egorgasay/itisadb/assets/102957432/2f56cfd0-80ae-45e9-8c13-b0a8da9e88fc"  width="1000" />
 
 
 # Transaction Logger
