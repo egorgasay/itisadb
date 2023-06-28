@@ -174,25 +174,20 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 
 func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.IndexSizeResponse, error) {
 	ram, size, err := h.logic.Size(r.Name)
+	resp := &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
-				status.Error(codes.ResourceExhausted, err.Error())
+			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 
 		if errors.Is(err, storage.ErrSomethingExists) {
-			return &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}},
-				status.Error(codes.AlreadyExists, err.Error())
+			return resp, status.Error(codes.AlreadyExists, err.Error())
 		}
 
-		return &api.IndexSizeResponse{
-			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
-		}, err
+		return resp, err
 	}
-	return &api.IndexSizeResponse{
-		Ram:  &api.Ram{Total: ram.Total, Available: ram.Available},
-		Size: size,
-	}, nil
+	resp.Size = size
+	return resp, nil
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
