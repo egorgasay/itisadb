@@ -4,16 +4,12 @@
 TransactionLoggerDir = true
 
 # Balancer IP:PORT
-Balancer = "127.0.0.1:800"
+Balancer = "127.0.0.1:8888"
 
 [Balancer]
 
 # Balancer IP:PORT
-Address = "127.0.0.1:800"
-
-# DNS to External Storage.
-# The External Storage is used to search for values if they are not found in the storage.
-DSN = ""
+Address = "127.0.0.1:8888"
 
 # Balancer RPS Limit
 MaxRPS = 35000

@@ -8,6 +8,9 @@ import (
 	"sync"
 )
 
+var ErrNoServers = errors.New("no servers available")
+var ErrNotFound = errors.New("key not found")
+
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
 	if uc.servers.Len() == 0 {
 		return 0, ErrNoServers
@@ -44,13 +47,10 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	return cl.GetNumber(), nil
 }
 
-var ErrNoServers = errors.New("no servers available")
-var ErrNotFound = errors.New("key not found")
-
 func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (val string, err error) {
 	return val, uc.withContext(ctx, func() error {
 		val, err = uc.get(ctx, key, serverNumber)
-		return nil
+		return err
 	})
 }
 
@@ -145,19 +145,19 @@ func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error
 }
 
 func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
-	uc.mu.Lock()
-	defer uc.mu.Unlock()
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
-	if num == 0 {
-		num = setToAll
-	}
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 
-	switch num {
-	case setToAll:
-		// TODO: delete from setToAll servers
+	if num == deleteFromAll {
+		atLeastOnce := uc.servers.DelFromAll(ctx, key)
+		if !atLeastOnce {
+			return ErrNotFound
+		}
+		return nil
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)

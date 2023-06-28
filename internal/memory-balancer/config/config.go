@@ -13,7 +13,7 @@ type Config struct {
 }
 
 const (
-	defaultGRPC = "127.0.0.1:8080"
+	defaultGRPC = "127.0.0.1:8888"
 )
 
 type Flag struct {

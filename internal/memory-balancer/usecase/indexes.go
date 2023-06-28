@@ -10,7 +10,14 @@ import (
 var ErrIndexNotFound = fmt.Errorf("index not found")
 var ErrServerNotFound = fmt.Errorf("server not found")
 
-func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
+func (uc *UseCase) Index(ctx context.Context, name string) (s int32, err error) {
+	return s, uc.withContext(ctx, func() error {
+		s, err = uc.index(ctx, name)
+		return err
+	})
+}
+
+func (uc *UseCase) index(ctx context.Context, name string) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -47,7 +54,14 @@ func (uc *UseCase) Index(ctx context.Context, name string) (int32, error) {
 	return num, nil
 }
 
-func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNumber int32) (string, error) {
+func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNumber int32) (v string, err error) {
+	return v, uc.withContext(ctx, func() error {
+		v, err = uc.getFromIndex(ctx, index, key, serverNumber)
+		return err
+	})
+}
+
+func (uc *UseCase) getFromIndex(ctx context.Context, index, key string, serverNumber int32) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -78,7 +92,14 @@ func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNu
 	return resp.Value, nil
 }
 
-func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniques bool) (int32, error) {
+func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniques bool) (s int32, err error) {
+	return s, uc.withContext(ctx, func() error {
+		s, err = uc.setToIndex(ctx, index, key, val, uniques)
+		return err
+	})
+}
+
+func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniques bool) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -104,9 +125,9 @@ func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniqu
 	return num, nil
 }
 
-func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string, error) {
+func (uc *UseCase) IndexToJSON(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
-		return nil, ctx.Err()
+		return "", ctx.Err()
 	}
 
 	uc.mu.RLock()
@@ -114,17 +135,17 @@ func (uc *UseCase) GetIndex(ctx context.Context, name string) (map[string]string
 	uc.mu.RUnlock()
 
 	if !ok {
-		return nil, ErrIndexNotFound
+		return "", ErrIndexNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return nil, ErrServerNotFound
+		return "", ErrServerNotFound
 	}
 
-	res, err := cl.GetIndex(ctx, name)
+	res, err := cl.IndexToJSON(ctx, name)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return res.Index, nil
@@ -142,7 +163,14 @@ func (uc *UseCase) IsIndex(ctx context.Context, name string) (bool, error) {
 	return ok, nil
 }
 
-func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
+func (uc *UseCase) Size(ctx context.Context, name string) (size uint64, err error) {
+	return size, uc.withContext(ctx, func() error {
+		size, err = uc.size(ctx, name)
+		return err
+	})
+}
+
+func (uc *UseCase) size(ctx context.Context, name string) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -169,6 +197,12 @@ func (uc *UseCase) Size(ctx context.Context, name string) (uint64, error) {
 }
 
 func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
+	return uc.withContext(ctx, func() error {
+		return uc.deleteIndex(ctx, name)
+	})
+}
+
+func (uc *UseCase) deleteIndex(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -199,6 +233,12 @@ func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
 }
 
 func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) error {
+	return uc.withContext(ctx, func() error {
+		return uc.attachToIndex(ctx, dst, src)
+	})
+}
+
+func (uc *UseCase) attachToIndex(ctx context.Context, dst string, src string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -223,6 +263,12 @@ func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) er
 }
 
 func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, index string) error {
+	return uc.withContext(ctx, func() error {
+		return uc.deleteAttr(ctx, attr, index)
+	})
+}
+
+func (uc *UseCase) deleteAttr(ctx context.Context, attr string, index string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

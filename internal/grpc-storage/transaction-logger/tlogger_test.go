@@ -23,7 +23,8 @@ func Test_WriteSet(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -89,7 +90,8 @@ func Test_WriteDelete(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -155,7 +157,8 @@ func Test_WriteSetToIndex(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -223,7 +226,8 @@ func Test_WriteDeleteAttr(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -291,7 +295,8 @@ func Test_WriteAttach(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -359,14 +364,15 @@ func Test_WriteDeleteIndex(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
 
 	tl.Run()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 200; i++ {
 		tl.WriteDeleteIndex("index" + fmt.Sprint(i))
 	}
 
@@ -427,7 +433,8 @@ func Test_WriteCreateIndex(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
@@ -495,20 +502,22 @@ func Test_Restore(t *testing.T) {
 		return
 	}
 	defer func() {
-		time.Sleep(1 * time.Second)
+		tl.Stop()
+		time.Sleep(2 * time.Second)
 		if err = os.RemoveAll(PATH); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
 
+	count := 119
 	tl.Run()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < count; i++ {
 		tl.WriteSet("test"+fmt.Sprint(i), "test"+fmt.Sprint(i))
 	}
 
 	time.Sleep(5 * time.Second)
 
-	st, err := storage.New(nil)
+	st, err := storage.New()
 	if err != nil {
 		t.Error(err)
 		return
@@ -519,7 +528,7 @@ func Test_Restore(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < count; i++ {
 		v, err := st.Get("test" + fmt.Sprint(i))
 		if err != nil {
 			t.Error(err)

@@ -87,7 +87,8 @@ func TestUseCase_Connect(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.Connect(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
@@ -350,7 +351,8 @@ func TestUseCase_Get(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.Get(tt.args.ctx, tt.args.key, tt.args.serverNumber)
@@ -443,7 +445,8 @@ func TestUseCase_Set(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			got, err := uc.Set(tt.args.ctx, tt.args.key, tt.args.val, tt.args.serverNumber, tt.args.uniques)
 			if (err != nil) != tt.wantErr {

@@ -115,7 +115,8 @@ func TestUseCase_AttachToIndex(t *testing.T) {
 					"test1": 1,
 					"test2": 2,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			if err = uc.AttachToIndex(tt.args.ctx, tt.args.dst, tt.args.src); (err != nil) != tt.wantErr {
@@ -219,7 +220,8 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			if err = uc.DeleteAttr(tt.args.ctx, tt.args.attr, tt.args.index); (err != nil) != tt.wantErr {
@@ -319,7 +321,8 @@ func TestUseCase_DeleteIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			if err := uc.DeleteIndex(tt.args.ctx, tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
@@ -434,7 +437,8 @@ func TestUseCase_GetFromIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.GetFromIndex(tt.args.ctx, tt.args.index, tt.args.key, tt.args.serverNumber)
@@ -449,7 +453,7 @@ func TestUseCase_GetFromIndex(t *testing.T) {
 	}
 }
 
-func TestUseCase_GetIndex(t *testing.T) {
+func TestUseCase_IndexToJSON(t *testing.T) {
 	srv := struct {
 		serv *servers.Server
 	}{}
@@ -463,7 +467,7 @@ func TestUseCase_GetIndex(t *testing.T) {
 		serversBehavior     serversBehavior
 		grpcStorageBehavior gStorageBehavior
 		args                args
-		want                map[string]string
+		want                string
 		wantErr             bool
 	}{
 		{
@@ -476,18 +480,12 @@ func TestUseCase_GetIndex(t *testing.T) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
 			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					&storage.GetIndexResponse{
-						Index: map[string]string{
-							"test1": "test1",
-							"test2": "test2",
-						},
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexToJSONResponse{
+						Index: "[\n  {\n    \"name\": \"index1\",\n    \"isIndex\": true,\n    \"values\": [\n      {\n        \"name\": \"key1\",\n        \"value\": \"value1\"\n      },\n      {\n        \"name\": \"key2\",\n        \"value\": \"value2\"\n      }\n    ]\n  }\n]",
 					}, nil)
 			},
-			want: map[string]string{
-				"test1": "test1",
-				"test2": "test2",
-			},
+			want: "[\n  {\n    \"name\": \"index1\",\n    \"isIndex\": true,\n    \"values\": [\n      {\n        \"name\": \"key1\",\n        \"value\": \"value1\"\n      },\n      {\n        \"name\": \"key2\",\n        \"value\": \"value2\"\n      }\n    ]\n  }\n]",
 		},
 		{
 			name: "indexNotFound",
@@ -511,8 +509,8 @@ func TestUseCase_GetIndex(t *testing.T) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
 			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					&storage.GetIndexResponse{}, status.Error(codes.NotFound, "index not found"))
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexToJSONResponse{}, status.Error(codes.NotFound, "index not found"))
 			},
 			wantErr: true,
 		},
@@ -552,16 +550,17 @@ func TestUseCase_GetIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
-			got, err := uc.GetIndex(tt.args.ctx, tt.args.name)
+			got, err := uc.IndexToJSON(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -593,8 +592,11 @@ func TestUseCase_Index(t *testing.T) {
 			serversBehavior: func(cl *serversmock.MockIServers) {
 				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
-			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
-			want:                1,
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().NewIndex(gomock.Any(), gomock.Any()).Return(
+					&storage.NewIndexResponse{}, nil)
+			},
+			want: 0,
 		},
 		{
 			name: "create",
@@ -652,7 +654,8 @@ func TestUseCase_Index(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			got, err := uc.Index(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -719,7 +722,8 @@ func TestUseCase_IsIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 			got, err := uc.IsIndex(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -842,7 +846,8 @@ func TestUseCase_SetToIndex(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.SetToIndex(tt.args.ctx, tt.args.index, tt.args.key, tt.args.val, tt.args.uniques)
@@ -951,7 +956,8 @@ func TestUseCase_Size(t *testing.T) {
 				indexes: map[string]int32{
 					"test_index": 1,
 				},
-				mu: sync.RWMutex{},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
 			got, err := uc.Size(tt.args.ctx, tt.args.name)

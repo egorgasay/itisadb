@@ -149,19 +149,19 @@ func (mr *MockIUseCaseMockRecorder) GetFromIndex(arg0, arg1, arg2, arg3 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromIndex", reflect.TypeOf((*MockIUseCase)(nil).GetFromIndex), arg0, arg1, arg2, arg3)
 }
 
-// GetIndex mocks base method.
-func (m *MockIUseCase) GetIndex(arg0 context.Context, arg1 string) (map[string]string, error) {
+// IndexToJSON mocks base method.
+func (m *MockIUseCase) IndexToJSON(arg0 context.Context, arg1 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIndex", arg0, arg1)
-	ret0, _ := ret[0].(map[string]string)
+	ret := m.ctrl.Call(m, "IndexToJSON", arg0, arg1)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetIndex indicates an expected call of GetIndex.
-func (mr *MockIUseCaseMockRecorder) GetIndex(arg0, arg1 interface{}) *gomock.Call {
+// IndexToJSON indicates an expected call of IndexToJSON.
+func (mr *MockIUseCaseMockRecorder) IndexToJSON(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIndex", reflect.TypeOf((*MockIUseCase)(nil).GetIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockIUseCase)(nil).IndexToJSON), arg0, arg1)
 }
 
 // Index mocks base method.

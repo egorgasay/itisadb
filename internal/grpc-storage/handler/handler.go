@@ -92,19 +92,19 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 	}, nil
 }
 
-func (h *Handler) GetIndex(ctx context.Context, r *api.GetIndexRequest) (*api.GetIndexResponse, error) {
-	ram, index, err := h.logic.GetIndex(r.Name)
+func (h *Handler) IndexToJSON(ctx context.Context, r *api.IndexToJSONRequest) (*api.IndexToJSONResponse, error) {
+	ram, index, err := h.logic.IndexToJSON(r.Name)
 	if err != nil {
 		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.GetIndexResponse{
+			return &api.IndexToJSONResponse{
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.ResourceExhausted, err.Error())
 		}
-		return &api.GetIndexResponse{
+		return &api.IndexToJSONResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
 	}
-	return &api.GetIndexResponse{
+	return &api.IndexToJSONResponse{
 		Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
 		Index: index,
 	}, nil

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/grpc-storage/storage"
-	mockusecase "itisadb/internal/memory-balancer/handler/grpc/mocks/usecase"
+	mockusecase "itisadb/internal/memory-balancer/handler/mocks/usecase"
 	"itisadb/internal/memory-balancer/servers"
 	"itisadb/internal/memory-balancer/usecase"
 	api "itisadb/pkg/api/balancer"
@@ -597,48 +597,49 @@ func TestHandler_GetFromIndex(t *testing.T) {
 	}
 }
 
-func TestHandler_GetIndex(t *testing.T) {
+func TestHandler_IndexToJSON(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx     context.Context
-		request *api.BalancerGetIndexRequest
+		request *api.BalancerIndexToJSONRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerGetIndexResponse
+		want        *api.BalancerIndexToJSONRequest
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerGetIndexRequest{
+				request: &api.BalancerIndexToJSONRequest{
 					Name: "index",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(map[string]string{"index": ""}, nil)
+				logicmock.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
+					Return(`{"index":"qwe","values":"2"}`, nil)
 			},
-			want: &api.BalancerGetIndexResponse{
-				Index: map[string]string{"index": ""},
+			want: &api.BalancerIndexToJSONRequest{
+				Name: "{\"index\":\"qwe\",\"values\":\"2\"}",
 			},
 		},
 		{
 			name: "indexNotFound",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerGetIndexRequest{
+				request: &api.BalancerIndexToJSONRequest{
 					Name: "index2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().GetIndex(gomock.Any(), gomock.Any()).
-					Return(nil, status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
+				logicmock.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
+					Return("", status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
 			},
 			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
 		},
@@ -647,13 +648,13 @@ func TestHandler_GetIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.GetIndex(tt.args.ctx, tt.args.request)
+			got, err := h.IndexToJSON(tt.args.ctx, tt.args.request)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("GetIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+			if tt.wantErr == nil && (got.Index != tt.want.Name) {
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -712,6 +713,7 @@ func TestHandler_Index(t *testing.T) {
 				t.Errorf("Index() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Index() got = %v, want %v", got, tt.want)
 			}

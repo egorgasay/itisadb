@@ -18,6 +18,11 @@ type MockIServers struct {
 	recorder *MockIServersMockRecorder
 }
 
+func (m *MockIServers) DelFromAll(ctx context.Context, key string) (atLeastOnce bool) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // MockIServersMockRecorder is the mock recorder for MockIServers.
 type MockIServersMockRecorder struct {
 	mock *MockIServers

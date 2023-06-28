@@ -470,7 +470,7 @@ func TestServer_GetFromIndex(t *testing.T) {
 	}
 }
 
-func TestServer_GetIndex(t *testing.T) {
+func TestServer_IndexToJSON(t *testing.T) {
 	type args struct {
 		ctx  context.Context
 		name string
@@ -479,55 +479,47 @@ func TestServer_GetIndex(t *testing.T) {
 		name         string
 		mockBehavior func(cl *storagemock.MockStorageClient)
 		args         args
-		want         *storage.GetIndexResponse
+		want         *storage.IndexToJSONResponse
 		wantErr      error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx:  context.Background(),
-				name: "TestServer_GetIndex1",
+				name: "TestServer_IndexToJSON1",
 			},
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
-					&storage.GetIndexResponse{
-						Index: map[string]string{
-							"Key_GetIndex1": "test",
-							"Key_GetIndex2": "test",
-							"Key_GetIndex3": "test",
-						},
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
+					&storage.IndexToJSONResponse{
+						Index: "{\n\t\"isIndex\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
 					}, nil,
 				)
 			},
-			want: &storage.GetIndexResponse{
-				Index: map[string]string{
-					"Key_GetIndex1": "test",
-					"Key_GetIndex2": "test",
-					"Key_GetIndex3": "test",
-				},
+			want: &storage.IndexToJSONResponse{
+				Index: "{\n\t\"isIndex\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
 			},
 		},
 		{
 			name: "badConnection",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection"))
 			},
 			args: args{
 				ctx:  context.Background(),
-				name: "TestServer_GetIndex2",
+				name: "TestServer_IndexToJSON2",
 			},
 			wantErr: status.Error(codes.Unavailable, "bad connection"),
 		},
 		{
 			name: "NotFound",
 			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().GetIndex(gomock.Any(), gomock.Any()).Return(
+				cl.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 			},
 			args: args{
 				ctx:  context.Background(),
-				name: "TestServer_GetIndex3",
+				name: "TestServer_IndexToJSON3",
 			},
 			wantErr: status.Error(codes.NotFound, "not found"),
 		},
@@ -548,9 +540,9 @@ func TestServer_GetIndex(t *testing.T) {
 				number: 1,
 				mu:     &sync.RWMutex{},
 			}
-			got, err := s.GetIndex(tt.args.ctx, tt.args.name)
+			got, err := s.IndexToJSON(tt.args.ctx, tt.args.name)
 			if (err != nil) && (!errors.Is(err, tt.wantErr)) {
-				t.Errorf("GetIndex() error = %v, wantCode %v", err, tt.wantErr)
+				t.Errorf("IndexToJSON() error = %v, wantCode %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr != nil {
@@ -559,10 +551,10 @@ func TestServer_GetIndex(t *testing.T) {
 
 			if got != nil && tt.want != nil {
 				if !reflect.DeepEqual(*got, *tt.want) {
-					t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+					t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 				}
 			} else {
-				t.Errorf("GetIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
 			}
 
 		})

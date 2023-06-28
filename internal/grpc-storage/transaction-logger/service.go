@@ -39,6 +39,7 @@ type TransactionLogger struct {
 	sync.RWMutex
 }
 
+
 func New() (*TransactionLogger, error) {
 	if err := os.MkdirAll(PATH, 0755); err != nil {
 		return nil, err
@@ -67,13 +68,7 @@ func New() (*TransactionLogger, error) {
 	}
 
 	filename := fmt.Sprint(PATH, "/", maxNumber)
-	f, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
-	f.Close()
-
-	f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}

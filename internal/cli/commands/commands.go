@@ -125,18 +125,12 @@ func (c *Commands) newIndex(name string) (string, error) {
 }
 
 func (c *Commands) showIndex(name string) (string, error) {
-	m, err := c.cl.GetIndex(context.Background(), &balancer.BalancerGetIndexRequest{Name: name})
+	m, err := c.cl.IndexToJSON(context.Background(), &balancer.BalancerIndexToJSONRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
 
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("index %s:<br>", name))
-	for k, v := range m.Index {
-		sb.WriteString(fmt.Sprintf("%s: %s<br>", k, v))
-	}
-
-	return sb.String(), nil
+	return m.Index, nil
 }
 
 func (c *Commands) index(act, name, key, value string) (string, error) {
@@ -144,7 +138,7 @@ func (c *Commands) index(act, name, key, value string) (string, error) {
 	case set:
 		return c.setIndex(name, key, value)
 	case get:
-		return c.getIndex(name, key)
+		return c.IndexToJSON(name, key)
 	default:
 		return "", fmt.Errorf("unknown action")
 	}
@@ -165,7 +159,7 @@ func (c *Commands) setIndex(name, key, value string) (string, error) {
 	return fmt.Sprintf("status: ok, saved in index %s, on server #%d", name, r.SavedTo), nil
 }
 
-func (c *Commands) getIndex(name, key string) (string, error) {
+func (c *Commands) IndexToJSON(name, key string) (string, error) {
 	r, err := c.cl.GetFromIndex(context.Background(), &balancer.BalancerGetFromIndexRequest{
 		Index: name,
 		Key:   key,

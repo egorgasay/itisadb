@@ -8,7 +8,7 @@ import (
 type value struct {
 	value      string
 	name       string
-	next       *swiss.Map[string, ivalue]
+	values     *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
 	isIndex    bool
 	attachedTo map[string]bool
@@ -24,7 +24,7 @@ type ivalue interface {
 	IsIndex() bool
 	IsEmpty() bool
 	NextOrCreate(name string) (val ivalue)
-	Next(name string) (val ivalue, ok bool)
+	GetIValue(name string) (val ivalue, ok bool)
 	Size() int
 	Iter(func(k string, v ivalue) bool)
 	AttachIndex(src ivalue) error
@@ -43,7 +43,7 @@ func NewIndex(name string, attachedTo map[string]bool) *value {
 	attachedTo[name] = true
 	return &value{
 		mutex:      &sync.RWMutex{},
-		next:       swiss.NewMap[string, ivalue](10),
+		values:     swiss.NewMap[string, ivalue](10),
 		attachedTo: attachedTo,
 		isIndex:    true,
 		name:       name,
@@ -65,12 +65,12 @@ func (v *value) IsEmpty() bool {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
 
-	return v.next == nil
+	return v.values == nil
 }
 
 func (v *value) Get(name string) (string, error) {
 	v.mutex.RLock()
-	val, ok := v.next.Get(name)
+	val, ok := v.values.Get(name)
 	v.mutex.RUnlock()
 	if !ok {
 		return "", ErrNotFound
@@ -82,7 +82,7 @@ func (v *value) Get(name string) (string, error) {
 func (v *value) Size() int {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	return v.next.Count()
+	return v.values.Count()
 }
 
 func (v *value) IsIndex() bool {
@@ -109,46 +109,46 @@ func (v *value) AttachIndex(src ivalue) (err error) {
 			src.setAttached(v.attachedTo)
 		}
 	}()
-	if v.next == nil {
-		v.next = swiss.NewMap[string, ivalue](10)
-		v.next.Put(src.Name(), src)
+	if v.values == nil {
+		v.values = swiss.NewMap[string, ivalue](10)
+		v.values.Put(src.Name(), src)
 		return nil
 	}
-	if v.next.Has(src.Name()) {
+	if v.values.Has(src.Name()) {
 		return nil
 	}
 	v.isIndex = true
-	v.next.Put(src.Name(), src)
+	v.values.Put(src.Name(), src)
 	return nil
 }
 
 func (v *value) Iter(f func(k string, v ivalue) bool) {
-	v.next.Iter(f)
+	v.values.Iter(f)
 }
 
 func (v *value) DeleteIndex() {
 	v.mutex.Lock()
-	v.next = nil
+	v.values = nil
 	v.mutex.Unlock()
 }
 
 func (v *value) NextOrCreate(name string) ivalue {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	val, ok := v.next.Get(name)
+	val, ok := v.values.Get(name)
 	if !ok {
 		blank := NewIndex(name, v.attachedTo)
-		v.next.Put(name, blank)
+		v.values.Put(name, blank)
 		return blank
 	}
 
 	return val
 }
 
-func (v *value) Next(name string) (ivalue, bool) {
+func (v *value) GetIValue(name string) (ivalue, bool) {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	val, ok := v.next.Get(name)
+	val, ok := v.values.Get(name)
 	if !ok {
 		return nil, false
 	}
@@ -159,14 +159,14 @@ func (v *value) Next(name string) (ivalue, bool) {
 func (v *value) Set(key, val string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	v.next.Put(key, &value{value: val, mutex: &sync.RWMutex{}})
+	v.values.Put(key, &value{value: val, mutex: &sync.RWMutex{}, name: key})
 }
 
 func (v *value) SetValueUnique(val string) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	if v.next.Has(val) {
+	if v.values.Has(val) {
 		return ErrAlreadyExists
 	}
 
@@ -177,33 +177,33 @@ func (v *value) SetValueUnique(val string) error {
 func (v *value) CreateIndex(name string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	if v.next.Has(name) {
+	if v.values.Has(name) {
 		return
 	}
 
-	v.next.Put(name, &value{next: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
+	v.values.Put(name, &value{values: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
 }
 
 func (v *value) RecreateIndex() {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
-	v.next = swiss.NewMap[string, ivalue](10000)
+	v.values = swiss.NewMap[string, ivalue](10000)
 }
 
 func (v *value) Delete(key string) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	if !v.next.Has(key) {
+	if !v.values.Has(key) {
 		return ErrNotFound
 	}
 
-	v.next.Delete(key)
+	v.values.Delete(key)
 	return nil
 }
 
 func (v *value) Has(key string) bool {
 	v.mutex.RLock()
 	defer v.mutex.RUnlock()
-	return v.next.Has(key)
+	return v.values.Has(key)
 }

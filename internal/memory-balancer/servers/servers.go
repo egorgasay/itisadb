@@ -30,14 +30,13 @@ func New() (*Servers, error) {
 	}
 	defer f.Close()
 
-	var number uint32 = 0
 	s := make(map[int32]*Server, 10)
 
 	max := runtime.GOMAXPROCS(0) * 100
 
 	servers := &Servers{
 		servers: s,
-		freeID:  int32(number + 1),
+		freeID:  1,
 		poolCh:  make(chan struct{}, max),
 	}
 
@@ -53,7 +52,7 @@ func New() (*Servers, error) {
 		return nil, fmt.Errorf("can't get the last used number: %w", err)
 	}
 
-	servers.freeID = int32(atoi) + 1
+	servers.freeID = int32(atoi)
 
 	return servers, nil
 }
@@ -89,12 +88,18 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	s.Lock()
 	defer s.Unlock()
 
+	if server < s.freeID {
+		return 0, fmt.Errorf("%w. can't add server, beacause number is smaller then last was", ErrInternal)
+	}
+
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return 0, errors.Wrap(ErrInternal, err.Error())
 	}
 
 	cl := storage.NewStorageClient(conn)
+
+	// add test connection
 
 	var stClient = &Server{
 		storage: cl,
@@ -103,24 +108,29 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	}
 
 	if server != 0 {
+		if _, ok := s.servers[server]; ok {
+			return 0, ErrAlreadyExists
+		}
+
 		stClient.number = server
 		if server > s.freeID {
 			s.freeID = server + 1
 		}
 	} else {
-		// saving last id
-		f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
-		if err != nil {
-			return 0, errors.Wrapf(ErrInternal, "can't open file: servers, %v", err.Error())
-		}
-		defer f.Close()
-
 		stClient.number = s.freeID
 		s.freeID++
-		_, err = f.WriteString(fmt.Sprintf("%d\n", s.freeID))
-		if err != nil {
-			return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
-		}
+	}
+
+	// saving last id
+	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return 0, errors.Wrapf(ErrInternal, "can't open file: servers, %v", err.Error())
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(fmt.Sprintf("%d\n", s.freeID))
+	if err != nil {
+		return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
 	}
 
 	s.servers[stClient.number] = stClient
@@ -250,4 +260,42 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 	wg.Wait()
 
 	return failedServers
+}
+
+func (s *Servers) DelFromAll(ctx context.Context, key string) (atLeastOnce bool) {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	s.RLock()
+	defer s.RUnlock()
+
+	wg.Add(len(s.servers))
+
+	del := func(server *Server, number int32) {
+		defer wg.Done()
+		err := server.Delete(ctx, key)
+		if err != nil {
+			if server.GetTries() > 2 {
+				delete(s.servers, number)
+			}
+			server.IncTries()
+			mu.Lock()
+			mu.Unlock()
+			return
+		}
+		atLeastOnce = true
+
+		server.ResetTries()
+	}
+
+	for n, serv := range s.servers {
+		s.poolCh <- struct{}{}
+		go func(serv *Server, n int32) {
+			del(serv, n)
+			<-s.poolCh
+		}(serv, n)
+	}
+	wg.Wait()
+
+	return atLeastOnce
 }
