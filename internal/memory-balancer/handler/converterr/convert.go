@@ -8,8 +8,8 @@ import (
 
 var ErrNotFound = errors.New("not found")
 var ErrUnavailable = errors.New("service unavailable")
-var ErrInvalidName = errors.New("invalid index name")
-var ErrIndexNotFound = errors.New("index not found")
+var ErrInvalidName = errors.New("invalid object name")
+var ErrObjectNotFound = errors.New("object not found")
 var ErrExists = errors.New("already exists")
 var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
@@ -61,7 +61,7 @@ func Set(err error) error {
 	return err
 }
 
-func GetFromIndex(err error) error {
+func GetFromObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -71,7 +71,7 @@ func GetFromIndex(err error) error {
 	case codes.NotFound:
 		return ErrNotFound
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -79,7 +79,7 @@ func GetFromIndex(err error) error {
 	return err
 }
 
-func DelFromIndex(err error) error {
+func DelFromObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -89,7 +89,7 @@ func DelFromIndex(err error) error {
 	case codes.NotFound:
 		return ErrNotFound
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -97,7 +97,7 @@ func DelFromIndex(err error) error {
 	return err
 }
 
-func SetToIndex(err error) error {
+func SetToObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -107,7 +107,7 @@ func SetToIndex(err error) error {
 	case codes.AlreadyExists:
 		return ErrExists
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -115,7 +115,7 @@ func SetToIndex(err error) error {
 	return err
 }
 
-func IndexToJSON(err error) error {
+func ObjectToJSON(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -123,7 +123,7 @@ func IndexToJSON(err error) error {
 
 	switch st.Code() {
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -131,7 +131,7 @@ func IndexToJSON(err error) error {
 	return err
 }
 
-func Index(err error) error {
+func Object(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -149,7 +149,7 @@ func Index(err error) error {
 	return err
 }
 
-func DelIndex(err error) error {
+func DelObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -157,7 +157,7 @@ func DelIndex(err error) error {
 
 	switch st.Code() {
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -165,7 +165,7 @@ func DelIndex(err error) error {
 	return err
 }
 
-func SizeIndex(err error) error {
+func SizeObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -173,7 +173,7 @@ func SizeIndex(err error) error {
 
 	switch st.Code() {
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -181,7 +181,7 @@ func SizeIndex(err error) error {
 	return err
 }
 
-func IsIndex(err error) error {
+func IsObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -189,7 +189,7 @@ func IsIndex(err error) error {
 
 	switch st.Code() {
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}
@@ -197,7 +197,7 @@ func IsIndex(err error) error {
 	return err
 }
 
-func AttachIndex(err error) error {
+func AttachObject(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		return err
@@ -207,7 +207,7 @@ func AttachIndex(err error) error {
 	case codes.PermissionDenied:
 		return ErrCircularAttachment
 	case codes.ResourceExhausted:
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	case codes.Unavailable:
 		return ErrUnavailable
 	}

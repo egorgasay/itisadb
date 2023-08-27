@@ -18,7 +18,7 @@ import (
 
 type mockUseCase func(*mockusecase.MockIUseCase)
 
-func TestHandler_AttachToIndex(t *testing.T) {
+func TestHandler_AttachToObject(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
@@ -26,75 +26,75 @@ func TestHandler_AttachToIndex(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		r   *api.BalancerAttachToIndexRequest
+		r   *api.BalancerAttachToObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerAttachToIndexResponse
+		want        *api.BalancerAttachToObjectResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerAttachToIndexRequest{
-					Dst: "index1",
-					Src: "index2",
+				r: &api.BalancerAttachToObjectRequest{
+					Dst: "object1",
+					Src: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				logicmock.EXPECT().AttachToObject(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
-			want: &api.BalancerAttachToIndexResponse{},
+			want: &api.BalancerAttachToObjectResponse{},
 		},
 		{
 			name: "notFound",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerAttachToIndexRequest{
-					Dst: "index3",
-					Src: "index2",
+				r: &api.BalancerAttachToObjectRequest{
+					Dst: "object3",
+					Src: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					usecase.ErrIndexNotFound)
+				logicmock.EXPECT().AttachToObject(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+					usecase.ErrObjectNotFound)
 			},
-			want:    &api.BalancerAttachToIndexResponse{},
-			wantErr: status.Error(codes.ResourceExhausted, usecase.ErrIndexNotFound.Error()),
+			want:    &api.BalancerAttachToObjectResponse{},
+			wantErr: status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error()),
 		},
 		{
 			name: "notFound#2",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerAttachToIndexRequest{
-					Dst: "index7",
-					Src: "index2",
+				r: &api.BalancerAttachToObjectRequest{
+					Dst: "object7",
+					Src: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				logicmock.EXPECT().AttachToObject(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					status.Error(codes.ResourceExhausted, storage.ErrNotFound.Error()))
 			},
-			want:    &api.BalancerAttachToIndexResponse{},
+			want:    &api.BalancerAttachToObjectResponse{},
 			wantErr: status.Error(codes.ResourceExhausted, storage.ErrNotFound.Error()),
 		},
 		{
 			name: "circularAttachment",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerAttachToIndexRequest{
-					Dst: "index3",
-					Src: "index2",
+				r: &api.BalancerAttachToObjectRequest{
+					Dst: "object3",
+					Src: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().AttachToIndex(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				logicmock.EXPECT().AttachToObject(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					status.Error(codes.PermissionDenied, storage.ErrCircularAttachment.Error()))
 			},
-			want:    &api.BalancerAttachToIndexResponse{},
+			want:    &api.BalancerAttachToObjectResponse{},
 			wantErr: status.Error(codes.PermissionDenied, storage.ErrCircularAttachment.Error()),
 		},
 	}
@@ -102,12 +102,12 @@ func TestHandler_AttachToIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.AttachToIndex(tt.args.ctx, tt.args.r)
+			got, err := h.AttachToObject(tt.args.ctx, tt.args.r)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AttachToIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AttachToObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			} else if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AttachToIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("AttachToObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -265,8 +265,8 @@ func TestHandler_DeleteAttr(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				r: &api.BalancerDeleteAttrRequest{
-					Key:   "key",
-					Index: "index",
+					Key:    "key",
+					Object: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
@@ -275,28 +275,28 @@ func TestHandler_DeleteAttr(t *testing.T) {
 			want: &api.BalancerDeleteAttrResponse{},
 		},
 		{
-			name: "indexNotFound",
+			name: "objectNotFound",
 			args: args{
 				ctx: context.Background(),
 				r: &api.BalancerDeleteAttrRequest{
-					Key:   "key",
-					Index: "index2",
+					Key:    "key",
+					Object: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().DeleteAttr(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
+					Return(status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()))
 			},
 			want:    &api.BalancerDeleteAttrResponse{},
-			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
+			wantErr: status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()),
 		},
 		{
 			name: "attrNotFound",
 			args: args{
 				ctx: context.Background(),
 				r: &api.BalancerDeleteAttrRequest{
-					Key:   "key",
-					Index: "index2",
+					Key:    "key",
+					Object: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
@@ -323,59 +323,59 @@ func TestHandler_DeleteAttr(t *testing.T) {
 	}
 }
 
-func TestHandler_DeleteIndex(t *testing.T) {
+func TestHandler_DeleteObject(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx context.Context
-		r   *api.BalancerDeleteIndexRequest
+		r   *api.BalancerDeleteObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerDeleteIndexResponse
+		want        *api.BalancerDeleteObjectResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerDeleteIndexRequest{
-					Index: "index",
+				r: &api.BalancerDeleteObjectRequest{
+					Object: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).Return(nil)
+				logicmock.EXPECT().DeleteObject(gomock.Any(), gomock.Any()).Return(nil)
 			},
-			want: &api.BalancerDeleteIndexResponse{},
+			want: &api.BalancerDeleteObjectResponse{},
 		},
 		{
-			name: "indexNotFound",
+			name: "objectNotFound",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerDeleteIndexRequest{
-					Index: "index2",
+				r: &api.BalancerDeleteObjectRequest{
+					Object: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).
-					Return(status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
+				logicmock.EXPECT().DeleteObject(gomock.Any(), gomock.Any()).
+					Return(status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()))
 			},
-			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
+			wantErr: status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()),
 		},
 		{
 			name: "unavailable",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerDeleteIndexRequest{
-					Index: "index2",
+				r: &api.BalancerDeleteObjectRequest{
+					Object: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().DeleteObject(gomock.Any(), gomock.Any()).
 					Return(status.Error(codes.Unavailable, servers.ErrUnavailable.Error()))
 			},
 			wantErr: status.Error(codes.Unavailable, servers.ErrUnavailable.Error()),
@@ -385,13 +385,13 @@ func TestHandler_DeleteIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.DeleteIndex(tt.args.ctx, tt.args.r)
+			got, err := h.DeleteObject(tt.args.ctx, tt.args.r)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeleteObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DeleteIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("DeleteObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -514,68 +514,68 @@ func TestHandler_Get(t *testing.T) {
 	}
 }
 
-func TestHandler_GetFromIndex(t *testing.T) {
+func TestHandler_GetFromObject(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx context.Context
-		r   *api.BalancerGetFromIndexRequest
+		r   *api.BalancerGetFromObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerGetFromIndexResponse
+		want        *api.BalancerGetFromObjectResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerGetFromIndexRequest{
-					Index:  "index",
+				r: &api.BalancerGetFromObjectRequest{
+					Object: "object",
 					Key:    "qwe",
 					Server: 1,
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().GetFromIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().GetFromObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("1", nil)
 			},
-			want: &api.BalancerGetFromIndexResponse{
+			want: &api.BalancerGetFromObjectResponse{
 				Value: "1",
 			},
 		},
 		{
-			name: "indexNotFound",
+			name: "objectNotFound",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerGetFromIndexRequest{
-					Index:  "index",
+				r: &api.BalancerGetFromObjectRequest{
+					Object: "object",
 					Key:    "qwe",
 					Server: 1,
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().GetFromIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("", status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
+				logicmock.EXPECT().GetFromObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()))
 			},
-			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
+			wantErr: status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()),
 		},
 		{
 			name: "attrNotFound",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerGetFromIndexRequest{
-					Index:  "index",
+				r: &api.BalancerGetFromObjectRequest{
+					Object: "object",
 					Key:    "qwe",
 					Server: 1,
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().GetFromIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().GetFromObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return("", status.Error(codes.NotFound, storage.ErrNotFound.Error()))
 			},
 			wantErr: status.Error(codes.NotFound, storage.ErrNotFound.Error()),
@@ -585,120 +585,120 @@ func TestHandler_GetFromIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.GetFromIndex(tt.args.ctx, tt.args.r)
+			got, err := h.GetFromObject(tt.args.ctx, tt.args.r)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("GetFromIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetFromObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetFromIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("GetFromObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestHandler_IndexToJSON(t *testing.T) {
+func TestHandler_ObjectToJSON(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx     context.Context
-		request *api.BalancerIndexToJSONRequest
+		request *api.BalancerObjectToJSONRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerIndexToJSONRequest
+		want        *api.BalancerObjectToJSONRequest
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexToJSONRequest{
-					Name: "index",
+				request: &api.BalancerObjectToJSONRequest{
+					Name: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
-					Return(`{"index":"qwe","values":"2"}`, nil)
+				logicmock.EXPECT().ObjectToJSON(gomock.Any(), gomock.Any()).
+					Return(`{"object":"qwe","values":"2"}`, nil)
 			},
-			want: &api.BalancerIndexToJSONRequest{
-				Name: "{\"index\":\"qwe\",\"values\":\"2\"}",
+			want: &api.BalancerObjectToJSONRequest{
+				Name: "{\"object\":\"qwe\",\"values\":\"2\"}",
 			},
 		},
 		{
-			name: "indexNotFound",
+			name: "objectNotFound",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexToJSONRequest{
-					Name: "index2",
+				request: &api.BalancerObjectToJSONRequest{
+					Name: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().IndexToJSON(gomock.Any(), gomock.Any()).
-					Return("", status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()))
+				logicmock.EXPECT().ObjectToJSON(gomock.Any(), gomock.Any()).
+					Return("", status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()))
 			},
-			wantErr: status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error()),
+			wantErr: status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error()),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.IndexToJSON(tt.args.ctx, tt.args.request)
+			got, err := h.ObjectToJSON(tt.args.ctx, tt.args.request)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ObjectToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.wantErr == nil && (got.Index != tt.want.Name) {
-				t.Errorf("IndexToJSON() got = %v, want %v", got, tt.want)
+			if tt.wantErr == nil && (got.Object != tt.want.Name) {
+				t.Errorf("ObjectToJSON() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestHandler_Index(t *testing.T) {
+func TestHandler_Object(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx     context.Context
-		request *api.BalancerIndexRequest
+		request *api.BalancerObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerIndexResponse
+		want        *api.BalancerObjectResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexRequest{
-					Name: "index",
+				request: &api.BalancerObjectRequest{
+					Name: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().Index(gomock.Any(), gomock.Any()).Return(int32(0), nil)
+				logicmock.EXPECT().Object(gomock.Any(), gomock.Any()).Return(int32(0), nil)
 			},
-			want: &api.BalancerIndexResponse{},
+			want: &api.BalancerObjectResponse{},
 		},
 		{
 			name: "ErrSomethingExists",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexRequest{
-					Name: "index",
+				request: &api.BalancerObjectRequest{
+					Name: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().Index(gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().Object(gomock.Any(), gomock.Any()).
 					Return(int32(0), status.Error(codes.AlreadyExists, storage.ErrSomethingExists.Error()))
 			},
 			wantErr: status.Error(codes.AlreadyExists, storage.ErrSomethingExists.Error()),
@@ -708,62 +708,62 @@ func TestHandler_Index(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.Index(tt.args.ctx, tt.args.request)
+			got, err := h.Object(tt.args.ctx, tt.args.request)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("Index() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Object() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Index() got = %v, want %v", got, tt.want)
+				t.Errorf("Object() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestHandler_IsIndex(t *testing.T) {
+func TestHandler_IsObject(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx     context.Context
-		request *api.BalancerIsIndexRequest
+		request *api.BalancerIsObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerIsIndexResponse
+		want        *api.BalancerIsObjectResponse
 		wantErr     error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIsIndexRequest{
-					Name: "index",
+				request: &api.BalancerIsObjectRequest{
+					Name: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().IsIndex(gomock.Any(), gomock.Any()).Return(true, nil)
+				logicmock.EXPECT().IsObject(gomock.Any(), gomock.Any()).Return(true, nil)
 			},
-			want: &api.BalancerIsIndexResponse{
+			want: &api.BalancerIsObjectResponse{
 				Ok: true,
 			},
 		},
 		{
-			name: "indexNotFound",
+			name: "objectNotFound",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIsIndexRequest{
-					Name: "index2",
+				request: &api.BalancerIsObjectRequest{
+					Name: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().IsIndex(gomock.Any(), gomock.Any()).Return(false, nil)
+				logicmock.EXPECT().IsObject(gomock.Any(), gomock.Any()).Return(false, nil)
 			},
-			want: &api.BalancerIsIndexResponse{
+			want: &api.BalancerIsObjectResponse{
 				Ok: false,
 			},
 		},
@@ -772,13 +772,13 @@ func TestHandler_IsIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.IsIndex(tt.args.ctx, tt.args.request)
+			got, err := h.IsObject(tt.args.ctx, tt.args.request)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("IsIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IsObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("IsIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("IsObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -918,38 +918,38 @@ func TestHandler_Set(t *testing.T) {
 	}
 }
 
-func TestHandler_SetToIndex(t *testing.T) {
+func TestHandler_SetToObject(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 	logicmock := mockusecase.NewMockIUseCase(c)
 	h := New(logicmock)
 	type args struct {
 		ctx context.Context
-		r   *api.BalancerSetToIndexRequest
+		r   *api.BalancerSetToObjectRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerSetToIndexResponse
+		want        *api.BalancerSetToObjectResponse
 		wantErr     bool
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerSetToIndexRequest{
+				r: &api.BalancerSetToObjectRequest{
 					Key:     "key",
 					Value:   "value",
 					Uniques: false,
-					Index:   "index",
+					Object:  "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().SetToIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().SetToObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(int32(1), nil)
 			},
-			want: &api.BalancerSetToIndexResponse{
+			want: &api.BalancerSetToObjectResponse{
 				SavedTo: 1,
 			},
 		},
@@ -957,15 +957,15 @@ func TestHandler_SetToIndex(t *testing.T) {
 			name: "error",
 			args: args{
 				ctx: context.Background(),
-				r: &api.BalancerSetToIndexRequest{
+				r: &api.BalancerSetToObjectRequest{
 					Key:     "key",
 					Value:   "value",
 					Uniques: false,
-					Index:   "index",
+					Object:  "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
-				logicmock.EXPECT().SetToIndex(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				logicmock.EXPECT().SetToObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(int32(1), errors.New("unexpected error"))
 			},
 			wantErr: true,
@@ -975,13 +975,13 @@ func TestHandler_SetToIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockUseCase(logicmock)
 
-			got, err := h.SetToIndex(tt.args.ctx, tt.args.r)
+			got, err := h.SetToObject(tt.args.ctx, tt.args.r)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("SetToIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SetToObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SetToIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("SetToObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -994,28 +994,28 @@ func TestHandler_Size(t *testing.T) {
 	h := New(logicmock)
 	type args struct {
 		ctx     context.Context
-		request *api.BalancerIndexSizeRequest
+		request *api.BalancerObjectSizeRequest
 	}
 	tests := []struct {
 		mockUseCase mockUseCase
 		name        string
 		args        args
-		want        *api.BalancerIndexSizeResponse
+		want        *api.BalancerObjectSizeResponse
 		wantErr     bool
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexSizeRequest{
-					Name: "index",
+				request: &api.BalancerObjectSizeRequest{
+					Name: "object",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().Size(gomock.Any(), gomock.Any()).
 					Return(uint64(1), nil)
 			},
-			want: &api.BalancerIndexSizeResponse{
+			want: &api.BalancerObjectSizeResponse{
 				Size: 1,
 			},
 		},
@@ -1023,8 +1023,8 @@ func TestHandler_Size(t *testing.T) {
 			name: "error",
 			args: args{
 				ctx: context.Background(),
-				request: &api.BalancerIndexSizeRequest{
-					Name: "index2",
+				request: &api.BalancerObjectSizeRequest{
+					Name: "object2",
 				},
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {

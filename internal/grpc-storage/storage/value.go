@@ -10,7 +10,7 @@ type value struct {
 	name       string
 	values     *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
-	isIndex    bool
+	isObject   bool
 	attachedTo map[string]bool
 }
 
@@ -19,16 +19,16 @@ type ivalue interface {
 	Get(name string) (val string, err error)
 	Set(key, val string)
 	SetValueUnique(val string) error
-	CreateIndex(name string)
-	RecreateIndex()
-	IsIndex() bool
+	CreateObject(name string)
+	RecreateObject()
+	IsObject() bool
 	IsEmpty() bool
 	NextOrCreate(name string) (val ivalue)
 	GetIValue(name string) (val ivalue, ok bool)
 	Size() int
 	Iter(func(k string, v ivalue) bool)
-	AttachIndex(src ivalue) error
-	DeleteIndex()
+	AttachObject(src ivalue) error
+	DeleteObject()
 	Delete(key string) error
 	Has(key string) bool
 	IsAttached(name string) bool
@@ -36,7 +36,7 @@ type ivalue interface {
 	Name() string
 }
 
-func NewIndex(name string, attachedTo map[string]bool) *value {
+func NewObject(name string, attachedTo map[string]bool) *value {
 	if attachedTo == nil {
 		attachedTo = make(map[string]bool)
 	}
@@ -45,7 +45,7 @@ func NewIndex(name string, attachedTo map[string]bool) *value {
 		mutex:      &sync.RWMutex{},
 		values:     swiss.NewMap[string, ivalue](10),
 		attachedTo: attachedTo,
-		isIndex:    true,
+		isObject:   true,
 		name:       name,
 	}
 }
@@ -85,8 +85,8 @@ func (v *value) Size() int {
 	return v.values.Count()
 }
 
-func (v *value) IsIndex() bool {
-	return v.isIndex
+func (v *value) IsObject() bool {
+	return v.isObject
 }
 
 func (v *value) IsAttached(name string) bool {
@@ -101,7 +101,7 @@ func (v *value) setAttached(attachedTo map[string]bool) {
 	}
 }
 
-func (v *value) AttachIndex(src ivalue) (err error) {
+func (v *value) AttachObject(src ivalue) (err error) {
 	v.mutex.Lock()
 	defer func() {
 		v.mutex.Unlock()
@@ -117,7 +117,7 @@ func (v *value) AttachIndex(src ivalue) (err error) {
 	if v.values.Has(src.Name()) {
 		return nil
 	}
-	v.isIndex = true
+	v.isObject = true
 	v.values.Put(src.Name(), src)
 	return nil
 }
@@ -126,7 +126,7 @@ func (v *value) Iter(f func(k string, v ivalue) bool) {
 	v.values.Iter(f)
 }
 
-func (v *value) DeleteIndex() {
+func (v *value) DeleteObject() {
 	v.mutex.Lock()
 	v.values = nil
 	v.mutex.Unlock()
@@ -137,7 +137,7 @@ func (v *value) NextOrCreate(name string) ivalue {
 	defer v.mutex.Unlock()
 	val, ok := v.values.Get(name)
 	if !ok {
-		blank := NewIndex(name, v.attachedTo)
+		blank := NewObject(name, v.attachedTo)
 		v.values.Put(name, blank)
 		return blank
 	}
@@ -174,7 +174,7 @@ func (v *value) SetValueUnique(val string) error {
 	return nil
 }
 
-func (v *value) CreateIndex(name string) {
+func (v *value) CreateObject(name string) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 	if v.values.Has(name) {
@@ -184,7 +184,7 @@ func (v *value) CreateIndex(name string) {
 	v.values.Put(name, &value{values: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
 }
 
-func (v *value) RecreateIndex() {
+func (v *value) RecreateObject() {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 	v.values = swiss.NewMap[string, ivalue](10000)

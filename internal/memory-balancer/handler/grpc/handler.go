@@ -31,13 +31,13 @@ func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.Bala
 	}, nil
 }
 
-func (h *Handler) SetToIndex(ctx context.Context, r *api.BalancerSetToIndexRequest) (*api.BalancerSetToIndexResponse, error) {
-	setTo, err := h.logic.SetToIndex(ctx, r.Index, r.Key, r.Value, r.Uniques)
+func (h *Handler) SetToObject(ctx context.Context, r *api.BalancerSetToObjectRequest) (*api.BalancerSetToObjectResponse, error) {
+	setTo, err := h.logic.SetToObject(ctx, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerSetToIndexResponse{
+	return &api.BalancerSetToObjectResponse{
 		SavedTo: setTo,
 	}, nil
 }
@@ -61,8 +61,8 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 	}, nil
 }
 
-func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexRequest) (*api.BalancerGetFromIndexResponse, error) {
-	value, err := h.logic.GetFromIndex(ctx, r.GetIndex(), r.GetKey(), r.GetServer())
+func (h *Handler) GetFromObject(ctx context.Context, r *api.BalancerGetFromObjectRequest) (*api.BalancerGetFromObjectResponse, error) {
+	value, err := h.logic.GetFromObject(ctx, r.GetObject(), r.GetKey(), r.GetServer())
 	if err != nil {
 		if errors.Is(err, usecase.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -75,7 +75,7 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.BalancerGetFromIndexR
 		return nil, err
 	}
 
-	return &api.BalancerGetFromIndexResponse{
+	return &api.BalancerGetFromObjectResponse{
 		Value: value,
 	}, nil
 }
@@ -90,25 +90,25 @@ func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*ap
 	return resp, nil
 }
 
-func (h *Handler) AttachToIndex(ctx context.Context, r *api.BalancerAttachToIndexRequest) (*api.BalancerAttachToIndexResponse, error) {
-	err := h.logic.AttachToIndex(ctx, r.Dst, r.Src)
+func (h *Handler) AttachToObject(ctx context.Context, r *api.BalancerAttachToObjectRequest) (*api.BalancerAttachToObjectResponse, error) {
+	err := h.logic.AttachToObject(ctx, r.Dst, r.Src)
 	if err != nil {
-		if errors.Is(err, usecase.ErrIndexNotFound) {
-			return nil, status.Error(codes.ResourceExhausted, usecase.ErrIndexNotFound.Error())
+		if errors.Is(err, usecase.ErrObjectNotFound) {
+			return nil, status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error())
 		}
 		return nil, err
 	}
 
-	return &api.BalancerAttachToIndexResponse{}, nil
+	return &api.BalancerAttachToObjectResponse{}, nil
 }
 
-func (h *Handler) DeleteIndex(ctx context.Context, r *api.BalancerDeleteIndexRequest) (*api.BalancerDeleteIndexResponse, error) {
-	err := h.logic.DeleteIndex(ctx, r.Index)
+func (h *Handler) DeleteObject(ctx context.Context, r *api.BalancerDeleteObjectRequest) (*api.BalancerDeleteObjectResponse, error) {
+	err := h.logic.DeleteObject(ctx, r.Object)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerDeleteIndexResponse{}, nil
+	return &api.BalancerDeleteObjectResponse{}, nil
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectRequest) (*api.BalancerConnectResponse, error) {
@@ -126,42 +126,42 @@ func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectReque
 	}, nil
 }
 
-func (h *Handler) Index(ctx context.Context, request *api.BalancerIndexRequest) (*api.BalancerIndexResponse, error) {
-	_, err := h.logic.Index(ctx, request.GetName())
+func (h *Handler) Object(ctx context.Context, request *api.BalancerObjectRequest) (*api.BalancerObjectResponse, error) {
+	_, err := h.logic.Object(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerIndexResponse{}, nil
+	return &api.BalancerObjectResponse{}, nil
 }
 
-func (h *Handler) IndexToJSON(ctx context.Context, request *api.BalancerIndexToJSONRequest) (*api.BalancerIndexToJSONResponse, error) {
-	m, err := h.logic.IndexToJSON(ctx, request.GetName())
+func (h *Handler) ObjectToJSON(ctx context.Context, request *api.BalancerObjectToJSONRequest) (*api.BalancerObjectToJSONResponse, error) {
+	m, err := h.logic.ObjectToJSON(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerIndexToJSONResponse{
-		Index: m,
+	return &api.BalancerObjectToJSONResponse{
+		Object: m,
 	}, nil
 }
 
-func (h *Handler) IsIndex(ctx context.Context, request *api.BalancerIsIndexRequest) (*api.BalancerIsIndexResponse, error) {
-	ok, err := h.logic.IsIndex(ctx, request.GetName())
+func (h *Handler) IsObject(ctx context.Context, request *api.BalancerIsObjectRequest) (*api.BalancerIsObjectResponse, error) {
+	ok, err := h.logic.IsObject(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerIsIndexResponse{
+	return &api.BalancerIsObjectResponse{
 		Ok: ok,
 	}, nil
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrRequest) (*api.BalancerDeleteAttrResponse, error) {
-	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetIndex())
+	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetObject())
 	if err != nil {
-		if errors.Is(err, usecase.ErrIndexNotFound) {
-			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, usecase.ErrIndexNotFound.Error())
+		if errors.Is(err, usecase.ErrObjectNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error())
 		}
 
 		return &api.BalancerDeleteAttrResponse{}, err
@@ -170,13 +170,13 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrReque
 	return &api.BalancerDeleteAttrResponse{}, nil
 }
 
-func (h *Handler) Size(ctx context.Context, request *api.BalancerIndexSizeRequest) (*api.BalancerIndexSizeResponse, error) {
+func (h *Handler) Size(ctx context.Context, request *api.BalancerObjectSizeRequest) (*api.BalancerObjectSizeResponse, error) {
 	size, err := h.logic.Size(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerIndexSizeResponse{
+	return &api.BalancerObjectSizeResponse{
 		Size: size,
 	}, nil
 }

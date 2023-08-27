@@ -22,8 +22,8 @@ const (
 
 //go:generate mockgen -destination=mocks/storage/mock_storage.go -package=mocks . IStorage
 type iStorage interface {
-	RestoreIndexes(ctx context.Context) (map[string]int32, error)
-	SaveIndexLoc(ctx context.Context, index string, server int32) error
+	RestoreObjects(ctx context.Context) (map[string]int32, error)
+	SaveObjectLoc(ctx context.Context, object string, server int32) error
 }
 
 //go:generate mockgen -destination=mocks/servers/mock_servers.go -package=mocks . iServers
@@ -45,7 +45,7 @@ type UseCase struct {
 	logger  logger.ILogger
 	storage iStorage
 
-	indexes map[string]int32
+	objects map[string]int32
 	mu      sync.RWMutex
 
 	pool chan struct{} // TODO: ADD TO CONFIG
@@ -57,7 +57,7 @@ func New(ctx context.Context, repository iStorage, logger logger.ILogger) (*UseC
 		return nil, err
 	}
 
-	indexes, err := repository.RestoreIndexes(ctx)
+	objects, err := repository.RestoreObjects(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func New(ctx context.Context, repository iStorage, logger logger.ILogger) (*UseC
 		servers: s,
 		storage: repository,
 		logger:  logger,
-		indexes: indexes,
+		objects: objects,
 		pool:    make(chan struct{}, 30000), // TODO: MOVE TO CONFIG
 	}, nil
 }

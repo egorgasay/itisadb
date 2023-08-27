@@ -121,9 +121,9 @@ func TestStorage_Get(t *testing.T) {
 	}
 }
 
-func TestStorage_GetFromIndex(t *testing.T) {
+func TestStorage_GetFromObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -138,7 +138,7 @@ func TestStorage_GetFromIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 				key:  "key",
 			},
 			want: "val",
@@ -146,7 +146,7 @@ func TestStorage_GetFromIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index.innner.inner2",
+				name: "object.innner.inner2",
 				key:  "key2",
 			},
 			want: "val2",
@@ -154,7 +154,7 @@ func TestStorage_GetFromIndex(t *testing.T) {
 		{
 			name: "not found",
 			args: args{
-				name: "index",
+				name: "object",
 				key:  "key3",
 			},
 			wantErr: true,
@@ -163,33 +163,33 @@ func TestStorage_GetFromIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Errorf("CreateIndex() error = %v", err)
+					t.Errorf("CreateObject() error = %v", err)
 				}
 
-				index, err := s.findIndex(tt.args.name)
+				object, err := s.findObject(tt.args.name)
 				if err != nil {
-					t.Errorf("findIndex() error = %v", err)
+					t.Errorf("findObject() error = %v", err)
 				}
 
-				index.Set(tt.args.key, tt.want)
+				object.Set(tt.args.key, tt.want)
 			}
-			got, err := s.GetFromIndex(tt.args.name, tt.args.key)
+			got, err := s.GetFromObject(tt.args.name, tt.args.key)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetFromIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetFromObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("GetFromIndex() got = %v, want %v", got, tt.want)
+				t.Errorf("GetFromObject() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestStorage_SetToIndex(t *testing.T) {
+func TestStorage_SetToObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name  string
@@ -204,7 +204,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name:  "index",
+				name:  "object",
 				key:   "key",
 				value: "val",
 			},
@@ -213,7 +213,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name:  "index.innner.inner3",
+				name:  "object.innner.inner3",
 				key:   "key2",
 				value: "val2",
 			},
@@ -222,7 +222,7 @@ func TestStorage_SetToIndex(t *testing.T) {
 		{
 			name: "not found",
 			args: args{
-				name:  "index44",
+				name:  "object44",
 				key:   "key",
 				value: "val",
 			},
@@ -232,20 +232,20 @@ func TestStorage_SetToIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Errorf("CreateIndex() error = %v", err)
+					t.Errorf("CreateObject() error = %v", err)
 				}
 			}
-			if err := s.SetToIndex(tt.args.name, tt.args.key, tt.args.value, false); (err != nil) != tt.wantErr {
-				t.Errorf("SetToIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.SetToObject(tt.args.name, tt.args.key, tt.args.value, false); (err != nil) != tt.wantErr {
+				t.Errorf("SetToObject() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr {
-				index, err := s.findIndex(tt.args.name)
+				object, err := s.findObject(tt.args.name)
 				if err != nil {
-					t.Errorf("findIndex() error = %v", err)
+					t.Errorf("findObject() error = %v", err)
 				}
-				getValue, err := index.Get(tt.args.key)
+				getValue, err := object.Get(tt.args.key)
 				if err != nil {
 					t.Errorf("GetValue() error = %v", err)
 				}
@@ -257,9 +257,9 @@ func TestStorage_SetToIndex(t *testing.T) {
 	}
 }
 
-func TestStorage_AttachToIndex(t *testing.T) {
+func TestStorage_AttachToObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		dst string
@@ -273,71 +273,71 @@ func TestStorage_AttachToIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				dst: "index1",
-				src: "index2",
+				dst: "object1",
+				src: "object2",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				dst: "index11.inner1",
-				src: "index22",
+				dst: "object11.inner1",
+				src: "object22",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				dst: "index678.inner1.inner2.inner3",
-				src: "index23.inner1",
+				dst: "object678.inner1.inner2.inner3",
+				src: "object23.inner1",
 			},
 		},
 		{
 			name: "notFound",
 			args: args{
-				dst: "index99",
-				src: "index98",
+				dst: "object99",
+				src: "object98",
 			},
-			wantErr: ErrIndexNotFound,
+			wantErr: ErrObjectNotFound,
 		},
 		{
 			name: "circle",
 			args: args{
-				dst: "index1.inner1",
-				src: "index1",
+				dst: "object1.inner1",
+				src: "object1",
 			},
 			wantErr: ErrCircularAttachment,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !errors.Is(tt.wantErr, ErrIndexNotFound) {
-				err := s.CreateIndex(tt.args.dst)
+			if !errors.Is(tt.wantErr, ErrObjectNotFound) {
+				err := s.CreateObject(tt.args.dst)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 
-				err = s.CreateIndex(tt.args.src)
+				err = s.CreateObject(tt.args.src)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 			}
-			if err := s.AttachToIndex(tt.args.dst, tt.args.src); !errors.Is(err, tt.wantErr) {
-				t.Fatalf("AttachToIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.AttachToObject(tt.args.dst, tt.args.src); !errors.Is(err, tt.wantErr) {
+				t.Fatalf("AttachToObject() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr == nil {
-				original, err := s.findIndex(tt.args.src)
+				original, err := s.findObject(tt.args.src)
 				if err != nil {
-					t.Fatalf("findIndex() error = %v", err)
+					t.Fatalf("findObject() error = %v", err)
 				}
 
 				split := strings.Split(tt.args.src, ".")
 				if len(split) == 0 {
-					t.Fatalf("index name error, fix it!")
+					t.Fatalf("object name error, fix it!")
 				}
 
-				attached, err := s.findIndex(tt.args.dst + "." + split[len(split)-1])
+				attached, err := s.findObject(tt.args.dst + "." + split[len(split)-1])
 				if err != nil {
-					t.Fatalf("findIndex() error = %v", err)
+					t.Fatalf("findObject() error = %v", err)
 				}
 
 				attached.Set("key", "value")
@@ -360,16 +360,16 @@ func TestStorage_AttachToIndex(t *testing.T) {
 				})
 
 				if !reflect.DeepEqual(originalMap, attachedMap) {
-					t.Errorf("AttachToIndex() originalMap = %v, attachedMap = %v", originalMap, attachedMap)
+					t.Errorf("AttachToObject() originalMap = %v, attachedMap = %v", originalMap, attachedMap)
 				}
 			}
 		})
 	}
 }
 
-func TestStorage_DeleteIndex(t *testing.T) {
+func TestStorage_DeleteObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -382,19 +382,19 @@ func TestStorage_DeleteIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index22",
+				name: "object22",
 			},
 		},
 		{
 			name: "not found",
 			args: args{
-				name: "index78",
+				name: "object78",
 			},
 			wantErr: true,
 		},
@@ -402,27 +402,27 @@ func TestStorage_DeleteIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 			}
-			if err := s.DeleteIndex(tt.args.name); (err != nil) != tt.wantErr {
-				t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.DeleteObject(tt.args.name); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteObject() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr {
-				_, err := s.findIndex(tt.args.name)
+				_, err := s.findObject(tt.args.name)
 				if err == nil {
-					t.Errorf("DeleteIndex() error = %v, wantErr %v", err, tt.wantErr)
+					t.Errorf("DeleteObject() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}
 		})
 	}
 }
 
-func TestStorage_CreateIndex(t *testing.T) {
+func TestStorage_CreateObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -435,19 +435,19 @@ func TestStorage_CreateIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index.inner",
+				name: "object.inner",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index.inner.inner2.inner3.inner4",
+				name: "object.inner.inner2.inner3.inner4",
 			},
 		},
 		{
@@ -458,13 +458,13 @@ func TestStorage_CreateIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := s.CreateIndex(tt.args.name); (err != nil) != tt.wantErr {
-				t.Errorf("CreateIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.CreateObject(tt.args.name); (err != nil) != tt.wantErr {
+				t.Errorf("CreateObject() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr {
-				_, err := s.findIndex(tt.args.name)
+				_, err := s.findObject(tt.args.name)
 				if err != nil {
-					t.Errorf("CreateIndex() error = %v, wantErr %v", err, tt.wantErr)
+					t.Errorf("CreateObject() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}
 		})
@@ -473,90 +473,90 @@ func TestStorage_CreateIndex(t *testing.T) {
 
 func TestStorage_ToJSON(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
 	}
 	tests := []struct {
-		name          string
-		args          args
-		structOfIndex map[string]string
-		want          string
-		wantErr       bool
+		name           string
+		args           args
+		structOfObject map[string]string
+		want           string
+		wantErr        bool
 	}{
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
-			structOfIndex: map[string]string{
+			structOfObject: map[string]string{
 				"key": "value",
 			},
-			want: "{\n\t\"isIndex\": true,\n\t\"name\": \"index\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t}\n\t]\n}",
+			want: "{\n\t\"isObject\": true,\n\t\"name\": \"object\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t}\n\t]\n}",
 		},
 		{
 			name: "ok#2",
 			args: args{
-				name: "index66",
+				name: "object66",
 			},
-			structOfIndex: map[string]string{
+			structOfObject: map[string]string{
 				"key":  "value",
 				"key1": "value1",
 				"key2": "value2",
 				"key3": "value3",
 				"key4": "value4",
 			},
-			want: "{\n\t\"isIndex\": true,\n\t\"name\": \"index66\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key3\",\n\t\t\t\"value\": \"value3\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key4\",\n\t\t\t\"value\": \"value4\"\n\t\t}\n\t]\n}",
+			want: "{\n\t\"isObject\": true,\n\t\"name\": \"object66\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key3\",\n\t\t\t\"value\": \"value3\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key4\",\n\t\t\t\"value\": \"value4\"\n\t\t}\n\t]\n}",
 		},
 		{
 			name: "ok#3",
 			args: args{
-				name: "index6.inner",
+				name: "object6.inner",
 			},
-			structOfIndex: map[string]string{
+			structOfObject: map[string]string{
 				"key":  "value",
 				"key1": "value1",
 				"key2": "value2",
 			},
-			want: "{\n\t\"isIndex\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
+			want: "{\n\t\"isObject\": true,\n\t\"name\": \"inner\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key\",\n\t\t\t\"value\": \"value\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key1\",\n\t\t\t\"value\": \"value1\"\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"key2\",\n\t\t\t\"value\": \"value2\"\n\t\t}\n\t]\n}",
 		},
 		{
 			name: "not found",
 			args: args{
-				name: "index67",
+				name: "object67",
 			},
 			wantErr: true,
 		},
 		{
-			name: "empty index",
+			name: "empty object",
 			args: args{
-				name: "index60",
+				name: "object60",
 			},
-			structOfIndex: map[string]string{},
-			want:          "{\n\t\"isIndex\": true,\n\t\"name\": \"index60\",\n\t\"values\": []\n}",
+			structOfObject: map[string]string{},
+			want:           "{\n\t\"isObject\": true,\n\t\"name\": \"object60\",\n\t\"values\": []\n}",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 
-				index, err := s.findIndex(tt.args.name)
+				object, err := s.findObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("findIndex() error = %v", err)
+					t.Fatalf("findObject() error = %v", err)
 				}
 
-				for k, v := range tt.structOfIndex {
-					index.Set(k, v)
+				for k, v := range tt.structOfObject {
+					object.Set(k, v)
 				}
 			}
-			got, err := s.IndexToJSON(tt.args.name)
+			got, err := s.ObjectToJSON(tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("IndexToJSON() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ObjectToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -590,45 +590,45 @@ func cmpWordsInJSON(target1, target2 string) (equals bool) {
 	return reflect.DeepEqual(m1, m2)
 }
 
-func TestStorage_GetIndex2(t *testing.T) {
+func TestStorage_GetObject2(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 
-	var want = "{\n\t\"isIndex\": true,\n\t\"name\": \"qwe\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isIndex\": true,\n\t\t\t\"name\": \"edc\",\n\t\t\t\"values\": [\n\t\t\t\t{\n\t\t\t\t\t\"isIndex\": true,\n\t\t\t\t\t\"name\": \"rty\",\n\t\t\t\t\t\"values\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"isIndex\": false,\n\t\t\t\t\t\t\t\"name\": \"r3g\",\n\t\t\t\t\t\t\t\"value\": \"g3f\"\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"isIndex\": false,\n\t\t\t\t\t\"name\": \"3g\",\n\t\t\t\t\t\"value\": \"3f\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"isIndex\": false,\n\t\t\t\"name\": \"rfg\",\n\t\t\t\"value\": \"gwf\"\n\t\t}\n\t]\n}"
-	err := s.CreateIndex("qwe")
+	var want = "{\n\t\"isObject\": true,\n\t\"name\": \"qwe\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isObject\": true,\n\t\t\t\"name\": \"edc\",\n\t\t\t\"values\": [\n\t\t\t\t{\n\t\t\t\t\t\"isObject\": true,\n\t\t\t\t\t\"name\": \"rty\",\n\t\t\t\t\t\"values\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"isObject\": false,\n\t\t\t\t\t\t\t\"name\": \"r3g\",\n\t\t\t\t\t\t\t\"value\": \"g3f\"\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"isObject\": false,\n\t\t\t\t\t\"name\": \"3g\",\n\t\t\t\t\t\"value\": \"3f\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"rfg\",\n\t\t\t\"value\": \"gwf\"\n\t\t}\n\t]\n}"
+	err := s.CreateObject("qwe")
 	if err != nil {
-		t.Fatalf("CreateIndex() error = %v", err)
+		t.Fatalf("CreateObject() error = %v", err)
 	}
 
-	err = s.CreateIndex("qwe.edc")
+	err = s.CreateObject("qwe.edc")
 	if err != nil {
-		t.Fatalf("CreateIndex() error = %v", err)
+		t.Fatalf("CreateObject() error = %v", err)
 	}
 
-	err = s.SetToIndex("qwe", "rfg", "gwf", false)
+	err = s.SetToObject("qwe", "rfg", "gwf", false)
 	if err != nil {
-		t.Fatalf("SetToIndex() error = %v", err)
+		t.Fatalf("SetToObject() error = %v", err)
 	}
 
-	err = s.CreateIndex("qwe.edc.rty")
+	err = s.CreateObject("qwe.edc.rty")
 	if err != nil {
-		t.Fatalf("CreateIndex() error = %v", err)
+		t.Fatalf("CreateObject() error = %v", err)
 	}
 
-	err = s.SetToIndex("qwe.edc.rty", "r3g", "g3f", false)
+	err = s.SetToObject("qwe.edc.rty", "r3g", "g3f", false)
 	if err != nil {
-		t.Fatalf("SetToIndex() error = %v", err)
+		t.Fatalf("SetToObject() error = %v", err)
 	}
 
-	err = s.SetToIndex("qwe.edc", "3g", "3f", false)
+	err = s.SetToObject("qwe.edc", "3g", "3f", false)
 	if err != nil {
-		t.Fatalf("SetToIndex() error = %v", err)
+		t.Fatalf("SetToObject() error = %v", err)
 	}
 
-	got, err := s.IndexToJSON("qwe")
+	got, err := s.ObjectToJSON("qwe")
 	if err != nil {
-		t.Errorf("IndexToJSON() error = %v, wantErr false", err)
+		t.Errorf("ObjectToJSON() error = %v, wantErr false", err)
 		return
 	}
 
@@ -637,9 +637,9 @@ func TestStorage_GetIndex2(t *testing.T) {
 	}
 }
 
-func TestStorage_findIndex(t *testing.T) {
+func TestStorage_findObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -652,33 +652,33 @@ func TestStorage_findIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index2",
+				name: "object2",
 			},
 		},
 		{
 			name: "not found",
 			args: args{
-				name: "index3",
+				name: "object3",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 			}
-			_, err := s.findIndex(tt.args.name)
+			_, err := s.findObject(tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("findIndex() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("findObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -687,7 +687,7 @@ func TestStorage_findIndex(t *testing.T) {
 
 func TestStorage_Size(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -701,7 +701,7 @@ func TestStorage_Size(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
 			want:    1,
 			wantErr: false,
@@ -709,7 +709,7 @@ func TestStorage_Size(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index34",
+				name: "object34",
 			},
 			want:    6,
 			wantErr: false,
@@ -717,14 +717,14 @@ func TestStorage_Size(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index38",
+				name: "object38",
 			},
 			want: 11,
 		},
 		{
 			name: "not found",
 			args: args{
-				name: "index389",
+				name: "object389",
 			},
 			wantErr: true,
 		},
@@ -732,18 +732,18 @@ func TestStorage_Size(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 
-				index, err := s.findIndex(tt.args.name)
+				object, err := s.findObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("findIndex() error = %v", err)
+					t.Fatalf("findObject() error = %v", err)
 				}
 
 				for i := 0; uint64(i) < tt.want; i++ {
-					index.Set(strconv.Itoa(i), "value")
+					object.Set(strconv.Itoa(i), "value")
 				}
 			}
 			got, err := s.Size(tt.args.name)
@@ -758,9 +758,9 @@ func TestStorage_Size(t *testing.T) {
 	}
 }
 
-func TestStorage_IsIndex(t *testing.T) {
+func TestStorage_IsObject(t *testing.T) {
 	s := Storage{
-		indexes: indexes{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -773,21 +773,21 @@ func TestStorage_IsIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				name: "index",
+				name: "object",
 			},
 			wantOk: true,
 		},
 		{
 			name: "ok",
 			args: args{
-				name: "index678",
+				name: "object678",
 			},
 			wantOk: true,
 		},
 		{
 			name: "not ok",
 			args: args{
-				name: "index678.qwe",
+				name: "object678.qwe",
 			},
 			wantOk: false,
 		},
@@ -804,28 +804,28 @@ func TestStorage_IsIndex(t *testing.T) {
 			split := strings.Split(tt.args.name, ".")
 			if !tt.wantOk && len(split) > 1 {
 				path := strings.Join(split[:len(split)-1], ".")
-				err := s.CreateIndex(path)
+				err := s.CreateObject(path)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 
-				index, err := s.findIndex(path)
+				object, err := s.findObject(path)
 				if err != nil {
-					t.Fatalf("findIndex() error = %v", err)
+					t.Fatalf("findObject() error = %v", err)
 				}
 
-				index.Set(split[len(split)-1], "")
+				object.Set(split[len(split)-1], "")
 			} else if tt.wantOk {
-				err := s.CreateIndex(tt.args.name)
+				err := s.CreateObject(tt.args.name)
 				if err != nil {
-					t.Fatalf("CreateIndex() error = %v", err)
+					t.Fatalf("CreateObject() error = %v", err)
 				}
 			}
 
-			gotOk := s.IsIndex(tt.args.name)
+			gotOk := s.IsObject(tt.args.name)
 
 			if gotOk != tt.wantOk {
-				t.Errorf("IsIndex() gotOk = %v, want %v", gotOk, tt.wantOk)
+				t.Errorf("IsObject() gotOk = %v, want %v", gotOk, tt.wantOk)
 			}
 		})
 	}

@@ -18,14 +18,14 @@ type UseCase struct {
 //go:generate mockgen -destination=mocks/usecase/mock_usecase.go -package=mocks . IUseCase
 type IUseCase interface {
 	Set(key string, val string, uniques bool) (RAM, error)
-	SetToIndex(name string, key string, val string, uniques bool) (RAM, error)
+	SetToObject(name string, key string, val string, uniques bool) (RAM, error)
 	Get(key string) (RAM, string, error)
-	GetFromIndex(name string, key string) (RAM, string, error)
-	IndexToJSON(name string) (RAM, string, error)
-	NewIndex(name string) (RAM, error)
+	GetFromObject(name string, key string) (RAM, string, error)
+	ObjectToJSON(name string) (RAM, string, error)
+	NewObject(name string) (RAM, error)
 	Size(name string) (RAM, uint64, error)
-	DeleteIndex(name string) (RAM, error)
-	AttachToIndex(dst string, src string) (RAM, error)
+	DeleteObject(name string) (RAM, error)
+	AttachToObject(dst string, src string) (RAM, error)
 	DeleteIfExists(key string) RAM
 	Delete(key string) (RAM, error)
 	DeleteAttr(name string, key string) (RAM, error)
@@ -68,14 +68,14 @@ func (uc *UseCase) Set(key, val string, uniques bool) (RAM, error) {
 	return RAMUsage(), err
 }
 
-func (uc *UseCase) SetToIndex(name, key, val string, uniques bool) (RAM, error) {
-	err := uc.storage.SetToIndex(name, key, val, uniques)
+func (uc *UseCase) SetToObject(name, key, val string, uniques bool) (RAM, error) {
+	err := uc.storage.SetToObject(name, key, val, uniques)
 	if err != nil {
 		return RAMUsage(), err
 	}
 
 	if uc.isTLogger {
-		uc.tLogger.WriteSetToIndex(name, key, val)
+		uc.tLogger.WriteSetToObject(name, key, val)
 	}
 	return RAMUsage(), err
 }
@@ -99,24 +99,24 @@ func (uc *UseCase) Get(key string) (RAM, string, error) {
 	return RAMUsage(), s, err
 }
 
-func (uc *UseCase) GetFromIndex(name, key string) (RAM, string, error) {
-	s, err := uc.storage.GetFromIndex(name, key)
+func (uc *UseCase) GetFromObject(name, key string) (RAM, string, error) {
+	s, err := uc.storage.GetFromObject(name, key)
 	return RAMUsage(), s, err
 }
 
-func (uc *UseCase) IndexToJSON(name string) (RAM, string, error) {
-	index, err := uc.storage.IndexToJSON(name)
-	return RAMUsage(), index, err
+func (uc *UseCase) ObjectToJSON(name string) (RAM, string, error) {
+	object, err := uc.storage.ObjectToJSON(name)
+	return RAMUsage(), object, err
 }
 
-func (uc *UseCase) NewIndex(name string) (RAM, error) {
-	r, err := RAMUsage(), uc.storage.CreateIndex(name)
+func (uc *UseCase) NewObject(name string) (RAM, error) {
+	r, err := RAMUsage(), uc.storage.CreateObject(name)
 	if err != nil {
 		return r, err
 	}
 
 	if uc.isTLogger {
-		uc.tLogger.WriteCreateIndex(name)
+		uc.tLogger.WriteCreateObject(name)
 	}
 	return r, err
 }
@@ -126,20 +126,20 @@ func (uc *UseCase) Size(name string) (RAM, uint64, error) {
 	return RAMUsage(), size, err
 }
 
-func (uc *UseCase) DeleteIndex(name string) (RAM, error) {
-	r, err := RAMUsage(), uc.storage.DeleteIndex(name)
+func (uc *UseCase) DeleteObject(name string) (RAM, error) {
+	r, err := RAMUsage(), uc.storage.DeleteObject(name)
 	if err != nil {
 		return r, err
 	}
 
 	if uc.isTLogger {
-		uc.tLogger.WriteDeleteIndex(name)
+		uc.tLogger.WriteDeleteObject(name)
 	}
 	return r, err
 }
 
-func (uc *UseCase) AttachToIndex(dst, src string) (RAM, error) {
-	r, err := RAMUsage(), uc.storage.AttachToIndex(dst, src)
+func (uc *UseCase) AttachToObject(dst, src string) (RAM, error) {
+	r, err := RAMUsage(), uc.storage.AttachToObject(dst, src)
 	if err != nil {
 		return r, err
 	}

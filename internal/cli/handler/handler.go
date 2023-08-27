@@ -25,7 +25,7 @@ func New(cfg *config.Config, logic *usecase.UseCase, loggerInstance logger.ILogg
 }
 
 func (h *Handler) MainPage(c echo.Context) error {
-	err := c.Render(http.StatusOK, "index.html", nil)
+	err := c.Render(http.StatusOK, "object.html", nil)
 	if err != nil {
 		h.Warn(err.Error())
 	}

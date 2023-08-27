@@ -74,16 +74,16 @@ func (s *Server) Get(ctx context.Context, Key string) (*storage.GetResponse, err
 
 }
 
-func (s *Server) IndexToJSON(ctx context.Context, name string) (*storage.IndexToJSONResponse, error) {
-	r, err := s.storage.IndexToJSON(ctx, &storage.IndexToJSONRequest{
+func (s *Server) ObjectToJSON(ctx context.Context, name string) (*storage.ObjectToJSONResponse, error) {
+	r, err := s.storage.ObjectToJSON(ctx, &storage.ObjectToJSONRequest{
 		Name: name,
 	})
 	s.setRAM(r)
 	return r, err
 }
 
-func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.GetResponse, error) {
-	r, err := s.storage.GetFromIndex(ctx, &storage.GetFromIndexRequest{
+func (s *Server) GetFromObject(ctx context.Context, name, Key string) (*storage.GetResponse, error) {
+	r, err := s.storage.GetFromObject(ctx, &storage.GetFromObjectRequest{
 		Key:  Key,
 		Name: name,
 	})
@@ -92,8 +92,8 @@ func (s *Server) GetFromIndex(ctx context.Context, name, Key string) (*storage.G
 
 }
 
-func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique bool) error {
-	r, err := s.storage.SetToIndex(ctx, &storage.SetToIndexRequest{
+func (s *Server) SetToObject(ctx context.Context, name, Key, Value string, unique bool) error {
+	r, err := s.storage.SetToObject(ctx, &storage.SetToObjectRequest{
 		Key:    Key,
 		Value:  Value,
 		Name:   name,
@@ -104,25 +104,25 @@ func (s *Server) SetToIndex(ctx context.Context, name, Key, Value string, unique
 
 }
 
-func (s *Server) NewIndex(ctx context.Context, name string) error {
-	r, err := s.storage.NewIndex(ctx, &storage.NewIndexRequest{
+func (s *Server) NewObject(ctx context.Context, name string) error {
+	r, err := s.storage.NewObject(ctx, &storage.NewObjectRequest{
 		Name: name,
 	})
 	s.setRAM(r)
 	return err
 }
 
-func (s *Server) Size(ctx context.Context, name string) (*storage.IndexSizeResponse, error) {
-	r, err := s.storage.Size(ctx, &storage.IndexSizeRequest{
+func (s *Server) Size(ctx context.Context, name string) (*storage.ObjectSizeResponse, error) {
+	r, err := s.storage.Size(ctx, &storage.ObjectSizeRequest{
 		Name: name,
 	})
 	s.setRAM(r)
 	return r, err
 }
 
-func (s *Server) DeleteIndex(ctx context.Context, name string) error {
-	r, err := s.storage.DeleteIndex(ctx, &storage.DeleteIndexRequest{
-		Index: name,
+func (s *Server) DeleteObject(ctx context.Context, name string) error {
+	r, err := s.storage.DeleteObject(ctx, &storage.DeleteObjectRequest{
+		Object: name,
 	})
 	s.setRAM(r)
 	return err
@@ -138,8 +138,8 @@ func (s *Server) Delete(ctx context.Context, Key string) error {
 
 var ErrCircularAttachment = fmt.Errorf("circular attachment")
 
-func (s *Server) AttachToIndex(ctx context.Context, dst string, src string) error {
-	r, err := s.storage.AttachToIndex(ctx, &storage.AttachToIndexRequest{
+func (s *Server) AttachToObject(ctx context.Context, dst string, src string) error {
+	r, err := s.storage.AttachToObject(ctx, &storage.AttachToObjectRequest{
 		Dst: dst,
 		Src: src,
 	})
@@ -163,9 +163,9 @@ func (s *Server) ResetTries() {
 	s.tries.Store(0)
 }
 
-func (s *Server) DeleteAttr(ctx context.Context, attr string, index string) error {
+func (s *Server) DeleteAttr(ctx context.Context, attr string, object string) error {
 	r, err := s.storage.DeleteAttr(ctx, &storage.DeleteAttrRequest{
-		Name: index,
+		Name: object,
 		Key:  attr,
 	})
 	s.setRAM(r)

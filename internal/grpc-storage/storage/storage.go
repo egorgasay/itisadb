@@ -12,9 +12,9 @@ import (
 
 var ErrNotFound = errors.New("the value does not exist")
 var ErrAlreadyExists = errors.New("the value already exists")
-var ErrIndexNotFound = errors.New("index not found")
+var ErrObjectNotFound = errors.New("object not found")
 var ErrSomethingExists = errors.New("something with this name already exists")
-var ErrEmptyIndexName = errors.New("index name is empty")
+var ErrEmptyObjectName = errors.New("object name is empty")
 var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 type IStorage interface {
@@ -23,20 +23,20 @@ type IStorage interface {
 	DeleteIfExists(key string)
 	Delete(key string) error
 
-	SetToIndex(name string, key string, value string, uniques bool) error
-	GetFromIndex(name string, key string) (string, error)
-	AttachToIndex(dst string, src string) error
-	DeleteIndex(name string) error
-	CreateIndex(name string) (err error)
-	IndexToJSON(name string) (string, error)
+	SetToObject(name string, key string, value string, uniques bool) error
+	GetFromObject(name string, key string) (string, error)
+	AttachToObject(dst string, src string) error
+	DeleteObject(name string) error
+	CreateObject(name string) (err error)
+	ObjectToJSON(name string) (string, error)
 	Size(name string) (uint64, error)
-	IsIndex(name string) bool
+	IsObject(name string) bool
 	DeleteAttr(name string, key string) error
 }
 
 type Storage struct {
 	ramStorage ramStorage
-	indexes    indexes
+	objects    objects
 }
 
 type ramStorage struct {
@@ -45,7 +45,7 @@ type ramStorage struct {
 	*sync.RWMutex
 }
 
-type indexes struct {
+type objects struct {
 	*swiss.Map[string, ivalue]
 	*sync.RWMutex
 	path string
@@ -54,7 +54,7 @@ type indexes struct {
 func New() (*Storage, error) {
 	st := &Storage{
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
-		indexes:    indexes{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
+		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
 	}
 
 	return st, nil
@@ -83,8 +83,8 @@ func (s *Storage) Get(key string) (string, error) {
 	return val, nil
 }
 
-func (s *Storage) GetFromIndex(name, key string) (string, error) {
-	v, err := s.findIndex(name)
+func (s *Storage) GetFromObject(name, key string) (string, error) {
+	v, err := s.findObject(name)
 	if err != nil {
 		return "", err
 	}
@@ -92,85 +92,85 @@ func (s *Storage) GetFromIndex(name, key string) (string, error) {
 	return v.Get(key)
 }
 
-func (s *Storage) SetToIndex(name, key, value string, uniques bool) error {
-	index, err := s.findIndex(name)
+func (s *Storage) SetToObject(name, key, value string, uniques bool) error {
+	object, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
-	if uniques && index.Has(key) {
+	if uniques && object.Has(key) {
 		return ErrAlreadyExists
 	}
 
-	index.Set(key, value)
+	object.Set(key, value)
 	return nil
 }
 
-func (s *Storage) AttachToIndex(dst, src string) error {
-	index1, err := s.findIndex(dst)
+func (s *Storage) AttachToObject(dst, src string) error {
+	object1, err := s.findObject(dst)
 	if err != nil {
 		return err
 	}
 
-	index2, err := s.findIndex(src)
+	object2, err := s.findObject(src)
 	if err != nil {
 		return err
 	}
 
-	if index2.IsAttached(index1.Name()) {
+	if object2.IsAttached(object1.Name()) {
 		return ErrCircularAttachment
 	}
 
-	err = index1.AttachIndex(index2)
+	err = object1.AttachObject(object2)
 	return err
 }
 
-func (s *Storage) DeleteIndex(name string) error {
-	val, err := s.findIndex(name)
+func (s *Storage) DeleteObject(name string) error {
+	val, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
-	val.DeleteIndex()
+	val.DeleteObject()
 
 	return nil
 }
 
-func (s *Storage) CreateIndex(name string) (err error) {
+func (s *Storage) CreateObject(name string) (err error) {
 	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
-		return ErrEmptyIndexName
+		return ErrEmptyObjectName
 	}
 
-	val, ok := s.indexes.Get(path[0])
+	val, ok := s.objects.Get(path[0])
 	if !ok || val.IsEmpty() {
-		s.indexes.Lock()
-		val = NewIndex(path[0], nil)
-		s.indexes.Put(path[0], val)
-		s.indexes.Unlock()
+		s.objects.Lock()
+		val = NewObject(path[0], nil)
+		s.objects.Put(path[0], val)
+		s.objects.Unlock()
 	}
 
 	path = path[1:]
 
-	for _, indexName := range path {
-		val = val.NextOrCreate(indexName)
-		if !val.IsIndex() {
+	for _, objectName := range path {
+		val = val.NextOrCreate(objectName)
+		if !val.IsObject() {
 			return ErrSomethingExists
 		} else if val.IsEmpty() {
-			val.RecreateIndex()
+			val.RecreateObject()
 		}
 	}
 	return nil
 }
 
-// TODO: JSONToIndex
-func (s *Storage) IndexToJSON(name string) (string, error) {
-	index, err := s.findIndex(name)
+// TODO: JSONToObject
+func (s *Storage) ObjectToJSON(name string) (string, error) {
+	object, err := s.findObject(name)
 	if err != nil {
 		return "", err
 	}
 
-	en, err := json.MarshalIndent(index, "", "\t")
+	en, err := json.MarshalIndent(object, "", "\t")
 	return string(en), err
 }
 
@@ -189,68 +189,68 @@ func (v *value) MarshalJSON() ([]byte, error) {
 		})
 
 		data = map[string]interface{}{
-			"isIndex": true,
-			"name":    v.Name(),
-			"values":  arr,
+			"isObject": true,
+			"name":     v.Name(),
+			"values":   arr,
 		}
 	} else {
 		data = map[string]interface{}{
-			"isIndex": false,
-			"name":    v.Name(),
-			"value":   v.value,
+			"isObject": false,
+			"name":     v.Name(),
+			"value":    v.value,
 		}
 	}
 
 	return json.MarshalIndent(data, "", "\t")
 }
 
-func (s *Storage) findIndex(name string) (ivalue, error) {
+func (s *Storage) findObject(name string) (ivalue, error) {
 	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
-		return nil, ErrIndexNotFound
+		return nil, ErrObjectNotFound
 	}
 
-	val, ok := s.indexes.Get(path[0])
+	val, ok := s.objects.Get(path[0])
 	if !ok {
-		return nil, ErrIndexNotFound
+		return nil, ErrObjectNotFound
 	}
 
 	path = path[1:]
 
-	for _, indexName := range path {
-		switch val.IsIndex() {
+	for _, objectName := range path {
+		switch val.IsObject() {
 		case true:
-			val, ok = val.GetIValue(indexName)
+			val, ok = val.GetIValue(objectName)
 			if !ok {
-				return nil, ErrIndexNotFound
+				return nil, ErrObjectNotFound
 			}
 		default:
 			return nil, ErrSomethingExists
 		}
 	}
 
-	if !val.IsIndex() || val.IsEmpty() {
-		return nil, ErrIndexNotFound
+	if !val.IsObject() || val.IsEmpty() {
+		return nil, ErrObjectNotFound
 	}
 
 	return val, nil
 }
 
-// Size returns the size of the index
+// Size returns the size of the object
 func (s *Storage) Size(name string) (uint64, error) {
-	index, err := s.findIndex(name)
+	object, err := s.findObject(name)
 	if err != nil {
 		return 0, err
 	}
-	return uint64(index.Size()), nil
+	return uint64(object.Size()), nil
 }
 
-func (s *Storage) IsIndex(name string) bool {
-	if val, err := s.findIndex(name); err != nil {
+func (s *Storage) IsObject(name string) bool {
+	if val, err := s.findObject(name); err != nil {
 		return false
 	} else {
-		return val.IsIndex()
+		return val.IsObject()
 	}
 }
 
@@ -273,10 +273,10 @@ func (s *Storage) Delete(key string) error {
 }
 
 func (s *Storage) DeleteAttr(name, key string) error {
-	index, err := s.findIndex(name)
+	object, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
-	return index.Delete(key)
+	return object.Delete(key)
 }

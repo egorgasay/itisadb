@@ -5,21 +5,21 @@ option go_package = "./balancer";
 package api;
 
 service Balancer {
-  rpc Index(BalancerIndexRequest) returns (BalancerIndexResponse) {}
+  rpc Object(BalancerObjectRequest) returns (BalancerObjectResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
-  rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetToIndexResponse) {}
-  rpc AttachToIndex(BalancerAttachToIndexRequest) returns (BalancerAttachToIndexResponse) {}
+  rpc SetToObject(BalancerSetToObjectRequest) returns (BalancerSetToObjectResponse) {}
+  rpc AttachToObject(BalancerAttachToObjectRequest) returns (BalancerAttachToObjectResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
-  rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetFromIndexResponse) {}
+  rpc GetFromObject(BalancerGetFromObjectRequest) returns (BalancerGetFromObjectResponse) {}
   rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
   rpc Disconnect(BalancerDisconnectRequest) returns (BalancerDisconnectResponse) {}
   rpc Servers(BalancerServersRequest) returns (BalancerServersResponse) {}
-  rpc GetIndex(BalancerGetIndexRequest) returns (BalancerGetIndexResponse) {}
-  rpc IsIndex(BalancerIsIndexRequest) returns (BalancerIsIndexResponse) {}
-  rpc Size(BalancerIndexSizeRequest) returns (BalancerIndexSizeResponse) {}
+  rpc ObjectToJSON(BalancerObjectToJSONRequest) returns (BalancerObjectToJSONResponse) {}
+  rpc IsObject(BalancerIsObjectRequest) returns (BalancerIsObjectResponse) {}
+  rpc Size(BalancerObjectSizeRequest) returns (BalancerObjectSizeResponse) {}
   rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
   rpc DeleteIfExists(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
-  rpc DeleteIndex(BalancerDeleteIndexRequest) returns (BalancerDeleteIndexResponse) {}
+  rpc DeleteObject(BalancerDeleteObjectRequest) returns (BalancerDeleteObjectResponse) {}
   rpc DeleteAttr(BalancerDeleteAttrRequest) returns (BalancerDeleteAttrResponse) {}
 }
 
@@ -30,11 +30,11 @@ message BalancerSetRequest {
   bool uniques = 4;
 }
 
-message BalancerIndexSizeRequest {
+message BalancerObjectSizeRequest {
   string name = 1;
 }
 
-message BalancerGetIndexRequest {
+message BalancerObjectToJSONRequest {
   string name = 1;
 }
 
@@ -43,23 +43,23 @@ message BalancerDeleteRequest {
   int32 server = 2;
 }
 
-message BalancerDeleteIndexRequest {
-  string index = 1;
+message BalancerDeleteObjectRequest {
+  string object = 1;
 }
 
-message BalancerGetToIndexRequest {
+message BalancerGetToObjectRequest {
   string key = 1;
   string name = 2;
 }
 
-message BalancerSetToIndexRequest {
+message BalancerSetToObjectRequest {
   string key = 1;
   string value = 2;
   bool uniques = 3;
-  string index = 4;
+  string object = 4;
 }
 
-message BalancerAttachToIndexRequest {
+message BalancerAttachToObjectRequest {
   string dst = 1;
   string src = 2;
 }
@@ -71,13 +71,13 @@ message BalancerGetRequest {
 
 message BalancerDeleteAttrRequest {
   string key = 1;
-  string index = 2;
+  string object = 2;
 }
 
-message BalancerGetFromIndexRequest {
+message BalancerGetFromObjectRequest {
   string key = 1;
   int32 server = 2;
-  string index = 3;
+  string object = 3;
 }
 
 message BalancerConnectRequest {
@@ -87,13 +87,13 @@ message BalancerConnectRequest {
   int32 server = 4;
 }
 
-message BalancerIndexRequest {
+message BalancerObjectRequest {
   string name = 1;
 //  string defaultAttributes = 2;
 }
 
 
-message BalancerIsIndexRequest {
+message BalancerIsObjectRequest {
   string name = 1;
 }
 
@@ -107,12 +107,12 @@ message BalancerGetResponse {
   string value = 1;
 }
 
-message BalancerIsIndexResponse {
+message BalancerIsObjectResponse {
   bool ok = 1;
 }
 
-message BalancerGetIndexResponse {
-  string index = 1;
+message BalancerObjectToJSONResponse {
+  string object = 1;
 }
 
 message BalancerSetResponse {
@@ -124,28 +124,28 @@ message BalancerConnectResponse {
   int32 serverNumber = 2;
 }
 
-message BalancerAttachToIndexResponse {}
+message BalancerAttachToObjectResponse {}
 
 message BalancerDeleteResponse {}
 message BalancerDeleteAttrResponse {}
 
 message BalancerDisconnectResponse{ }
 
-message BalancerSetToIndexResponse {
+message BalancerSetToObjectResponse {
   int32 savedTo = 1;
 }
 
-message BalancerIndexSizeResponse {
+message BalancerObjectSizeResponse {
   uint64 size = 1;
 }
 
-message BalancerGetFromIndexResponse {
+message BalancerGetFromObjectResponse {
   string value = 1;
 }
 
-message BalancerIndexResponse{ }
+message BalancerObjectResponse{ }
 
-message BalancerDeleteIndexResponse{ }
+message BalancerDeleteObjectResponse{ }
 
 message BalancerServersResponse {
   string serversInfo = 1;

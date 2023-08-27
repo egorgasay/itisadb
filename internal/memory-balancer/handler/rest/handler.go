@@ -36,30 +36,30 @@ func (h *Handler) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		case fasthttp.MethodDelete: // delete value
 			h.del(ctx)
 		}
-	case "/index": // handle index endpoint
+	case "/object": // handle object endpoint
 		switch string(ctx.Method()) {
-		case fasthttp.MethodGet: // get index
-			h.IndexToJSON(ctx)
-		case fasthttp.MethodPost: // create index if not exists
-			h.index(ctx)
-		case fasthttp.MethodDelete: // delete index
-			h.delIndex(ctx)
+		case fasthttp.MethodGet: // get object
+			h.ObjectToJSON(ctx)
+		case fasthttp.MethodPost: // create object if not exists
+			h.object(ctx)
+		case fasthttp.MethodDelete: // delete object
+			h.delObject(ctx)
 		}
-	case "/index/": // handle values in index endpoint
+	case "/object/": // handle values in object endpoint
 		switch string(ctx.Method()) {
-		case fasthttp.MethodGet: // get from index
-			h.getFromIndex(ctx)
-		case fasthttp.MethodPost: // set to index
-			h.setToIndex(ctx)
+		case fasthttp.MethodGet: // get from object
+			h.getFromObject(ctx)
+		case fasthttp.MethodPost: // set to object
+			h.setToObject(ctx)
 		case fasthttp.MethodDelete: // delete attribute
-			h.delFromIndex(ctx)
+			h.delFromObject(ctx)
 		}
-	case "/index/size": // size of index
-		h.indexSize(ctx)
-	case "/index/is": // is index exists
-		h.isIndex(ctx)
-	case "/index/attach": // attach one index to another
-		h.attachIndex(ctx)
+	case "/object/size": // size of object
+		h.objectSize(ctx)
+	case "/object/is": // is object exists
+		h.isObject(ctx)
+	case "/object/attach": // attach one object to another
+		h.attachObject(ctx)
 	case "/connect": // connect to balancer
 		h.connect(ctx)
 	case "/disconnect": // disconnect from balancer
@@ -149,20 +149,20 @@ func (h *Handler) del(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
-func (h *Handler) getFromIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.GetFromIndexRequest](&ctx.Request)
+func (h *Handler) getFromObject(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.GetFromObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	value, err := h.logic.GetFromIndex(ctx, r.Index, r.Key, r.Server)
+	value, err := h.logic.GetFromObject(ctx, r.Object, r.Key, r.Server)
 	if err != nil {
-		err = converterr.GetFromIndex(err)
+		err = converterr.GetFromObject(err)
 		if errors.Is(err, converterr.ErrNotFound) {
 			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrIndexNotFound) {
-			ctx.Error(converterr.ErrIndexNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrObjectNotFound) {
+			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
@@ -175,20 +175,20 @@ func (h *Handler) getFromIndex(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody([]byte(value))
 }
 
-func (h *Handler) setToIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.SetToIndexRequest](&ctx.Request)
+func (h *Handler) setToObject(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.SetToObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	v, err := h.logic.SetToIndex(ctx, r.Index, r.Key, r.Value, r.Uniques)
+	v, err := h.logic.SetToObject(ctx, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
-		err = converterr.SetToIndex(err)
+		err = converterr.SetToObject(err)
 		if errors.Is(err, converterr.ErrExists) {
 			ctx.Error(fmt.Sprint(v), fasthttp.StatusConflict)
-		} else if errors.Is(err, converterr.ErrIndexNotFound) {
-			ctx.Error(converterr.ErrIndexNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrObjectNotFound) {
+			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
@@ -201,20 +201,20 @@ func (h *Handler) setToIndex(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody([]byte(fmt.Sprint(v)))
 }
 
-func (h *Handler) delFromIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DelFromIndexRequest](&ctx.Request)
+func (h *Handler) delFromObject(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.DelFromObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	err = h.logic.DeleteAttr(ctx, r.Index, r.Key)
+	err = h.logic.DeleteAttr(ctx, r.Object, r.Key)
 	if err != nil {
-		err = converterr.DelFromIndex(err)
+		err = converterr.DelFromObject(err)
 		if errors.Is(err, converterr.ErrNotFound) {
 			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrIndexNotFound) {
-			ctx.Error(converterr.ErrIndexNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, converterr.ErrObjectNotFound) {
+			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
@@ -232,18 +232,18 @@ func (h *Handler) servers(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody([]byte(strings.Join(servers, "<br>")))
 }
 
-func (h *Handler) IndexToJSON(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.IndexToJSONRequest](&ctx.Request)
+func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.ObjectToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	value, err := h.logic.IndexToJSON(ctx, r.Index)
+	value, err := h.logic.ObjectToJSON(ctx, r.Object)
 	if err != nil {
-		err = converterr.IndexToJSON(err)
-		if errors.Is(err, converterr.ErrIndexNotFound) {
-			ctx.Error(converterr.ErrIndexNotFound.Error(), fasthttp.StatusGone)
+		err = converterr.ObjectToJSON(err)
+		if errors.Is(err, converterr.ErrObjectNotFound) {
+			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
@@ -265,16 +265,16 @@ func (h *Handler) IndexToJSON(ctx *fasthttp.RequestCtx) {
 
 }
 
-func (h *Handler) index(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.IndexToJSONRequest](&ctx.Request)
+func (h *Handler) object(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.ObjectToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	_, err = h.logic.Index(ctx, r.Index)
+	_, err = h.logic.Object(ctx, r.Object)
 	if err != nil {
-		err = converterr.Index(err)
+		err = converterr.Object(err)
 		if errors.Is(err, converterr.ErrExists) {
 			ctx.Error(err.Error(), fasthttp.StatusConflict)
 		} else if errors.Is(err, converterr.ErrInvalidName) {
@@ -290,17 +290,17 @@ func (h *Handler) index(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
-func (h *Handler) delIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DelIndexRequest](&ctx.Request)
+func (h *Handler) delObject(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.DelObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	err = h.logic.DeleteIndex(ctx, r.Index)
+	err = h.logic.DeleteObject(ctx, r.Object)
 	if err != nil {
-		err = converterr.DelIndex(err)
-		if errors.Is(err, converterr.ErrIndexNotFound) {
+		err = converterr.DelObject(err)
+		if errors.Is(err, converterr.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
@@ -313,17 +313,17 @@ func (h *Handler) delIndex(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
-func (h *Handler) indexSize(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.SizeIndexRequest](&ctx.Request)
+func (h *Handler) objectSize(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.SizeObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	size, err := h.logic.Size(ctx, r.Index)
+	size, err := h.logic.Size(ctx, r.Object)
 	if err != nil {
-		err = converterr.SizeIndex(err)
-		if errors.Is(err, converterr.ErrIndexNotFound) {
+		err = converterr.SizeObject(err)
+		if errors.Is(err, converterr.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
@@ -337,17 +337,17 @@ func (h *Handler) indexSize(ctx *fasthttp.RequestCtx) {
 	ctx.Write([]byte(fmt.Sprint(size)))
 }
 
-func (h *Handler) isIndex(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.IsIndexRequest](&ctx.Request)
+func (h *Handler) isObject(ctx *fasthttp.RequestCtx) {
+	r, err := dataFromRequest[schema.IsObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	is, err := h.logic.IsIndex(ctx, r.Name)
+	is, err := h.logic.IsObject(ctx, r.Name)
 	if err != nil {
-		err = converterr.IsIndex(err)
-		if errors.Is(err, converterr.ErrIndexNotFound) {
+		err = converterr.IsObject(err)
+		if errors.Is(err, converterr.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
@@ -359,20 +359,20 @@ func (h *Handler) isIndex(ctx *fasthttp.RequestCtx) {
 
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.Response.Header.Set("Content-Type", "application/json")
-	ctx.Write([]byte(fmt.Sprintf(`{"isIndex":%v}`, is)))
+	ctx.Write([]byte(fmt.Sprintf(`{"isObject":%v}`, is)))
 }
 
-func (h *Handler) attachIndex(ctx *fasthttp.RequestCtx) {
+func (h *Handler) attachObject(ctx *fasthttp.RequestCtx) {
 	r, err := dataFromRequest[schema.AttachRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
-	err = h.logic.AttachToIndex(ctx, r.Dst, r.Src)
+	err = h.logic.AttachToObject(ctx, r.Dst, r.Src)
 	if err != nil {
-		err = converterr.AttachIndex(err)
-		if errors.Is(err, converterr.ErrIndexNotFound) {
+		err = converterr.AttachObject(err)
+		if errors.Is(err, converterr.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
 		} else if errors.Is(err, converterr.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
