@@ -88,8 +88,9 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	s.Lock()
 	defer s.Unlock()
 
-	if server < s.freeID {
-		return 0, fmt.Errorf("%w. can't add server, beacause number is smaller then last was", ErrInternal)
+	if server == 0 {
+		server = s.freeID
+		s.freeID++
 	}
 
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -108,10 +109,6 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	}
 
 	if server != 0 {
-		if _, ok := s.servers[server]; ok {
-			return 0, ErrAlreadyExists
-		}
-
 		stClient.number = server
 		if server > s.freeID {
 			s.freeID = server + 1

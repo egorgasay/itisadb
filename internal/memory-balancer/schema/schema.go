@@ -17,39 +17,39 @@ type DelRequest struct {
 	Server int32  `json:"server,omitempty"`
 }
 
-type GetFromIndexRequest struct {
+type GetFromObjectRequest struct {
 	Key    string `json:"key"`
-	Index  string `json:"index"`
+	Object string `json:"object"`
 	Server int32  `json:"server,omitempty"`
 }
 
-type SetToIndexRequest struct {
+type SetToObjectRequest struct {
 	Key     string `json:"key"`
-	Index   string `json:"index"`
+	Object  string `json:"object"`
 	Value   string `json:"value"`
 	Server  int32  `json:"server,omitempty"`
 	Uniques bool   `json:"uniques"`
 }
 
-type DelFromIndexRequest struct {
+type DelFromObjectRequest struct {
 	Key    string `json:"key"`
-	Index  string `json:"index"`
+	Object string `json:"object"`
 	Server int32  `json:"server,omitempty"`
 }
 
-type IndexToJSONRequest struct {
-	Index string `json:"index"`
+type ObjectToJSONRequest struct {
+	Object string `json:"object"`
 }
 
-type DelIndexRequest struct {
-	Index string `json:"index"`
+type DelObjectRequest struct {
+	Object string `json:"object"`
 }
 
-type SizeIndexRequest struct {
-	Index string `json:"index"`
+type SizeObjectRequest struct {
+	Object string `json:"object"`
 }
 
-type IsIndexRequest struct {
+type IsObjectRequest struct {
 	Name string `json:"name"`
 }
 

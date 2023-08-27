@@ -48,15 +48,15 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 	}, nil
 }
 
-func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*api.SetResponse, error) {
-	ram, err := h.logic.SetToIndex(r.Name, r.Key, r.Value, r.Unique)
+func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*api.SetResponse, error) {
+	ram, err := h.logic.SetToObject(r.Name, r.Key, r.Value, r.Unique)
 	resp := &api.SetResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
 		if errors.Is(err, storage.ErrAlreadyExists) {
 			return resp, status.Error(codes.AlreadyExists, err.Error())
 		}
 
-		if errors.Is(err, storage.ErrIndexNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
 			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 
@@ -66,8 +66,8 @@ func (h *Handler) SetToIndex(ctx context.Context, r *api.SetToIndexRequest) (*ap
 	return resp, nil
 }
 
-func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) (*api.GetResponse, error) {
-	ram, value, err := h.logic.GetFromIndex(r.Name, r.Key)
+func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest) (*api.GetResponse, error) {
+	ram, value, err := h.logic.GetFromObject(r.Name, r.Key)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &api.GetResponse{
@@ -75,7 +75,7 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 			}, status.Error(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, storage.ErrIndexNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
 			return &api.GetResponse{
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.ResourceExhausted, err.Error())
@@ -92,29 +92,29 @@ func (h *Handler) GetFromIndex(ctx context.Context, r *api.GetFromIndexRequest) 
 	}, nil
 }
 
-func (h *Handler) IndexToJSON(ctx context.Context, r *api.IndexToJSONRequest) (*api.IndexToJSONResponse, error) {
-	ram, index, err := h.logic.IndexToJSON(r.Name)
+func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
+	ram, object, err := h.logic.ObjectToJSON(r.Name)
 	if err != nil {
-		if errors.Is(err, storage.ErrIndexNotFound) {
-			return &api.IndexToJSONResponse{
+		if errors.Is(err, storage.ErrObjectNotFound) {
+			return &api.ObjectToJSONResponse{
 				Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 			}, status.Error(codes.ResourceExhausted, err.Error())
 		}
-		return &api.IndexToJSONResponse{
+		return &api.ObjectToJSONResponse{
 			Ram: &api.Ram{Total: ram.Total, Available: ram.Available},
 		}, err
 	}
-	return &api.IndexToJSONResponse{
-		Ram:   &api.Ram{Total: ram.Total, Available: ram.Available},
-		Index: index,
+	return &api.ObjectToJSONResponse{
+		Ram:    &api.Ram{Total: ram.Total, Available: ram.Available},
+		Object: object,
 	}, nil
 }
 
-func (h *Handler) NewIndex(ctx context.Context, r *api.NewIndexRequest) (*api.NewIndexResponse, error) {
-	ram, err := h.logic.NewIndex(r.Name)
-	resp := &api.NewIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
+func (h *Handler) NewObject(ctx context.Context, r *api.NewObjectRequest) (*api.NewObjectResponse, error) {
+	ram, err := h.logic.NewObject(r.Name)
+	resp := &api.NewObjectResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		if errors.Is(err, storage.ErrEmptyIndexName) {
+		if errors.Is(err, storage.ErrEmptyObjectName) {
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
@@ -127,11 +127,11 @@ func (h *Handler) NewIndex(ctx context.Context, r *api.NewIndexRequest) (*api.Ne
 	return resp, nil
 }
 
-func (h *Handler) AttachToIndex(ctx context.Context, r *api.AttachToIndexRequest) (*api.AttachToIndexResponse, error) {
-	ram, err := h.logic.AttachToIndex(r.Dst, r.Src)
-	resp := &api.AttachToIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
+func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectRequest) (*api.AttachToObjectResponse, error) {
+	ram, err := h.logic.AttachToObject(r.Dst, r.Src)
+	resp := &api.AttachToObjectResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		if errors.Is(err, storage.ErrIndexNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
 			return resp, status.Error(codes.NotFound, err.Error())
 		}
 
@@ -148,11 +148,11 @@ func (h *Handler) AttachToIndex(ctx context.Context, r *api.AttachToIndexRequest
 	return resp, nil
 }
 
-func (h *Handler) DeleteIndex(ctx context.Context, r *api.DeleteIndexRequest) (*api.DeleteIndexResponse, error) {
-	ram, err := h.logic.DeleteIndex(r.Index)
-	resp := &api.DeleteIndexResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
+func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) (*api.DeleteObjectResponse, error) {
+	ram, err := h.logic.DeleteObject(r.Object)
+	resp := &api.DeleteObjectResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		if errors.Is(err, storage.ErrIndexNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
 			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 		return resp, err
@@ -172,11 +172,11 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 	return resp, nil
 }
 
-func (h *Handler) Size(ctx context.Context, r *api.IndexSizeRequest) (*api.IndexSizeResponse, error) {
+func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
 	ram, size, err := h.logic.Size(r.Name)
-	resp := &api.IndexSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
+	resp := &api.ObjectSizeResponse{Ram: &api.Ram{Total: ram.Total, Available: ram.Available}}
 	if err != nil {
-		if errors.Is(err, storage.ErrIndexNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
 			return resp, status.Error(codes.ResourceExhausted, err.Error())
 		}
 
@@ -198,8 +198,8 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 			return resp, status.Error(codes.NotFound, storage.ErrNotFound.Error())
 		}
 
-		if errors.Is(err, storage.ErrIndexNotFound) {
-			return resp, status.Error(codes.ResourceExhausted, storage.ErrIndexNotFound.Error())
+		if errors.Is(err, storage.ErrObjectNotFound) {
+			return resp, status.Error(codes.ResourceExhausted, storage.ErrObjectNotFound.Error())
 		}
 
 		return resp, err

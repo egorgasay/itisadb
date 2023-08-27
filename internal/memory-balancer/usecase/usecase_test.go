@@ -84,8 +84,8 @@ func TestUseCase_Connect(t *testing.T) {
 			uc := &UseCase{
 				servers: s,
 				logger:  logger.New(loggerInstance),
-				indexes: map[string]int32{
-					"test_index": 1,
+				objects: map[string]int32{
+					"test_object": 1,
 				},
 				mu:   sync.RWMutex{},
 				pool: make(chan struct{}, 30000),
@@ -184,8 +184,8 @@ func TestUseCase_Delete(t *testing.T) {
 			uc := &UseCase{
 				servers: s,
 				logger:  logger.New(loggerInstance),
-				indexes: map[string]int32{
-					"test_index": 1,
+				objects: map[string]int32{
+					"test_object": 1,
 				},
 				mu:   sync.RWMutex{},
 				pool: make(chan struct{}, 30000),
@@ -240,8 +240,8 @@ func TestUseCase_Disconnect(t *testing.T) {
 			uc := &UseCase{
 				servers: s,
 				logger:  logger.New(loggerInstance),
-				indexes: map[string]int32{
-					"test_index": 1,
+				objects: map[string]int32{
+					"test_object": 1,
 				},
 				mu:   sync.RWMutex{},
 				pool: make(chan struct{}, 30000),
@@ -348,8 +348,8 @@ func TestUseCase_Get(t *testing.T) {
 			uc := &UseCase{
 				servers: s,
 				logger:  logger.New(loggerInstance),
-				indexes: map[string]int32{
-					"test_index": 1,
+				objects: map[string]int32{
+					"test_object": 1,
 				},
 				mu:   sync.RWMutex{},
 				pool: make(chan struct{}, 30000),
@@ -442,8 +442,8 @@ func TestUseCase_Set(t *testing.T) {
 			uc := &UseCase{
 				servers: s,
 				logger:  logger.New(loggerInstance),
-				indexes: map[string]int32{
-					"test_index": 1,
+				objects: map[string]int32{
+					"test_object": 1,
 				},
 				mu:   sync.RWMutex{},
 				pool: make(chan struct{}, 30000),

@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestStorage_RestoreIndexes(t *testing.T) {
+func TestStorage_RestoreObjects(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
@@ -48,36 +48,36 @@ func TestStorage_RestoreIndexes(t *testing.T) {
 				mu: &sync.RWMutex{},
 			}
 			if !tt.wantErr {
-				err := os.Mkdir(".indexes", 0755)
+				err := os.Mkdir(".objects", 0755)
 				if err != nil && !os.IsExist(err) {
 					t.Errorf("Mkdir() error = %v", err)
 					return
 				}
 				for indx, serv := range tt.want {
-					if err = s.SaveIndexLoc(tt.args.ctx, indx, serv); err != nil {
-						t.Errorf("SaveIndexes() error = %v", err)
+					if err = s.SaveObjectLoc(tt.args.ctx, indx, serv); err != nil {
+						t.Errorf("SaveObjects() error = %v", err)
 					}
 				}
 				defer func() {
-					err = os.RemoveAll(".indexes")
+					err = os.RemoveAll(".objects")
 					if err != nil {
 						t.Errorf("RemoveAll() error = %v", err)
 					}
 				}()
 			}
-			got, err := s.RestoreIndexes(tt.args.ctx)
+			got, err := s.RestoreObjects(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RestoreIndexes() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RestoreObjects() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RestoreIndexes() got = %v, want %v", got, tt.want)
+				t.Errorf("RestoreObjects() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestStorage_SaveIndexes(t *testing.T) {
+func TestStorage_SaveObjects(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
@@ -108,7 +108,7 @@ func TestStorage_SaveIndexes(t *testing.T) {
 				mu: &sync.RWMutex{},
 			}
 
-			err := os.Mkdir(".indexes", 0755)
+			err := os.Mkdir(".objects", 0755)
 			if err != nil && !os.IsExist(err) {
 				t.Errorf("Mkdir() error = %v", err)
 				return
@@ -116,19 +116,19 @@ func TestStorage_SaveIndexes(t *testing.T) {
 
 			var got = make(map[string]int32)
 			defer func() {
-				err = os.RemoveAll(".indexes")
+				err = os.RemoveAll(".objects")
 				if err != nil {
 					t.Errorf("RemoveAll() error = %v", err)
 				}
 			}()
 
 			for indx, serv := range tt.want {
-				if err = s.SaveIndexLoc(tt.args.ctx, indx, serv); (err != nil) != tt.wantErr {
-					t.Errorf("SaveIndexes() error = %v, wantErr %v", err, tt.wantErr)
+				if err = s.SaveObjectLoc(tt.args.ctx, indx, serv); (err != nil) != tt.wantErr {
+					t.Errorf("SaveObjects() error = %v, wantErr %v", err, tt.wantErr)
 				}
 
 				if !tt.wantErr {
-					f, err := os.OpenFile(fmt.Sprintf(".indexes/%d", serv), os.O_RDWR|os.O_CREATE, 0755)
+					f, err := os.OpenFile(fmt.Sprintf(".objects/%d", serv), os.O_RDWR|os.O_CREATE, 0755)
 					if err != nil {
 						t.Errorf("OpenFile() error = %v", err)
 					}
@@ -137,8 +137,8 @@ func TestStorage_SaveIndexes(t *testing.T) {
 					scanner := bufio.NewScanner(f)
 
 					for scanner.Scan() {
-						var index = scanner.Text()
-						if index != "" {
+						var object = scanner.Text()
+						if object != "" {
 							got[scanner.Text()] = serv
 						}
 
@@ -152,7 +152,7 @@ func TestStorage_SaveIndexes(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SaveIndexes() got = %v, want %v", got, tt.want)
+				t.Errorf("SaveObjects() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

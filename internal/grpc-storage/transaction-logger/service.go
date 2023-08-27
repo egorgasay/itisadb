@@ -12,11 +12,11 @@ type EventType byte
 const (
 	Set EventType = iota
 	Delete
-	SetToIndex
+	SetToObject
 	DeleteAttr
-	CreateIndex
+	CreateObject
 	Attach
-	DeleteIndex
+	DeleteObject
 )
 
 type Event struct {
@@ -38,7 +38,6 @@ type TransactionLogger struct {
 
 	sync.RWMutex
 }
-
 
 func New() (*TransactionLogger, error) {
 	if err := os.MkdirAll(PATH, 0755); err != nil {

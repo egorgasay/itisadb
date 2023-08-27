@@ -34,18 +34,18 @@ func (m *MockIUseCase) EXPECT() *MockIUseCaseMockRecorder {
 	return m.recorder
 }
 
-// AttachToIndex mocks base method.
-func (m *MockIUseCase) AttachToIndex(arg0 context.Context, arg1, arg2 string) error {
+// AttachToObject mocks base method.
+func (m *MockIUseCase) AttachToObject(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AttachToIndex", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "AttachToObject", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AttachToIndex indicates an expected call of AttachToIndex.
-func (mr *MockIUseCaseMockRecorder) AttachToIndex(arg0, arg1, arg2 interface{}) *gomock.Call {
+// AttachToObject indicates an expected call of AttachToObject.
+func (mr *MockIUseCaseMockRecorder) AttachToObject(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToIndex", reflect.TypeOf((*MockIUseCase)(nil).AttachToIndex), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToObject", reflect.TypeOf((*MockIUseCase)(nil).AttachToObject), arg0, arg1, arg2)
 }
 
 // Connect mocks base method.
@@ -91,18 +91,18 @@ func (mr *MockIUseCaseMockRecorder) DeleteAttr(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAttr", reflect.TypeOf((*MockIUseCase)(nil).DeleteAttr), arg0, arg1, arg2)
 }
 
-// DeleteIndex mocks base method.
-func (m *MockIUseCase) DeleteIndex(arg0 context.Context, arg1 string) error {
+// DeleteObject mocks base method.
+func (m *MockIUseCase) DeleteObject(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteIndex", arg0, arg1)
+	ret := m.ctrl.Call(m, "DeleteObject", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteIndex indicates an expected call of DeleteIndex.
-func (mr *MockIUseCaseMockRecorder) DeleteIndex(arg0, arg1 interface{}) *gomock.Call {
+// DeleteObject indicates an expected call of DeleteObject.
+func (mr *MockIUseCaseMockRecorder) DeleteObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteIndex", reflect.TypeOf((*MockIUseCase)(nil).DeleteIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockIUseCase)(nil).DeleteObject), arg0, arg1)
 }
 
 // Disconnect mocks base method.
@@ -134,64 +134,64 @@ func (mr *MockIUseCaseMockRecorder) Get(arg0, arg1, arg2 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockIUseCase)(nil).Get), arg0, arg1, arg2)
 }
 
-// GetFromIndex mocks base method.
-func (m *MockIUseCase) GetFromIndex(arg0 context.Context, arg1, arg2 string, arg3 int32) (string, error) {
+// GetFromObject mocks base method.
+func (m *MockIUseCase) GetFromObject(arg0 context.Context, arg1, arg2 string, arg3 int32) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFromIndex", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetFromObject", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFromIndex indicates an expected call of GetFromIndex.
-func (mr *MockIUseCaseMockRecorder) GetFromIndex(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// GetFromObject indicates an expected call of GetFromObject.
+func (mr *MockIUseCaseMockRecorder) GetFromObject(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromIndex", reflect.TypeOf((*MockIUseCase)(nil).GetFromIndex), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromObject", reflect.TypeOf((*MockIUseCase)(nil).GetFromObject), arg0, arg1, arg2, arg3)
 }
 
-// IndexToJSON mocks base method.
-func (m *MockIUseCase) IndexToJSON(arg0 context.Context, arg1 string) (string, error) {
+// ObjectToJSON mocks base method.
+func (m *MockIUseCase) ObjectToJSON(arg0 context.Context, arg1 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IndexToJSON", arg0, arg1)
+	ret := m.ctrl.Call(m, "ObjectToJSON", arg0, arg1)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IndexToJSON indicates an expected call of IndexToJSON.
-func (mr *MockIUseCaseMockRecorder) IndexToJSON(arg0, arg1 interface{}) *gomock.Call {
+// ObjectToJSON indicates an expected call of ObjectToJSON.
+func (mr *MockIUseCaseMockRecorder) ObjectToJSON(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockIUseCase)(nil).IndexToJSON), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjectToJSON", reflect.TypeOf((*MockIUseCase)(nil).ObjectToJSON), arg0, arg1)
 }
 
-// Index mocks base method.
-func (m *MockIUseCase) Index(arg0 context.Context, arg1 string) (int32, error) {
+// Object mocks base method.
+func (m *MockIUseCase) Object(arg0 context.Context, arg1 string) (int32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Index", arg0, arg1)
+	ret := m.ctrl.Call(m, "Object", arg0, arg1)
 	ret0, _ := ret[0].(int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Index indicates an expected call of Index.
-func (mr *MockIUseCaseMockRecorder) Index(arg0, arg1 interface{}) *gomock.Call {
+// Object indicates an expected call of Object.
+func (mr *MockIUseCaseMockRecorder) Object(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockIUseCase)(nil).Index), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Object", reflect.TypeOf((*MockIUseCase)(nil).Object), arg0, arg1)
 }
 
-// IsIndex mocks base method.
-func (m *MockIUseCase) IsIndex(arg0 context.Context, arg1 string) (bool, error) {
+// IsObject mocks base method.
+func (m *MockIUseCase) IsObject(arg0 context.Context, arg1 string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsIndex", arg0, arg1)
+	ret := m.ctrl.Call(m, "IsObject", arg0, arg1)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IsIndex indicates an expected call of IsIndex.
-func (mr *MockIUseCaseMockRecorder) IsIndex(arg0, arg1 interface{}) *gomock.Call {
+// IsObject indicates an expected call of IsObject.
+func (mr *MockIUseCaseMockRecorder) IsObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsIndex", reflect.TypeOf((*MockIUseCase)(nil).IsIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsObject", reflect.TypeOf((*MockIUseCase)(nil).IsObject), arg0, arg1)
 }
 
 // Servers mocks base method.
@@ -223,19 +223,19 @@ func (mr *MockIUseCaseMockRecorder) Set(arg0, arg1, arg2, arg3, arg4 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockIUseCase)(nil).Set), arg0, arg1, arg2, arg3, arg4)
 }
 
-// SetToIndex mocks base method.
-func (m *MockIUseCase) SetToIndex(arg0 context.Context, arg1, arg2, arg3 string, arg4 bool) (int32, error) {
+// SetToObject mocks base method.
+func (m *MockIUseCase) SetToObject(arg0 context.Context, arg1, arg2, arg3 string, arg4 bool) (int32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetToIndex", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "SetToObject", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// SetToIndex indicates an expected call of SetToIndex.
-func (mr *MockIUseCaseMockRecorder) SetToIndex(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+// SetToObject indicates an expected call of SetToObject.
+func (mr *MockIUseCaseMockRecorder) SetToObject(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToIndex", reflect.TypeOf((*MockIUseCase)(nil).SetToIndex), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToObject", reflect.TypeOf((*MockIUseCase)(nil).SetToObject), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Size mocks base method.

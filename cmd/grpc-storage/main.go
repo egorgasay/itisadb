@@ -64,7 +64,7 @@ func main() {
 
 	snum, err := servernumber.Get(dir)
 	if err != nil {
-		log.Fatalf("Unable to get server number: %v", err)
+		log.Printf("Unable to get server number: %v\n", err)
 	}
 
 	cr := &balancer.BalancerConnectRequest{

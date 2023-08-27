@@ -7,17 +7,17 @@ import (
 	"itisadb/internal/memory-balancer/servers"
 )
 
-var ErrIndexNotFound = fmt.Errorf("index not found")
+var ErrObjectNotFound = fmt.Errorf("object not found")
 var ErrServerNotFound = fmt.Errorf("server not found")
 
-func (uc *UseCase) Index(ctx context.Context, name string) (s int32, err error) {
+func (uc *UseCase) Object(ctx context.Context, name string) (s int32, err error) {
 	return s, uc.withContext(ctx, func() error {
-		s, err = uc.index(ctx, name)
+		s, err = uc.object(ctx, name)
 		return err
 	})
 }
 
-func (uc *UseCase) index(ctx context.Context, name string) (int32, error) {
+func (uc *UseCase) object(ctx context.Context, name string) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -29,7 +29,7 @@ func (uc *UseCase) index(ctx context.Context, name string) (int32, error) {
 	var cl *servers.Server
 	var num int32
 
-	if num, ok = uc.indexes[name]; ok {
+	if num, ok = uc.objects[name]; ok {
 		cl, ok = uc.servers.GetServerByID(num)
 	} else {
 		cl, ok = uc.servers.GetServer()
@@ -39,39 +39,39 @@ func (uc *UseCase) index(ctx context.Context, name string) (int32, error) {
 		return 0, ErrServerNotFound
 	}
 
-	err := cl.NewIndex(ctx, name)
+	err := cl.NewObject(ctx, name)
 	if err != nil {
 		return 0, err
 	}
 
 	num = cl.GetNumber()
-	err = uc.storage.SaveIndexLoc(ctx, name, num)
+	err = uc.storage.SaveObjectLoc(ctx, name, num)
 	if err != nil {
-		uc.logger.Warn(fmt.Sprintf("error while saving index: %s", err.Error()))
+		uc.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
 	}
 
-	uc.indexes[name] = num
+	uc.objects[name] = num
 	return num, nil
 }
 
-func (uc *UseCase) GetFromIndex(ctx context.Context, index, key string, serverNumber int32) (v string, err error) {
+func (uc *UseCase) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
 	return v, uc.withContext(ctx, func() error {
-		v, err = uc.getFromIndex(ctx, index, key, serverNumber)
+		v, err = uc.getFromObject(ctx, object, key, serverNumber)
 		return err
 	})
 }
 
-func (uc *UseCase) getFromIndex(ctx context.Context, index, key string, serverNumber int32) (string, error) {
+func (uc *UseCase) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[index]
+	num, ok := uc.objects[object]
 	uc.mu.RUnlock()
 
 	if !ok && serverNumber == 0 {
-		return "", ErrIndexNotFound
+		return "", ErrObjectNotFound
 	} else if serverNumber != 0 {
 		num = serverNumber
 	}
@@ -81,7 +81,7 @@ func (uc *UseCase) getFromIndex(ctx context.Context, index, key string, serverNu
 		return "", ErrServerNotFound
 	}
 
-	resp, err := cl.GetFromIndex(ctx, index, key)
+	resp, err := cl.GetFromObject(ctx, object, key)
 	if err != nil {
 		if errors.Is(err, servers.ErrNotFound) {
 			return "", ErrNoData
@@ -92,24 +92,24 @@ func (uc *UseCase) getFromIndex(ctx context.Context, index, key string, serverNu
 	return resp.Value, nil
 }
 
-func (uc *UseCase) SetToIndex(ctx context.Context, index, key, val string, uniques bool) (s int32, err error) {
+func (uc *UseCase) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
 	return s, uc.withContext(ctx, func() error {
-		s, err = uc.setToIndex(ctx, index, key, val, uniques)
+		s, err = uc.setToObject(ctx, object, key, val, uniques)
 		return err
 	})
 }
 
-func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniques bool) (int32, error) {
+func (uc *UseCase) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[index]
+	num, ok := uc.objects[object]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return 0, ErrIndexNotFound
+		return 0, ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -117,7 +117,7 @@ func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniqu
 		return 0, ErrServerNotFound
 	}
 
-	err := cl.SetToIndex(ctx, index, key, val, uniques)
+	err := cl.SetToObject(ctx, object, key, val, uniques)
 	if err != nil {
 		return 0, err
 	}
@@ -125,17 +125,17 @@ func (uc *UseCase) setToIndex(ctx context.Context, index, key, val string, uniqu
 	return num, nil
 }
 
-func (uc *UseCase) IndexToJSON(ctx context.Context, name string) (string, error) {
+func (uc *UseCase) ObjectToJSON(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[name]
+	num, ok := uc.objects[name]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return "", ErrIndexNotFound
+		return "", ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -143,21 +143,21 @@ func (uc *UseCase) IndexToJSON(ctx context.Context, name string) (string, error)
 		return "", ErrServerNotFound
 	}
 
-	res, err := cl.IndexToJSON(ctx, name)
+	res, err := cl.ObjectToJSON(ctx, name)
 	if err != nil {
 		return "", err
 	}
 
-	return res.Index, nil
+	return res.Object, nil
 }
 
-func (uc *UseCase) IsIndex(ctx context.Context, name string) (bool, error) {
+func (uc *UseCase) IsObject(ctx context.Context, name string) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
 
 	uc.mu.RLock()
-	_, ok := uc.indexes[name]
+	_, ok := uc.objects[name]
 	uc.mu.RUnlock()
 
 	return ok, nil
@@ -176,11 +176,11 @@ func (uc *UseCase) size(ctx context.Context, name string) (uint64, error) {
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[name]
+	num, ok := uc.objects[name]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return 0, ErrIndexNotFound
+		return 0, ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -196,23 +196,23 @@ func (uc *UseCase) size(ctx context.Context, name string) (uint64, error) {
 	return res.Size, nil
 }
 
-func (uc *UseCase) DeleteIndex(ctx context.Context, name string) error {
+func (uc *UseCase) DeleteObject(ctx context.Context, name string) error {
 	return uc.withContext(ctx, func() error {
-		return uc.deleteIndex(ctx, name)
+		return uc.deleteObject(ctx, name)
 	})
 }
 
-func (uc *UseCase) deleteIndex(ctx context.Context, name string) error {
+func (uc *UseCase) deleteObject(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[name]
+	num, ok := uc.objects[name]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -220,34 +220,34 @@ func (uc *UseCase) deleteIndex(ctx context.Context, name string) error {
 		return ErrServerNotFound
 	}
 
-	err := cl.DeleteIndex(ctx, name)
+	err := cl.DeleteObject(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	uc.mu.Lock()
-	delete(uc.indexes, name)
+	delete(uc.objects, name)
 	uc.mu.Unlock()
 
 	return nil
 }
 
-func (uc *UseCase) AttachToIndex(ctx context.Context, dst string, src string) error {
+func (uc *UseCase) AttachToObject(ctx context.Context, dst string, src string) error {
 	return uc.withContext(ctx, func() error {
-		return uc.attachToIndex(ctx, dst, src)
+		return uc.attachToObject(ctx, dst, src)
 	})
 }
 
-func (uc *UseCase) attachToIndex(ctx context.Context, dst string, src string) error {
+func (uc *UseCase) attachToObject(ctx context.Context, dst string, src string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 	uc.mu.RLock()
-	num, ok := uc.indexes[dst]
+	num, ok := uc.objects[dst]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -255,30 +255,30 @@ func (uc *UseCase) attachToIndex(ctx context.Context, dst string, src string) er
 		return ErrServerNotFound
 	}
 
-	err := cl.AttachToIndex(ctx, dst, src)
+	err := cl.AttachToObject(ctx, dst, src)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, index string) error {
+func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, object string) error {
 	return uc.withContext(ctx, func() error {
-		return uc.deleteAttr(ctx, attr, index)
+		return uc.deleteAttr(ctx, attr, object)
 	})
 }
 
-func (uc *UseCase) deleteAttr(ctx context.Context, attr string, index string) error {
+func (uc *UseCase) deleteAttr(ctx context.Context, attr string, object string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
 	uc.mu.RLock()
-	num, ok := uc.indexes[index]
+	num, ok := uc.objects[object]
 	uc.mu.RUnlock()
 
 	if !ok {
-		return ErrIndexNotFound
+		return ErrObjectNotFound
 	}
 
 	cl, ok := uc.servers.GetServerByID(num)
@@ -286,7 +286,7 @@ func (uc *UseCase) deleteAttr(ctx context.Context, attr string, index string) er
 		return ErrServerNotFound
 	}
 
-	err := cl.DeleteAttr(ctx, attr, index)
+	err := cl.DeleteAttr(ctx, attr, object)
 	if err != nil {
 		return err
 	}

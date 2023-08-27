@@ -44,20 +44,20 @@ func Test_WriteSet(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
@@ -111,20 +111,20 @@ func Test_WriteDelete(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
@@ -150,7 +150,7 @@ func Test_WriteDelete(t *testing.T) {
 	}
 }
 
-func Test_WriteSetToIndex(t *testing.T) {
+func Test_WriteSetToObject(t *testing.T) {
 	tl, err := New()
 	if err != nil {
 		t.Error(err)
@@ -166,7 +166,7 @@ func Test_WriteSetToIndex(t *testing.T) {
 
 	tl.Run()
 	for i := 0; i < 100; i++ {
-		tl.WriteSetToIndex("test"+fmt.Sprint(i), "test"+fmt.Sprint(i), "test")
+		tl.WriteSetToObject("test"+fmt.Sprint(i), "test"+fmt.Sprint(i), "test")
 	}
 
 	time.Sleep(3 * time.Second)
@@ -178,26 +178,26 @@ func Test_WriteSetToIndex(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
 			for ; sc.Scan(); i++ {
 				ok = true
-				w := fmt.Sprintf("%v %s %s", SetToIndex, "test"+fmt.Sprint(i)+".test"+fmt.Sprint(i), "test")
+				w := fmt.Sprintf("%v %s %s", SetToObject, "test"+fmt.Sprint(i)+".test"+fmt.Sprint(i), "test")
 				v := sc.Bytes()
 				want := strutil.Base64Encode([]byte(w))
 				dec, err := strutil.Base64Decode(v)
@@ -247,20 +247,20 @@ func Test_WriteDeleteAttr(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
@@ -316,20 +316,20 @@ func Test_WriteAttach(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
@@ -357,7 +357,7 @@ func Test_WriteAttach(t *testing.T) {
 
 }
 
-func Test_WriteDeleteIndex(t *testing.T) {
+func Test_WriteDeleteObject(t *testing.T) {
 	tl, err := New()
 	if err != nil {
 		t.Error(err)
@@ -373,7 +373,7 @@ func Test_WriteDeleteIndex(t *testing.T) {
 
 	tl.Run()
 	for i := 0; i < 200; i++ {
-		tl.WriteDeleteIndex("index" + fmt.Sprint(i))
+		tl.WriteDeleteObject("object" + fmt.Sprint(i))
 	}
 
 	time.Sleep(3 * time.Second)
@@ -385,26 +385,26 @@ func Test_WriteDeleteIndex(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
 			for ; sc.Scan(); i++ {
 				ok = true
-				w := fmt.Sprintf("%v %s %s", DeleteIndex, "index"+fmt.Sprint(i), "")
+				w := fmt.Sprintf("%v %s %s", DeleteObject, "object"+fmt.Sprint(i), "")
 				v := sc.Bytes()
 				want := strutil.Base64Encode([]byte(w))
 				dec, err := strutil.Base64Decode(v)
@@ -426,7 +426,7 @@ func Test_WriteDeleteIndex(t *testing.T) {
 
 }
 
-func Test_WriteCreateIndex(t *testing.T) {
+func Test_WriteCreateObject(t *testing.T) {
 	tl, err := New()
 	if err != nil {
 		t.Error(err)
@@ -442,7 +442,7 @@ func Test_WriteCreateIndex(t *testing.T) {
 
 	tl.Run()
 	for i := 0; i < 100; i++ {
-		tl.WriteCreateIndex("index" + fmt.Sprint(i))
+		tl.WriteCreateObject("object" + fmt.Sprint(i))
 	}
 
 	time.Sleep(3 * time.Second)
@@ -454,26 +454,26 @@ func Test_WriteCreateIndex(t *testing.T) {
 	}
 
 	if len(files) == 0 {
-		t.Error("indexes is empty")
+		t.Error("objects is empty")
 		return
 	}
 
 	for _, f := range files {
 		func() {
-			findex, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(PATH + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			defer findex.Close()
+			defer fobject.Close()
 
-			sc := bufio.NewScanner(findex)
+			sc := bufio.NewScanner(fobject)
 			i := 0
 			var ok bool
 
 			for ; sc.Scan(); i++ {
 				ok = true
-				w := fmt.Sprintf("%v %s %s", CreateIndex, "index"+fmt.Sprint(i), "")
+				w := fmt.Sprintf("%v %s %s", CreateObject, "object"+fmt.Sprint(i), "")
 				v := sc.Bytes()
 				want := strutil.Base64Encode([]byte(w))
 				dec, err := strutil.Base64Decode(v)

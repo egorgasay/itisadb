@@ -9,7 +9,7 @@ import (
 )
 
 func Test_value_GetValue(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isIndex: true}
+	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
 	tests := []struct {
 		name    string
 		wantVal string
@@ -34,7 +34,7 @@ func Test_value_GetValue(t *testing.T) {
 }
 
 func Test_value_IsEmpty(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isIndex: true}
+	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
 	tests := []struct {
 		name string
 		want bool
@@ -63,7 +63,7 @@ func Test_value_IsEmpty(t *testing.T) {
 }
 
 func Test_value_Get(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isIndex: true}
+	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
 	tests := []struct {
 		name    string
 		arg     string
@@ -123,7 +123,7 @@ func Test_value_Size(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isIndex: true}
+		v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
 		t.Run(tt.name, func(t *testing.T) {
 			for i := 0; i < tt.want; i++ {
 				v.Set(fmt.Sprint(i), tt.name)
@@ -135,13 +135,13 @@ func Test_value_Size(t *testing.T) {
 	}
 }
 
-func Test_value_IsIndex(t *testing.T) {
+func Test_value_IsObject(t *testing.T) {
 	tests := []struct {
 		name string
 		want bool
 	}{
 		{
-			name: "IsIndex",
+			name: "IsObject",
 			want: true,
 		},
 		{
@@ -151,15 +151,15 @@ func Test_value_IsIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isIndex: tt.want}
-			if got := v.IsIndex(); got != tt.want {
-				t.Errorf("IsIndex() = %v, want %v", got, tt.want)
+			v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: tt.want}
+			if got := v.IsObject(); got != tt.want {
+				t.Errorf("IsObject() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_value_AttachIndex(t *testing.T) {
+func Test_value_AttachObject(t *testing.T) {
 	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100)}
 	type args struct {
 		name string
@@ -173,29 +173,29 @@ func Test_value_AttachIndex(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				val: NewIndex("foo", nil),
+				val: NewObject("foo", nil),
 			},
 		},
 		{
 			name: "ok2",
 			args: args{
-				val: NewIndex("qwdqdq", nil),
+				val: NewObject("qwdqdq", nil),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := v.AttachIndex(tt.args.val); (err != nil) != tt.wantErr {
-				t.Errorf("AttachIndex() error = %v, wantErr %v", err, tt.wantErr)
+			if err := v.AttachObject(tt.args.val); (err != nil) != tt.wantErr {
+				t.Errorf("AttachObject() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			vv, ok := v.values.Get(tt.args.val.Name())
 			if !ok {
-				t.Errorf("AttachIndex() ok = %v, wantOk %v", ok, true)
+				t.Errorf("AttachObject() ok = %v, wantOk %v", ok, true)
 				return
 			}
 			if !reflect.DeepEqual(vv, tt.args.val) {
-				t.Errorf("AttachIndex() = %v, want %v", vv, tt.args.val)
+				t.Errorf("AttachObject() = %v, want %v", vv, tt.args.val)
 				return
 			}
 		})

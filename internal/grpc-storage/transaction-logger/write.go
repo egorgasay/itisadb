@@ -8,16 +8,16 @@ func (t *TransactionLogger) WriteDelete(key string) {
 	t.events <- Event{EventType: Delete, Name: key}
 }
 
-func (t *TransactionLogger) WriteSetToIndex(name string, key string, val string) {
-	t.events <- Event{EventType: SetToIndex, Name: name + "." + key, Value: val}
+func (t *TransactionLogger) WriteSetToObject(name string, key string, val string) {
+	t.events <- Event{EventType: SetToObject, Name: name + "." + key, Value: val}
 }
 
-func (t *TransactionLogger) WriteCreateIndex(name string) {
-	t.events <- Event{EventType: CreateIndex, Name: name}
+func (t *TransactionLogger) WriteCreateObject(name string) {
+	t.events <- Event{EventType: CreateObject, Name: name}
 }
 
-func (t *TransactionLogger) WriteDeleteIndex(name string) {
-	t.events <- Event{EventType: DeleteIndex, Name: name}
+func (t *TransactionLogger) WriteDeleteObject(name string) {
+	t.events <- Event{EventType: DeleteObject, Name: name}
 }
 
 func (t *TransactionLogger) WriteAttach(dst string, src string) {

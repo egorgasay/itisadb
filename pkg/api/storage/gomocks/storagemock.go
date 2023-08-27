@@ -36,24 +36,24 @@ func (m *MockStorageClient) EXPECT() *MockStorageClientMockRecorder {
 	return m.recorder
 }
 
-// AttachToIndex mocks base method.
-func (m *MockStorageClient) AttachToIndex(ctx context.Context, in *storage.AttachToIndexRequest, opts ...grpc.CallOption) (*storage.AttachToIndexResponse, error) {
+// AttachToObject mocks base method.
+func (m *MockStorageClient) AttachToObject(ctx context.Context, in *storage.AttachToObjectRequest, opts ...grpc.CallOption) (*storage.AttachToObjectResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "AttachToIndex", varargs...)
-	ret0, _ := ret[0].(*storage.AttachToIndexResponse)
+	ret := m.ctrl.Call(m, "AttachToObject", varargs...)
+	ret0, _ := ret[0].(*storage.AttachToObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AttachToIndex indicates an expected call of AttachToIndex.
-func (mr *MockStorageClientMockRecorder) AttachToIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// AttachToObject indicates an expected call of AttachToObject.
+func (mr *MockStorageClientMockRecorder) AttachToObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToIndex", reflect.TypeOf((*MockStorageClient)(nil).AttachToIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToObject", reflect.TypeOf((*MockStorageClient)(nil).AttachToObject), varargs...)
 }
 
 // Delete mocks base method.
@@ -96,24 +96,24 @@ func (mr *MockStorageClientMockRecorder) DeleteAttr(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAttr", reflect.TypeOf((*MockStorageClient)(nil).DeleteAttr), varargs...)
 }
 
-// DeleteIndex mocks base method.
-func (m *MockStorageClient) DeleteIndex(ctx context.Context, in *storage.DeleteIndexRequest, opts ...grpc.CallOption) (*storage.DeleteIndexResponse, error) {
+// DeleteObject mocks base method.
+func (m *MockStorageClient) DeleteObject(ctx context.Context, in *storage.DeleteObjectRequest, opts ...grpc.CallOption) (*storage.DeleteObjectResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeleteIndex", varargs...)
-	ret0, _ := ret[0].(*storage.DeleteIndexResponse)
+	ret := m.ctrl.Call(m, "DeleteObject", varargs...)
+	ret0, _ := ret[0].(*storage.DeleteObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeleteIndex indicates an expected call of DeleteIndex.
-func (mr *MockStorageClientMockRecorder) DeleteIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// DeleteObject indicates an expected call of DeleteObject.
+func (mr *MockStorageClientMockRecorder) DeleteObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteIndex", reflect.TypeOf((*MockStorageClient)(nil).DeleteIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockStorageClient)(nil).DeleteObject), varargs...)
 }
 
 // Get mocks base method.
@@ -136,84 +136,84 @@ func (mr *MockStorageClientMockRecorder) Get(ctx, in interface{}, opts ...interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStorageClient)(nil).Get), varargs...)
 }
 
-// GetFromIndex mocks base method.
-func (m *MockStorageClient) GetFromIndex(ctx context.Context, in *storage.GetFromIndexRequest, opts ...grpc.CallOption) (*storage.GetResponse, error) {
+// GetFromObject mocks base method.
+func (m *MockStorageClient) GetFromObject(ctx context.Context, in *storage.GetFromObjectRequest, opts ...grpc.CallOption) (*storage.GetResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetFromIndex", varargs...)
+	ret := m.ctrl.Call(m, "GetFromObject", varargs...)
 	ret0, _ := ret[0].(*storage.GetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFromIndex indicates an expected call of GetFromIndex.
-func (mr *MockStorageClientMockRecorder) GetFromIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// GetFromObject indicates an expected call of GetFromObject.
+func (mr *MockStorageClientMockRecorder) GetFromObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromIndex", reflect.TypeOf((*MockStorageClient)(nil).GetFromIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromObject", reflect.TypeOf((*MockStorageClient)(nil).GetFromObject), varargs...)
 }
 
-// IndexToJSON mocks base method.
-func (m *MockStorageClient) IndexToJSON(ctx context.Context, in *storage.IndexToJSONRequest, opts ...grpc.CallOption) (*storage.IndexToJSONResponse, error) {
+// ObjectToJSON mocks base method.
+func (m *MockStorageClient) ObjectToJSON(ctx context.Context, in *storage.ObjectToJSONRequest, opts ...grpc.CallOption) (*storage.ObjectToJSONResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "IndexToJSON", varargs...)
-	ret0, _ := ret[0].(*storage.IndexToJSONResponse)
+	ret := m.ctrl.Call(m, "ObjectToJSON", varargs...)
+	ret0, _ := ret[0].(*storage.ObjectToJSONResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IndexToJSON indicates an expected call of IndexToJSON.
-func (mr *MockStorageClientMockRecorder) IndexToJSON(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// ObjectToJSON indicates an expected call of ObjectToJSON.
+func (mr *MockStorageClientMockRecorder) ObjectToJSON(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockStorageClient)(nil).IndexToJSON), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjectToJSON", reflect.TypeOf((*MockStorageClient)(nil).ObjectToJSON), varargs...)
 }
 
-// IsIndex mocks base method.
-func (m *MockStorageClient) IsIndex(ctx context.Context, in *storage.IsIndexRequest, opts ...grpc.CallOption) (*storage.IsIndexResponse, error) {
+// IsObject mocks base method.
+func (m *MockStorageClient) IsObject(ctx context.Context, in *storage.IsObjectRequest, opts ...grpc.CallOption) (*storage.IsObjectResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "IsIndex", varargs...)
-	ret0, _ := ret[0].(*storage.IsIndexResponse)
+	ret := m.ctrl.Call(m, "IsObject", varargs...)
+	ret0, _ := ret[0].(*storage.IsObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IsIndex indicates an expected call of IsIndex.
-func (mr *MockStorageClientMockRecorder) IsIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// IsObject indicates an expected call of IsObject.
+func (mr *MockStorageClientMockRecorder) IsObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsIndex", reflect.TypeOf((*MockStorageClient)(nil).IsIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsObject", reflect.TypeOf((*MockStorageClient)(nil).IsObject), varargs...)
 }
 
-// NewIndex mocks base method.
-func (m *MockStorageClient) NewIndex(ctx context.Context, in *storage.NewIndexRequest, opts ...grpc.CallOption) (*storage.NewIndexResponse, error) {
+// NewObject mocks base method.
+func (m *MockStorageClient) NewObject(ctx context.Context, in *storage.NewObjectRequest, opts ...grpc.CallOption) (*storage.NewObjectResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "NewIndex", varargs...)
-	ret0, _ := ret[0].(*storage.NewIndexResponse)
+	ret := m.ctrl.Call(m, "NewObject", varargs...)
+	ret0, _ := ret[0].(*storage.NewObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewIndex indicates an expected call of NewIndex.
-func (mr *MockStorageClientMockRecorder) NewIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// NewObject indicates an expected call of NewObject.
+func (mr *MockStorageClientMockRecorder) NewObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIndex", reflect.TypeOf((*MockStorageClient)(nil).NewIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewObject", reflect.TypeOf((*MockStorageClient)(nil).NewObject), varargs...)
 }
 
 // Set mocks base method.
@@ -236,35 +236,35 @@ func (mr *MockStorageClientMockRecorder) Set(ctx, in interface{}, opts ...interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStorageClient)(nil).Set), varargs...)
 }
 
-// SetToIndex mocks base method.
-func (m *MockStorageClient) SetToIndex(ctx context.Context, in *storage.SetToIndexRequest, opts ...grpc.CallOption) (*storage.SetResponse, error) {
+// SetToObject mocks base method.
+func (m *MockStorageClient) SetToObject(ctx context.Context, in *storage.SetToObjectRequest, opts ...grpc.CallOption) (*storage.SetResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "SetToIndex", varargs...)
+	ret := m.ctrl.Call(m, "SetToObject", varargs...)
 	ret0, _ := ret[0].(*storage.SetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// SetToIndex indicates an expected call of SetToIndex.
-func (mr *MockStorageClientMockRecorder) SetToIndex(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+// SetToObject indicates an expected call of SetToObject.
+func (mr *MockStorageClientMockRecorder) SetToObject(ctx, in interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToIndex", reflect.TypeOf((*MockStorageClient)(nil).SetToIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToObject", reflect.TypeOf((*MockStorageClient)(nil).SetToObject), varargs...)
 }
 
 // Size mocks base method.
-func (m *MockStorageClient) Size(ctx context.Context, in *storage.IndexSizeRequest, opts ...grpc.CallOption) (*storage.IndexSizeResponse, error) {
+func (m *MockStorageClient) Size(ctx context.Context, in *storage.ObjectSizeRequest, opts ...grpc.CallOption) (*storage.ObjectSizeResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Size", varargs...)
-	ret0, _ := ret[0].(*storage.IndexSizeResponse)
+	ret0, _ := ret[0].(*storage.ObjectSizeResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -299,19 +299,19 @@ func (m *MockStorageServer) EXPECT() *MockStorageServerMockRecorder {
 	return m.recorder
 }
 
-// AttachToIndex mocks base method.
-func (m *MockStorageServer) AttachToIndex(arg0 context.Context, arg1 *storage.AttachToIndexRequest) (*storage.AttachToIndexResponse, error) {
+// AttachToObject mocks base method.
+func (m *MockStorageServer) AttachToObject(arg0 context.Context, arg1 *storage.AttachToObjectRequest) (*storage.AttachToObjectResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AttachToIndex", arg0, arg1)
-	ret0, _ := ret[0].(*storage.AttachToIndexResponse)
+	ret := m.ctrl.Call(m, "AttachToObject", arg0, arg1)
+	ret0, _ := ret[0].(*storage.AttachToObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AttachToIndex indicates an expected call of AttachToIndex.
-func (mr *MockStorageServerMockRecorder) AttachToIndex(arg0, arg1 interface{}) *gomock.Call {
+// AttachToObject indicates an expected call of AttachToObject.
+func (mr *MockStorageServerMockRecorder) AttachToObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToIndex", reflect.TypeOf((*MockStorageServer)(nil).AttachToIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToObject", reflect.TypeOf((*MockStorageServer)(nil).AttachToObject), arg0, arg1)
 }
 
 // Delete mocks base method.
@@ -344,19 +344,19 @@ func (mr *MockStorageServerMockRecorder) DeleteAttr(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAttr", reflect.TypeOf((*MockStorageServer)(nil).DeleteAttr), arg0, arg1)
 }
 
-// DeleteIndex mocks base method.
-func (m *MockStorageServer) DeleteIndex(arg0 context.Context, arg1 *storage.DeleteIndexRequest) (*storage.DeleteIndexResponse, error) {
+// DeleteObject mocks base method.
+func (m *MockStorageServer) DeleteObject(arg0 context.Context, arg1 *storage.DeleteObjectRequest) (*storage.DeleteObjectResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteIndex", arg0, arg1)
-	ret0, _ := ret[0].(*storage.DeleteIndexResponse)
+	ret := m.ctrl.Call(m, "DeleteObject", arg0, arg1)
+	ret0, _ := ret[0].(*storage.DeleteObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeleteIndex indicates an expected call of DeleteIndex.
-func (mr *MockStorageServerMockRecorder) DeleteIndex(arg0, arg1 interface{}) *gomock.Call {
+// DeleteObject indicates an expected call of DeleteObject.
+func (mr *MockStorageServerMockRecorder) DeleteObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteIndex", reflect.TypeOf((*MockStorageServer)(nil).DeleteIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockStorageServer)(nil).DeleteObject), arg0, arg1)
 }
 
 // Get mocks base method.
@@ -374,64 +374,64 @@ func (mr *MockStorageServerMockRecorder) Get(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStorageServer)(nil).Get), arg0, arg1)
 }
 
-// GetFromIndex mocks base method.
-func (m *MockStorageServer) GetFromIndex(arg0 context.Context, arg1 *storage.GetFromIndexRequest) (*storage.GetResponse, error) {
+// GetFromObject mocks base method.
+func (m *MockStorageServer) GetFromObject(arg0 context.Context, arg1 *storage.GetFromObjectRequest) (*storage.GetResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFromIndex", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetFromObject", arg0, arg1)
 	ret0, _ := ret[0].(*storage.GetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFromIndex indicates an expected call of GetFromIndex.
-func (mr *MockStorageServerMockRecorder) GetFromIndex(arg0, arg1 interface{}) *gomock.Call {
+// GetFromObject indicates an expected call of GetFromObject.
+func (mr *MockStorageServerMockRecorder) GetFromObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromIndex", reflect.TypeOf((*MockStorageServer)(nil).GetFromIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFromObject", reflect.TypeOf((*MockStorageServer)(nil).GetFromObject), arg0, arg1)
 }
 
-// IndexToJSON mocks base method.
-func (m *MockStorageServer) IndexToJSON(arg0 context.Context, arg1 *storage.IndexToJSONRequest) (*storage.IndexToJSONResponse, error) {
+// ObjectToJSON mocks base method.
+func (m *MockStorageServer) ObjectToJSON(arg0 context.Context, arg1 *storage.ObjectToJSONRequest) (*storage.ObjectToJSONResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IndexToJSON", arg0, arg1)
-	ret0, _ := ret[0].(*storage.IndexToJSONResponse)
+	ret := m.ctrl.Call(m, "ObjectToJSON", arg0, arg1)
+	ret0, _ := ret[0].(*storage.ObjectToJSONResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IndexToJSON indicates an expected call of IndexToJSON.
-func (mr *MockStorageServerMockRecorder) IndexToJSON(arg0, arg1 interface{}) *gomock.Call {
+// ObjectToJSON indicates an expected call of ObjectToJSON.
+func (mr *MockStorageServerMockRecorder) ObjectToJSON(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexToJSON", reflect.TypeOf((*MockStorageServer)(nil).IndexToJSON), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjectToJSON", reflect.TypeOf((*MockStorageServer)(nil).ObjectToJSON), arg0, arg1)
 }
 
-// IsIndex mocks base method.
-func (m *MockStorageServer) IsIndex(arg0 context.Context, arg1 *storage.IsIndexRequest) (*storage.IsIndexResponse, error) {
+// IsObject mocks base method.
+func (m *MockStorageServer) IsObject(arg0 context.Context, arg1 *storage.IsObjectRequest) (*storage.IsObjectResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsIndex", arg0, arg1)
-	ret0, _ := ret[0].(*storage.IsIndexResponse)
+	ret := m.ctrl.Call(m, "IsObject", arg0, arg1)
+	ret0, _ := ret[0].(*storage.IsObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IsIndex indicates an expected call of IsIndex.
-func (mr *MockStorageServerMockRecorder) IsIndex(arg0, arg1 interface{}) *gomock.Call {
+// IsObject indicates an expected call of IsObject.
+func (mr *MockStorageServerMockRecorder) IsObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsIndex", reflect.TypeOf((*MockStorageServer)(nil).IsIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsObject", reflect.TypeOf((*MockStorageServer)(nil).IsObject), arg0, arg1)
 }
 
-// NewIndex mocks base method.
-func (m *MockStorageServer) NewIndex(arg0 context.Context, arg1 *storage.NewIndexRequest) (*storage.NewIndexResponse, error) {
+// NewObject mocks base method.
+func (m *MockStorageServer) NewObject(arg0 context.Context, arg1 *storage.NewObjectRequest) (*storage.NewObjectResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewIndex", arg0, arg1)
-	ret0, _ := ret[0].(*storage.NewIndexResponse)
+	ret := m.ctrl.Call(m, "NewObject", arg0, arg1)
+	ret0, _ := ret[0].(*storage.NewObjectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewIndex indicates an expected call of NewIndex.
-func (mr *MockStorageServerMockRecorder) NewIndex(arg0, arg1 interface{}) *gomock.Call {
+// NewObject indicates an expected call of NewObject.
+func (mr *MockStorageServerMockRecorder) NewObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIndex", reflect.TypeOf((*MockStorageServer)(nil).NewIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewObject", reflect.TypeOf((*MockStorageServer)(nil).NewObject), arg0, arg1)
 }
 
 // Set mocks base method.
@@ -449,26 +449,26 @@ func (mr *MockStorageServerMockRecorder) Set(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStorageServer)(nil).Set), arg0, arg1)
 }
 
-// SetToIndex mocks base method.
-func (m *MockStorageServer) SetToIndex(arg0 context.Context, arg1 *storage.SetToIndexRequest) (*storage.SetResponse, error) {
+// SetToObject mocks base method.
+func (m *MockStorageServer) SetToObject(arg0 context.Context, arg1 *storage.SetToObjectRequest) (*storage.SetResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetToIndex", arg0, arg1)
+	ret := m.ctrl.Call(m, "SetToObject", arg0, arg1)
 	ret0, _ := ret[0].(*storage.SetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// SetToIndex indicates an expected call of SetToIndex.
-func (mr *MockStorageServerMockRecorder) SetToIndex(arg0, arg1 interface{}) *gomock.Call {
+// SetToObject indicates an expected call of SetToObject.
+func (mr *MockStorageServerMockRecorder) SetToObject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToIndex", reflect.TypeOf((*MockStorageServer)(nil).SetToIndex), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetToObject", reflect.TypeOf((*MockStorageServer)(nil).SetToObject), arg0, arg1)
 }
 
 // Size mocks base method.
-func (m *MockStorageServer) Size(arg0 context.Context, arg1 *storage.IndexSizeRequest) (*storage.IndexSizeResponse, error) {
+func (m *MockStorageServer) Size(arg0 context.Context, arg1 *storage.ObjectSizeRequest) (*storage.ObjectSizeResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Size", arg0, arg1)
-	ret0, _ := ret[0].(*storage.IndexSizeResponse)
+	ret0, _ := ret[0].(*storage.ObjectSizeResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

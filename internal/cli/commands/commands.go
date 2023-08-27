@@ -29,13 +29,13 @@ var ErrEmpty = errors.New("the value does not exist")
 var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
-	get        = "get"
-	set        = "set"
-	uset       = "uset"
-	new_index  = "new_index"
-	index      = "index"
-	show_index = "show_index"
-	attach     = "attach"
+	get         = "get"
+	set         = "set"
+	uset        = "uset"
+	new_object  = "new_object"
+	object      = "object"
+	show_object = "show_object"
+	attach      = "attach"
 )
 
 const (
@@ -76,13 +76,13 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 
 		return c.set(args[0], strings.Join(args[1:], " "), server, uset == act)
-	case new_index:
+	case new_object:
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
 		name := args[0]
-		return c.newIndex(name)
-	case index:
+		return c.newObject(name)
+	case object:
 		if len(args) < 3 {
 			return "", ErrWrongInput
 		}
@@ -93,13 +93,13 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		if len(args) > 3 {
 			value = strings.Join(args[3:], " ")
 		}
-		return c.index(act, name, key, value)
-	case show_index:
+		return c.object(act, name, key, value)
+	case show_object:
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
 		name := args[0]
-		return c.showIndex(name)
+		return c.showObject(name)
 	case attach:
 		if len(args) < 2 {
 			return "", ErrWrongInput
@@ -115,54 +115,54 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 	return "", ErrUnknownCMD
 }
 
-func (c *Commands) newIndex(name string) (string, error) {
-	_, err := c.cl.Index(context.Background(), &balancer.BalancerIndexRequest{Name: name})
+func (c *Commands) newObject(name string) (string, error) {
+	_, err := c.cl.Object(context.Background(), &balancer.BalancerObjectRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("status: ok, index %s created", name), nil
+	return fmt.Sprintf("status: ok, object %s created", name), nil
 }
 
-func (c *Commands) showIndex(name string) (string, error) {
-	m, err := c.cl.IndexToJSON(context.Background(), &balancer.BalancerIndexToJSONRequest{Name: name})
+func (c *Commands) showObject(name string) (string, error) {
+	m, err := c.cl.ObjectToJSON(context.Background(), &balancer.BalancerObjectToJSONRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
 
-	return m.Index, nil
+	return m.Object, nil
 }
 
-func (c *Commands) index(act, name, key, value string) (string, error) {
+func (c *Commands) object(act, name, key, value string) (string, error) {
 	switch act {
 	case set:
-		return c.setIndex(name, key, value)
+		return c.setObject(name, key, value)
 	case get:
-		return c.IndexToJSON(name, key)
+		return c.ObjectToJSON(name, key)
 	default:
 		return "", fmt.Errorf("unknown action")
 	}
 
 }
 
-func (c *Commands) setIndex(name, key, value string) (string, error) {
-	r, err := c.cl.SetToIndex(context.Background(), &balancer.BalancerSetToIndexRequest{
-		Index: name,
-		Key:   key,
-		Value: value,
+func (c *Commands) setObject(name, key, value string) (string, error) {
+	r, err := c.cl.SetToObject(context.Background(), &balancer.BalancerSetToObjectRequest{
+		Object: name,
+		Key:    key,
+		Value:  value,
 	})
 
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("status: ok, saved in index %s, on server #%d", name, r.SavedTo), nil
+	return fmt.Sprintf("status: ok, saved in object %s, on server #%d", name, r.SavedTo), nil
 }
 
-func (c *Commands) IndexToJSON(name, key string) (string, error) {
-	r, err := c.cl.GetFromIndex(context.Background(), &balancer.BalancerGetFromIndexRequest{
-		Index: name,
-		Key:   key,
+func (c *Commands) ObjectToJSON(name, key string) (string, error) {
+	r, err := c.cl.GetFromObject(context.Background(), &balancer.BalancerGetFromObjectRequest{
+		Object: name,
+		Key:    key,
 	})
 
 	if err != nil {
@@ -185,7 +185,7 @@ func (c *Commands) get(key string, server int32) (string, error) {
 }
 
 func (c *Commands) attach(dst string, src string) error {
-	_, err := c.cl.AttachToIndex(context.Background(), &balancer.BalancerAttachToIndexRequest{
+	_, err := c.cl.AttachToObject(context.Background(), &balancer.BalancerAttachToObjectRequest{
 		Dst: dst,
 		Src: src,
 	})
@@ -196,7 +196,7 @@ func (c *Commands) attach(dst string, src string) error {
 		}
 
 		if st.Code() == codes.NotFound {
-			return fmt.Errorf("index not found")
+			return fmt.Errorf("object not found")
 		}
 
 		if st.Code() == codes.Unavailable {

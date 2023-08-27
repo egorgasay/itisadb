@@ -19,8 +19,8 @@ func New() (*Storage, error) {
 	}, nil
 }
 
-// RestoreIndexes restores index names.
-func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) {
+// RestoreObjects restores object names.
+func (s *Storage) RestoreObjects(ctx context.Context) (map[string]int32, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -28,16 +28,16 @@ func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	err := os.MkdirAll(".indexes", 0755)
+	err := os.MkdirAll(".objects", 0755)
 	if err != nil && !os.IsExist(err) {
-		return nil, fmt.Errorf("failed to create indexes dir: %w", err)
+		return nil, fmt.Errorf("failed to create objects dir: %w", err)
 	}
 
 	entry := make(map[string]int32)
 
-	dir, err := os.ReadDir(".indexes")
+	dir, err := os.ReadDir(".objects")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read indexes dir: %w", err)
+		return nil, fmt.Errorf("failed to read objects dir: %w", err)
 	}
 
 	for _, fe := range dir {
@@ -45,14 +45,14 @@ func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) 
 			continue
 		}
 
-		f, err := os.OpenFile(fmt.Sprintf(".indexes/%s", fe.Name()), os.O_RDONLY, 0644)
+		f, err := os.OpenFile(fmt.Sprintf(".objects/%s", fe.Name()), os.O_RDONLY, 0644)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open indexes: %w", err)
+			return nil, fmt.Errorf("failed to open objects: %w", err)
 		}
 
 		for {
-			var index string
-			_, err = fmt.Fscanln(f, &index)
+			var object string
+			_, err = fmt.Fscanln(f, &object)
 			if err != nil {
 				break
 			}
@@ -61,7 +61,7 @@ func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) 
 			if err != nil {
 				log.Errorf("failed to convert server number: %v", err)
 			} else {
-				entry[index] = int32(num)
+				entry[object] = int32(num)
 			}
 		}
 
@@ -71,8 +71,8 @@ func (s *Storage) RestoreIndexes(ctx context.Context) (map[string]int32, error) 
 	return entry, nil
 }
 
-// SaveIndexLoc saves index location.
-func (s *Storage) SaveIndexLoc(ctx context.Context, index string, server int32) error {
+// SaveObjectLoc saves object location.
+func (s *Storage) SaveObjectLoc(ctx context.Context, object string, server int32) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -80,15 +80,15 @@ func (s *Storage) SaveIndexLoc(ctx context.Context, index string, server int32) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := os.OpenFile(fmt.Sprintf(".indexes/%d", server), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(fmt.Sprintf(".objects/%d", server), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil && !os.IsExist(err) {
-		return fmt.Errorf("failed to open indexes: %w", err)
+		return fmt.Errorf("failed to open objects: %w", err)
 	}
 	defer f.Close()
 
-	_, err = f.WriteString(index + "\n")
+	_, err = f.WriteString(object + "\n")
 	if err != nil {
-		return fmt.Errorf("failed to write to indexes: %w", err)
+		return fmt.Errorf("failed to write to objects: %w", err)
 	}
 
 	return nil

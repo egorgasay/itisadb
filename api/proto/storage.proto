@@ -7,17 +7,16 @@ package api;
 service Storage {
   rpc Set(SetRequest) returns (SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
-  rpc SetToIndex(SetToIndexRequest) returns (SetResponse) {}
-  rpc AttachToIndex(AttachToIndexRequest) returns (AttachToIndexResponse) {}
-  rpc GetFromIndex(GetFromIndexRequest) returns (GetResponse) {}
-  rpc GetIndex(GetIndexRequest) returns (GetIndexResponse) {}
-  rpc IsIndex(IsIndexRequest) returns (IsIndexResponse) {}
-  rpc NewIndex(NewIndexRequest) returns (NewIndexResponse) {}
-  rpc Size(IndexSizeRequest) returns (IndexSizeResponse) {}
+  rpc SetToObject(SetToObjectRequest) returns (SetResponse) {}
+  rpc AttachToObject(AttachToObjectRequest) returns (AttachToObjectResponse) {}
+  rpc GetFromObject(GetFromObjectRequest) returns (GetResponse) {}
+  rpc ObjectToJSON(ObjectToJSONRequest) returns (ObjectToJSONResponse) {}
+  rpc IsObject(IsObjectRequest) returns (IsObjectResponse) {}
+  rpc NewObject(NewObjectRequest) returns (NewObjectResponse) {}
+  rpc Size(ObjectSizeRequest) returns (ObjectSizeResponse) {}
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
-  rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse) {}
+  rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse) {}
   rpc DeleteAttr(DeleteAttrRequest) returns (DeleteAttrResponse) {}
-
 }
 
 
@@ -35,40 +34,40 @@ message DeleteRequest {
   string key = 1;
 }
 
-message DeleteIndexRequest {
-  string index = 1;
+message DeleteObjectRequest {
+  string object = 1;
 }
 
-message GetIndexRequest {
+message ObjectToJSONRequest {
   string name = 1;
 }
 
-message IsIndexRequest {
+message IsObjectRequest {
   string name = 1;
 }
 
-message NewIndexRequest {
+message NewObjectRequest {
   string name = 1;
 }
 
-message IndexSizeRequest {
+message ObjectSizeRequest {
   string name = 1;
 }
 
 
-message SetToIndexRequest {
+message SetToObjectRequest {
   string key = 1;
   string value = 2;
   bool unique = 3;
   string name = 4;
 }
 
-message AttachToIndexRequest {
+message AttachToObjectRequest {
   string dst = 1;
   string src = 2;
 }
 
-message GetFromIndexRequest {
+message GetFromObjectRequest {
   string key = 1;
   string name = 2;
 }
@@ -94,17 +93,17 @@ message DeleteAttrResponse {
   Ram ram = 1;
 }
 
-message IsIndexResponse {
+message IsObjectResponse {
   bool ok = 1;
   Ram ram = 2;
 }
 
-message GetIndexResponse {
-  string index = 1;
+message ObjectToJSONResponse {
+  string object = 1;
   Ram ram = 2;
 }
 
-message NewIndexResponse{
+message NewObjectResponse{
   Ram ram = 1;
 }
 
@@ -116,15 +115,15 @@ message DeleteResponse {
   Ram ram = 1;
 }
 
-message DeleteIndexResponse {
+message DeleteObjectResponse {
   Ram ram = 1;
 }
 
-message AttachToIndexResponse {
+message AttachToObjectResponse {
   Ram ram = 1;
 }
 
-message IndexSizeResponse {
+message ObjectSizeResponse {
   uint64 Size = 1;
   Ram ram = 2;
 }
