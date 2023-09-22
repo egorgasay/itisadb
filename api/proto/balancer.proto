@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "./";
+option go_package = "./balancer";
 
 package api;
 
@@ -8,14 +8,19 @@ service Balancer {
   rpc Index(BalancerIndexRequest) returns (BalancerIndexResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
   rpc SetToIndex(BalancerSetToIndexRequest) returns (BalancerSetToIndexResponse) {}
+  rpc AttachToIndex(BalancerAttachToIndexRequest) returns (BalancerAttachToIndexResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
   rpc GetFromIndex(BalancerGetFromIndexRequest) returns (BalancerGetFromIndexResponse) {}
   rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
   rpc Disconnect(BalancerDisconnectRequest) returns (BalancerDisconnectResponse) {}
   rpc Servers(BalancerServersRequest) returns (BalancerServersResponse) {}
-  rpc GetIndex(BalancerGetIndexRequest) returns (BalancerGetIndexResponse) {}
+  rpc IndexToJSON(BalancerIndexToJSONRequest) returns (BalancerIndexToJSONResponse) {}
   rpc IsIndex(BalancerIsIndexRequest) returns (BalancerIsIndexResponse) {}
   rpc Size(BalancerIndexSizeRequest) returns (BalancerIndexSizeResponse) {}
+  rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+  rpc DeleteIfExists(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+  rpc DeleteIndex(BalancerDeleteIndexRequest) returns (BalancerDeleteIndexResponse) {}
+  rpc DeleteAttr(BalancerDeleteAttrRequest) returns (BalancerDeleteAttrResponse) {}
 }
 
 message BalancerSetRequest {
@@ -29,10 +34,18 @@ message BalancerIndexSizeRequest {
   string name = 1;
 }
 
-message BalancerGetIndexRequest {
+message BalancerIndexToJSONRequest {
   string name = 1;
 }
 
+message BalancerDeleteRequest {
+  string key = 1;
+  int32 server = 2;
+}
+
+message BalancerDeleteIndexRequest {
+  string index = 1;
+}
 
 message BalancerGetToIndexRequest {
   string key = 1;
@@ -46,9 +59,19 @@ message BalancerSetToIndexRequest {
   string index = 4;
 }
 
+message BalancerAttachToIndexRequest {
+  string dst = 1;
+  string src = 2;
+}
+
 message BalancerGetRequest {
   string key = 1;
   int32 server = 2;
+}
+
+message BalancerDeleteAttrRequest {
+  string key = 1;
+  string index = 2;
 }
 
 message BalancerGetFromIndexRequest {
@@ -66,8 +89,9 @@ message BalancerConnectRequest {
 
 message BalancerIndexRequest {
   string name = 1;
-//  string defaultAttributes = 2;
+  //  string defaultAttributes = 2;
 }
+
 
 message BalancerIsIndexRequest {
   string name = 1;
@@ -87,8 +111,8 @@ message BalancerIsIndexResponse {
   bool ok = 1;
 }
 
-message BalancerGetIndexResponse {
-  map<string, string> index = 1;
+message BalancerIndexToJSONResponse {
+  string index = 1;
 }
 
 message BalancerSetResponse {
@@ -99,6 +123,11 @@ message BalancerConnectResponse {
   string status = 1;
   int32 serverNumber = 2;
 }
+
+message BalancerAttachToIndexResponse {}
+
+message BalancerDeleteResponse {}
+message BalancerDeleteAttrResponse {}
 
 message BalancerDisconnectResponse{ }
 
@@ -115,6 +144,8 @@ message BalancerGetFromIndexResponse {
 }
 
 message BalancerIndexResponse{ }
+
+message BalancerDeleteIndexResponse{ }
 
 message BalancerServersResponse {
   string serversInfo = 1;

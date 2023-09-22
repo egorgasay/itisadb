@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option go_package = "./server";
+
+package api;
+
+service SecretKeeper {
+  rpc Auth(AuthRequest) returns (AuthResponse) {}
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  rpc GetAllNames(GetAllNamesRequest) returns (GetAllNamesResponse) {}
+  rpc Set(SetRequest) returns (SetResponse) {}
+}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  string value = 1;
+}
+
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {}
+
+message GetAllNamesRequest {}
+
+message GetAllNamesResponse {
+  repeated string vars = 1;
+}
+
+message SetRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SetResponse {}
+
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  string token = 1;
+}
+
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  string token = 1;
+}
