@@ -189,15 +189,13 @@ func (v *value) MarshalJSON() ([]byte, error) {
 		})
 
 		data = map[string]interface{}{
-			"isObject": true,
-			"name":     v.Name(),
-			"values":   arr,
+			"name":   v.Name(),
+			"values": arr,
 		}
 	} else {
 		data = map[string]interface{}{
-			"isObject": false,
-			"name":     v.Name(),
-			"value":    v.value,
+			"name":  v.Name(),
+			"value": v.value,
 		}
 	}
 

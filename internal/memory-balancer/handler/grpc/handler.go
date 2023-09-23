@@ -200,3 +200,12 @@ func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersReque
 		ServersInfo: s,
 	}, nil
 }
+
+func (h *Handler) Authenticate(ctx context.Context, request *api.BalancerAuthRequest) (*api.BalancerAuthResponse, error) {
+	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BalancerAuthResponse{Token: token}, nil
+}

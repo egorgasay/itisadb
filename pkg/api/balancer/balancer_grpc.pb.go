@@ -19,44 +19,46 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Balancer_Object_FullMethodName         = "/api.Balancer/Object"
 	Balancer_Set_FullMethodName            = "/api.Balancer/Set"
-	Balancer_SetToObject_FullMethodName    = "/api.Balancer/SetToObject"
-	Balancer_AttachToObject_FullMethodName = "/api.Balancer/AttachToObject"
 	Balancer_Get_FullMethodName            = "/api.Balancer/Get"
+	Balancer_Delete_FullMethodName         = "/api.Balancer/Delete"
+	Balancer_DeleteIfExists_FullMethodName = "/api.Balancer/DeleteIfExists"
+	Balancer_Object_FullMethodName         = "/api.Balancer/Object"
+	Balancer_SetToObject_FullMethodName    = "/api.Balancer/SetToObject"
 	Balancer_GetFromObject_FullMethodName  = "/api.Balancer/GetFromObject"
-	Balancer_Connect_FullMethodName        = "/api.Balancer/Connect"
-	Balancer_Disconnect_FullMethodName     = "/api.Balancer/Disconnect"
-	Balancer_Servers_FullMethodName        = "/api.Balancer/Servers"
+	Balancer_AttachToObject_FullMethodName = "/api.Balancer/AttachToObject"
 	Balancer_ObjectToJSON_FullMethodName   = "/api.Balancer/ObjectToJSON"
 	Balancer_IsObject_FullMethodName       = "/api.Balancer/IsObject"
 	Balancer_Size_FullMethodName           = "/api.Balancer/Size"
-	Balancer_Delete_FullMethodName         = "/api.Balancer/Delete"
-	Balancer_DeleteIfExists_FullMethodName = "/api.Balancer/DeleteIfExists"
 	Balancer_DeleteObject_FullMethodName   = "/api.Balancer/DeleteObject"
 	Balancer_DeleteAttr_FullMethodName     = "/api.Balancer/DeleteAttr"
+	Balancer_Authenticate_FullMethodName   = "/api.Balancer/Authenticate"
+	Balancer_Connect_FullMethodName        = "/api.Balancer/Connect"
+	Balancer_Disconnect_FullMethodName     = "/api.Balancer/Disconnect"
+	Balancer_Servers_FullMethodName        = "/api.Balancer/Servers"
 )
 
 // BalancerClient is the client API for Balancer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalancerClient interface {
-	Object(ctx context.Context, in *BalancerObjectRequest, opts ...grpc.CallOption) (*BalancerObjectResponse, error)
 	Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error)
-	SetToObject(ctx context.Context, in *BalancerSetToObjectRequest, opts ...grpc.CallOption) (*BalancerSetToObjectResponse, error)
-	AttachToObject(ctx context.Context, in *BalancerAttachToObjectRequest, opts ...grpc.CallOption) (*BalancerAttachToObjectResponse, error)
 	Get(ctx context.Context, in *BalancerGetRequest, opts ...grpc.CallOption) (*BalancerGetResponse, error)
+	Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
+	DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
+	Object(ctx context.Context, in *BalancerObjectRequest, opts ...grpc.CallOption) (*BalancerObjectResponse, error)
+	SetToObject(ctx context.Context, in *BalancerSetToObjectRequest, opts ...grpc.CallOption) (*BalancerSetToObjectResponse, error)
 	GetFromObject(ctx context.Context, in *BalancerGetFromObjectRequest, opts ...grpc.CallOption) (*BalancerGetFromObjectResponse, error)
-	Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error)
-	Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error)
-	Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error)
+	AttachToObject(ctx context.Context, in *BalancerAttachToObjectRequest, opts ...grpc.CallOption) (*BalancerAttachToObjectResponse, error)
 	ObjectToJSON(ctx context.Context, in *BalancerObjectToJSONRequest, opts ...grpc.CallOption) (*BalancerObjectToJSONResponse, error)
 	IsObject(ctx context.Context, in *BalancerIsObjectRequest, opts ...grpc.CallOption) (*BalancerIsObjectResponse, error)
 	Size(ctx context.Context, in *BalancerObjectSizeRequest, opts ...grpc.CallOption) (*BalancerObjectSizeResponse, error)
-	Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
-	DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error)
 	DeleteObject(ctx context.Context, in *BalancerDeleteObjectRequest, opts ...grpc.CallOption) (*BalancerDeleteObjectResponse, error)
 	DeleteAttr(ctx context.Context, in *BalancerDeleteAttrRequest, opts ...grpc.CallOption) (*BalancerDeleteAttrResponse, error)
+	Authenticate(ctx context.Context, in *BalancerAuthRequest, opts ...grpc.CallOption) (*BalancerAuthResponse, error)
+	Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error)
+	Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error)
+	Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error)
 }
 
 type balancerClient struct {
@@ -67,36 +69,9 @@ func NewBalancerClient(cc grpc.ClientConnInterface) BalancerClient {
 	return &balancerClient{cc}
 }
 
-func (c *balancerClient) Object(ctx context.Context, in *BalancerObjectRequest, opts ...grpc.CallOption) (*BalancerObjectResponse, error) {
-	out := new(BalancerObjectResponse)
-	err := c.cc.Invoke(ctx, Balancer_Object_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *balancerClient) Set(ctx context.Context, in *BalancerSetRequest, opts ...grpc.CallOption) (*BalancerSetResponse, error) {
 	out := new(BalancerSetResponse)
 	err := c.cc.Invoke(ctx, Balancer_Set_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *balancerClient) SetToObject(ctx context.Context, in *BalancerSetToObjectRequest, opts ...grpc.CallOption) (*BalancerSetToObjectResponse, error) {
-	out := new(BalancerSetToObjectResponse)
-	err := c.cc.Invoke(ctx, Balancer_SetToObject_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *balancerClient) AttachToObject(ctx context.Context, in *BalancerAttachToObjectRequest, opts ...grpc.CallOption) (*BalancerAttachToObjectResponse, error) {
-	out := new(BalancerAttachToObjectResponse)
-	err := c.cc.Invoke(ctx, Balancer_AttachToObject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +87,42 @@ func (c *balancerClient) Get(ctx context.Context, in *BalancerGetRequest, opts .
 	return out, nil
 }
 
+func (c *balancerClient) Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error) {
+	out := new(BalancerDeleteResponse)
+	err := c.cc.Invoke(ctx, Balancer_Delete_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error) {
+	out := new(BalancerDeleteResponse)
+	err := c.cc.Invoke(ctx, Balancer_DeleteIfExists_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) Object(ctx context.Context, in *BalancerObjectRequest, opts ...grpc.CallOption) (*BalancerObjectResponse, error) {
+	out := new(BalancerObjectResponse)
+	err := c.cc.Invoke(ctx, Balancer_Object_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) SetToObject(ctx context.Context, in *BalancerSetToObjectRequest, opts ...grpc.CallOption) (*BalancerSetToObjectResponse, error) {
+	out := new(BalancerSetToObjectResponse)
+	err := c.cc.Invoke(ctx, Balancer_SetToObject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *balancerClient) GetFromObject(ctx context.Context, in *BalancerGetFromObjectRequest, opts ...grpc.CallOption) (*BalancerGetFromObjectResponse, error) {
 	out := new(BalancerGetFromObjectResponse)
 	err := c.cc.Invoke(ctx, Balancer_GetFromObject_FullMethodName, in, out, opts...)
@@ -121,27 +132,9 @@ func (c *balancerClient) GetFromObject(ctx context.Context, in *BalancerGetFromO
 	return out, nil
 }
 
-func (c *balancerClient) Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error) {
-	out := new(BalancerConnectResponse)
-	err := c.cc.Invoke(ctx, Balancer_Connect_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *balancerClient) Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error) {
-	out := new(BalancerDisconnectResponse)
-	err := c.cc.Invoke(ctx, Balancer_Disconnect_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *balancerClient) Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error) {
-	out := new(BalancerServersResponse)
-	err := c.cc.Invoke(ctx, Balancer_Servers_FullMethodName, in, out, opts...)
+func (c *balancerClient) AttachToObject(ctx context.Context, in *BalancerAttachToObjectRequest, opts ...grpc.CallOption) (*BalancerAttachToObjectResponse, error) {
+	out := new(BalancerAttachToObjectResponse)
+	err := c.cc.Invoke(ctx, Balancer_AttachToObject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -175,24 +168,6 @@ func (c *balancerClient) Size(ctx context.Context, in *BalancerObjectSizeRequest
 	return out, nil
 }
 
-func (c *balancerClient) Delete(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error) {
-	out := new(BalancerDeleteResponse)
-	err := c.cc.Invoke(ctx, Balancer_Delete_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *balancerClient) DeleteIfExists(ctx context.Context, in *BalancerDeleteRequest, opts ...grpc.CallOption) (*BalancerDeleteResponse, error) {
-	out := new(BalancerDeleteResponse)
-	err := c.cc.Invoke(ctx, Balancer_DeleteIfExists_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *balancerClient) DeleteObject(ctx context.Context, in *BalancerDeleteObjectRequest, opts ...grpc.CallOption) (*BalancerDeleteObjectResponse, error) {
 	out := new(BalancerDeleteObjectResponse)
 	err := c.cc.Invoke(ctx, Balancer_DeleteObject_FullMethodName, in, out, opts...)
@@ -211,26 +186,63 @@ func (c *balancerClient) DeleteAttr(ctx context.Context, in *BalancerDeleteAttrR
 	return out, nil
 }
 
+func (c *balancerClient) Authenticate(ctx context.Context, in *BalancerAuthRequest, opts ...grpc.CallOption) (*BalancerAuthResponse, error) {
+	out := new(BalancerAuthResponse)
+	err := c.cc.Invoke(ctx, Balancer_Authenticate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) Connect(ctx context.Context, in *BalancerConnectRequest, opts ...grpc.CallOption) (*BalancerConnectResponse, error) {
+	out := new(BalancerConnectResponse)
+	err := c.cc.Invoke(ctx, Balancer_Connect_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) Disconnect(ctx context.Context, in *BalancerDisconnectRequest, opts ...grpc.CallOption) (*BalancerDisconnectResponse, error) {
+	out := new(BalancerDisconnectResponse)
+	err := c.cc.Invoke(ctx, Balancer_Disconnect_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *balancerClient) Servers(ctx context.Context, in *BalancerServersRequest, opts ...grpc.CallOption) (*BalancerServersResponse, error) {
+	out := new(BalancerServersResponse)
+	err := c.cc.Invoke(ctx, Balancer_Servers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BalancerServer is the server API for Balancer service.
 // All implementations must embed UnimplementedBalancerServer
 // for forward compatibility
 type BalancerServer interface {
-	Object(context.Context, *BalancerObjectRequest) (*BalancerObjectResponse, error)
 	Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error)
-	SetToObject(context.Context, *BalancerSetToObjectRequest) (*BalancerSetToObjectResponse, error)
-	AttachToObject(context.Context, *BalancerAttachToObjectRequest) (*BalancerAttachToObjectResponse, error)
 	Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error)
+	Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
+	DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
+	Object(context.Context, *BalancerObjectRequest) (*BalancerObjectResponse, error)
+	SetToObject(context.Context, *BalancerSetToObjectRequest) (*BalancerSetToObjectResponse, error)
 	GetFromObject(context.Context, *BalancerGetFromObjectRequest) (*BalancerGetFromObjectResponse, error)
-	Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error)
-	Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error)
-	Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error)
+	AttachToObject(context.Context, *BalancerAttachToObjectRequest) (*BalancerAttachToObjectResponse, error)
 	ObjectToJSON(context.Context, *BalancerObjectToJSONRequest) (*BalancerObjectToJSONResponse, error)
 	IsObject(context.Context, *BalancerIsObjectRequest) (*BalancerIsObjectResponse, error)
 	Size(context.Context, *BalancerObjectSizeRequest) (*BalancerObjectSizeResponse, error)
-	Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
-	DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error)
 	DeleteObject(context.Context, *BalancerDeleteObjectRequest) (*BalancerDeleteObjectResponse, error)
 	DeleteAttr(context.Context, *BalancerDeleteAttrRequest) (*BalancerDeleteAttrResponse, error)
+	Authenticate(context.Context, *BalancerAuthRequest) (*BalancerAuthResponse, error)
+	Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error)
+	Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error)
+	Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error)
 	mustEmbedUnimplementedBalancerServer()
 }
 
@@ -238,32 +250,29 @@ type BalancerServer interface {
 type UnimplementedBalancerServer struct {
 }
 
-func (UnimplementedBalancerServer) Object(context.Context, *BalancerObjectRequest) (*BalancerObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Object not implemented")
-}
 func (UnimplementedBalancerServer) Set(context.Context, *BalancerSetRequest) (*BalancerSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
-}
-func (UnimplementedBalancerServer) SetToObject(context.Context, *BalancerSetToObjectRequest) (*BalancerSetToObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetToObject not implemented")
-}
-func (UnimplementedBalancerServer) AttachToObject(context.Context, *BalancerAttachToObjectRequest) (*BalancerAttachToObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AttachToObject not implemented")
 }
 func (UnimplementedBalancerServer) Get(context.Context, *BalancerGetRequest) (*BalancerGetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedBalancerServer) Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedBalancerServer) DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteIfExists not implemented")
+}
+func (UnimplementedBalancerServer) Object(context.Context, *BalancerObjectRequest) (*BalancerObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Object not implemented")
+}
+func (UnimplementedBalancerServer) SetToObject(context.Context, *BalancerSetToObjectRequest) (*BalancerSetToObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetToObject not implemented")
+}
 func (UnimplementedBalancerServer) GetFromObject(context.Context, *BalancerGetFromObjectRequest) (*BalancerGetFromObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFromObject not implemented")
 }
-func (UnimplementedBalancerServer) Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
-}
-func (UnimplementedBalancerServer) Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
-}
-func (UnimplementedBalancerServer) Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
+func (UnimplementedBalancerServer) AttachToObject(context.Context, *BalancerAttachToObjectRequest) (*BalancerAttachToObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AttachToObject not implemented")
 }
 func (UnimplementedBalancerServer) ObjectToJSON(context.Context, *BalancerObjectToJSONRequest) (*BalancerObjectToJSONResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ObjectToJSON not implemented")
@@ -274,17 +283,23 @@ func (UnimplementedBalancerServer) IsObject(context.Context, *BalancerIsObjectRe
 func (UnimplementedBalancerServer) Size(context.Context, *BalancerObjectSizeRequest) (*BalancerObjectSizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Size not implemented")
 }
-func (UnimplementedBalancerServer) Delete(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
-}
-func (UnimplementedBalancerServer) DeleteIfExists(context.Context, *BalancerDeleteRequest) (*BalancerDeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteIfExists not implemented")
-}
 func (UnimplementedBalancerServer) DeleteObject(context.Context, *BalancerDeleteObjectRequest) (*BalancerDeleteObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteObject not implemented")
 }
 func (UnimplementedBalancerServer) DeleteAttr(context.Context, *BalancerDeleteAttrRequest) (*BalancerDeleteAttrResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAttr not implemented")
+}
+func (UnimplementedBalancerServer) Authenticate(context.Context, *BalancerAuthRequest) (*BalancerAuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
+}
+func (UnimplementedBalancerServer) Connect(context.Context, *BalancerConnectRequest) (*BalancerConnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
+}
+func (UnimplementedBalancerServer) Disconnect(context.Context, *BalancerDisconnectRequest) (*BalancerDisconnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
+}
+func (UnimplementedBalancerServer) Servers(context.Context, *BalancerServersRequest) (*BalancerServersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
 }
 func (UnimplementedBalancerServer) mustEmbedUnimplementedBalancerServer() {}
 
@@ -297,24 +312,6 @@ type UnsafeBalancerServer interface {
 
 func RegisterBalancerServer(s grpc.ServiceRegistrar, srv BalancerServer) {
 	s.RegisterService(&Balancer_ServiceDesc, srv)
-}
-
-func _Balancer_Object_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerObjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).Object(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_Object_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Object(ctx, req.(*BalancerObjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Balancer_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -331,42 +328,6 @@ func _Balancer_Set_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BalancerServer).Set(ctx, req.(*BalancerSetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Balancer_SetToObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerSetToObjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).SetToObject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_SetToObject_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).SetToObject(ctx, req.(*BalancerSetToObjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Balancer_AttachToObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerAttachToObjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).AttachToObject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_AttachToObject_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).AttachToObject(ctx, req.(*BalancerAttachToObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -389,6 +350,78 @@ func _Balancer_Get_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Delete(ctx, req.(*BalancerDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_DeleteIfExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).DeleteIfExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_DeleteIfExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).DeleteIfExists(ctx, req.(*BalancerDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_Object_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Object(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Object_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Object(ctx, req.(*BalancerObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_SetToObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerSetToObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).SetToObject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_SetToObject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).SetToObject(ctx, req.(*BalancerSetToObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Balancer_GetFromObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BalancerGetFromObjectRequest)
 	if err := dec(in); err != nil {
@@ -407,56 +440,20 @@ func _Balancer_GetFromObject_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Balancer_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerConnectRequest)
+func _Balancer_AttachToObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerAttachToObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BalancerServer).Connect(ctx, in)
+		return srv.(BalancerServer).AttachToObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Balancer_Connect_FullMethodName,
+		FullMethod: Balancer_AttachToObject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Connect(ctx, req.(*BalancerConnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Balancer_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerDisconnectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).Disconnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_Disconnect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Disconnect(ctx, req.(*BalancerDisconnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerServersRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).Servers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_Servers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Servers(ctx, req.(*BalancerServersRequest))
+		return srv.(BalancerServer).AttachToObject(ctx, req.(*BalancerAttachToObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -515,42 +512,6 @@ func _Balancer_Size_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Balancer_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerDeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).Delete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_Delete_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).Delete(ctx, req.(*BalancerDeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Balancer_DeleteIfExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BalancerDeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BalancerServer).DeleteIfExists(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Balancer_DeleteIfExists_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalancerServer).DeleteIfExists(ctx, req.(*BalancerDeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Balancer_DeleteObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BalancerDeleteObjectRequest)
 	if err := dec(in); err != nil {
@@ -587,6 +548,78 @@ func _Balancer_DeleteAttr_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Balancer_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Authenticate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Authenticate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Authenticate(ctx, req.(*BalancerAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Connect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Connect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Connect(ctx, req.(*BalancerConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerDisconnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Disconnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Disconnect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Disconnect(ctx, req.(*BalancerDisconnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Balancer_Servers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BalancerServersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalancerServer).Servers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Balancer_Servers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalancerServer).Servers(ctx, req.(*BalancerServersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Balancer_ServiceDesc is the grpc.ServiceDesc for Balancer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -595,40 +628,36 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BalancerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Object",
-			Handler:    _Balancer_Object_Handler,
-		},
-		{
 			MethodName: "Set",
 			Handler:    _Balancer_Set_Handler,
-		},
-		{
-			MethodName: "SetToObject",
-			Handler:    _Balancer_SetToObject_Handler,
-		},
-		{
-			MethodName: "AttachToObject",
-			Handler:    _Balancer_AttachToObject_Handler,
 		},
 		{
 			MethodName: "Get",
 			Handler:    _Balancer_Get_Handler,
 		},
 		{
+			MethodName: "Delete",
+			Handler:    _Balancer_Delete_Handler,
+		},
+		{
+			MethodName: "DeleteIfExists",
+			Handler:    _Balancer_DeleteIfExists_Handler,
+		},
+		{
+			MethodName: "Object",
+			Handler:    _Balancer_Object_Handler,
+		},
+		{
+			MethodName: "SetToObject",
+			Handler:    _Balancer_SetToObject_Handler,
+		},
+		{
 			MethodName: "GetFromObject",
 			Handler:    _Balancer_GetFromObject_Handler,
 		},
 		{
-			MethodName: "Connect",
-			Handler:    _Balancer_Connect_Handler,
-		},
-		{
-			MethodName: "Disconnect",
-			Handler:    _Balancer_Disconnect_Handler,
-		},
-		{
-			MethodName: "Servers",
-			Handler:    _Balancer_Servers_Handler,
+			MethodName: "AttachToObject",
+			Handler:    _Balancer_AttachToObject_Handler,
 		},
 		{
 			MethodName: "ObjectToJSON",
@@ -643,20 +672,28 @@ var Balancer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Balancer_Size_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _Balancer_Delete_Handler,
-		},
-		{
-			MethodName: "DeleteIfExists",
-			Handler:    _Balancer_DeleteIfExists_Handler,
-		},
-		{
 			MethodName: "DeleteObject",
 			Handler:    _Balancer_DeleteObject_Handler,
 		},
 		{
 			MethodName: "DeleteAttr",
 			Handler:    _Balancer_DeleteAttr_Handler,
+		},
+		{
+			MethodName: "Authenticate",
+			Handler:    _Balancer_Authenticate_Handler,
+		},
+		{
+			MethodName: "Connect",
+			Handler:    _Balancer_Connect_Handler,
+		},
+		{
+			MethodName: "Disconnect",
+			Handler:    _Balancer_Disconnect_Handler,
+		},
+		{
+			MethodName: "Servers",
+			Handler:    _Balancer_Servers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

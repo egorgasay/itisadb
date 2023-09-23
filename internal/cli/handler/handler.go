@@ -25,19 +25,28 @@ func New(cfg *config.Config, logic *usecase.UseCase, loggerInstance logger.ILogg
 }
 
 func (h *Handler) MainPage(c echo.Context) error {
-	err := c.Render(http.StatusOK, "object.html", nil)
-	if err != nil {
-		h.Warn(err.Error())
+	cookie, err := c.Cookie("session")
+	if err != nil || cookie == nil {
+		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
-	return err
+
+	return c.Render(http.StatusOK, "index.html", nil)
+}
+
+func (h *Handler) GetAuthPage(c echo.Context) error {
+	cookie, err := c.Cookie("session")
+	if err == nil && cookie != nil {
+		return c.Redirect(http.StatusMovedPermanently, "/")
+	}
+
+	return c.Render(http.StatusOK, "auth.html", nil)
 }
 
 func (h *Handler) Action(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/json")
 	cookie, err := c.Cookie("session")
 	if err != nil || cookie == nil {
-		cookie = cookies.SetCookie()
-		c.SetCookie(cookie)
+		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 
 	action := c.Request().URL.Query().Get("action")
@@ -82,8 +91,7 @@ func (h *Handler) History(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/json")
 	cookie, err := c.Cookie("session")
 	if err != nil || cookie == nil {
-		cookie = cookies.SetCookie()
-		c.SetCookie(cookie)
+		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 
 	history, err := h.logic.History(cookie.Value)
@@ -125,4 +133,25 @@ func (h *Handler) Servers(c echo.Context) error {
 	}
 	c.Response().Write(bytes)
 	return nil
+}
+
+func (h *Handler) Authenticate(c echo.Context) error {
+	cookie, err := c.Cookie("session")
+	if cookie != nil && err == nil {
+		return c.Redirect(http.StatusMovedPermanently, "/")
+	}
+
+	ctx := c.Request().Context()
+
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+
+	if err := h.logic.Authenticate(ctx, username, password); err != nil {
+		return err
+	}
+
+	cookie = cookies.SetCookie()
+	c.SetCookie(cookie)
+
+	return c.Redirect(http.StatusMovedPermanently, "/")
 }

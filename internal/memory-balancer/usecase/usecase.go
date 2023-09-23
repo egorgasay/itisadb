@@ -171,3 +171,7 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 	}
 	return nil
 }
+
+func (uc *UseCase) Authenticate(ctx context.Context, login string, password string) (string, error) {
+	return "token_for_" + login, nil
+}
