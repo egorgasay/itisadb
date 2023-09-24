@@ -34,12 +34,12 @@ func (t *TransactionLogger) handleEvents(r restorer, events <-chan Event, errs <
 			case Delete:
 				r.Delete(e.Name)
 			case SetToObject:
-				split := strings.Split(e.Value, ".")
-				if len(split) != 2 {
+				split := strings.Split(e.Name, ".")
+				if len(split) < 2 {
 					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
-				key, value := split[0], split[1]
-				r.SetToObject(e.Name, key, value, false)
+				key, value := split[len(split)-1], e.Value
+				r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, false)
 			case DeleteAttr:
 				r.Delete(e.Name)
 			case CreateObject:

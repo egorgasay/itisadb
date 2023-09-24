@@ -29,13 +29,13 @@ var ErrEmpty = errors.New("the value does not exist")
 var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
-	get         = "get"
-	set         = "set"
-	uset        = "uset"
-	new_object  = "new_object"
-	object      = "object"
-	show_object = "show_object"
-	attach      = "attach"
+	get    = "get"
+	set    = "set"
+	uset   = "uset"
+	newEl  = "new"
+	object = "object"
+	show   = "show"
+	attach = "attach"
 )
 
 const (
@@ -46,7 +46,7 @@ const (
 )
 
 func (c *Commands) Do(act Action, args ...string) (string, error) {
-	switch act {
+	switch strings.ToLower(string(act)) {
 	case get:
 		if len(args) < 1 {
 			return "", ErrWrongInput
@@ -76,12 +76,21 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 
 		return c.set(args[0], strings.Join(args[1:], " "), server, uset == act)
-	case new_object:
+	case newEl:
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
-		name := args[0]
-		return c.newObject(name)
+
+		switch strings.ToLower(args[0]) {
+		case object:
+			if len(args) < 2 {
+				return "", ErrWrongInput
+			}
+			name := args[1]
+			return c.newObject(name)
+		default:
+			return c.set(args[0], "", 0, false)
+		}
 	case object:
 		if len(args) < 3 {
 			return "", ErrWrongInput
@@ -94,12 +103,21 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 			value = strings.Join(args[3:], " ")
 		}
 		return c.object(act, name, key, value)
-	case show_object:
+	case show:
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
-		name := args[0]
-		return c.showObject(name)
+
+		switch strings.ToLower(args[0]) {
+		case object:
+			if len(args) < 2 {
+				return "", ErrWrongInput
+			}
+			name := args[1]
+			return c.showObject(name)
+		default:
+			return "", ErrUnknownCMD
+		}
 	case attach:
 		if len(args) < 2 {
 			return "", ErrWrongInput

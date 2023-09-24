@@ -1,5 +1,10 @@
 package pkg
 
+import (
+	"context"
+	"sync"
+)
+
 func IsTheSameArray[T comparable](a, b []T) bool {
 	if len(a) != len(b) {
 		return false
@@ -15,4 +20,28 @@ func IsTheSameArray[T comparable](a, b []T) bool {
 		}
 	}
 	return true
+}
+
+func WithContext(ctx context.Context, fn func() error, pool chan struct{}, onStop func()) (err error) {
+	ch := make(chan struct{})
+
+	defer onStop()
+
+	once := sync.Once{}
+	done := func() { close(ch) }
+
+	pool <- struct{}{}
+	go func() {
+		err = fn()
+		once.Do(done)
+		<-pool
+	}()
+
+	select {
+	case <-ch:
+		return err
+	case <-ctx.Done():
+		once.Do(done)
+		return ctx.Err()
+	}
 }

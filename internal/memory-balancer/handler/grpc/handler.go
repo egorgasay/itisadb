@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	mocks "itisadb/internal/memory-balancer/handler/mocks/usecase"
@@ -194,9 +195,25 @@ func (h *Handler) Disconnect(ctx context.Context, request *api.BalancerDisconnec
 }
 
 func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersRequest) (*api.BalancerServersResponse, error) {
+	t, err := getToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(t)
+
 	servers := h.logic.Servers()
 	s := strings.Join(servers, "<br>")
 	return &api.BalancerServersResponse{
 		ServersInfo: s,
 	}, nil
+}
+
+func (h *Handler) Authenticate(ctx context.Context, request *api.BalancerAuthRequest) (*api.BalancerAuthResponse, error) {
+	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BalancerAuthResponse{Token: token}, nil
 }

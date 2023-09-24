@@ -22,4 +22,5 @@ type IUseCase interface {
 	Connect(address string, available uint64, total uint64, server int32) (int32, error)
 	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
+	Authenticate(ctx context.Context, login string, password string) (string, error)
 }

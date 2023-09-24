@@ -1,0 +1,1 @@
+mv bin/itisadb-all-amd64 /bin/itisadb

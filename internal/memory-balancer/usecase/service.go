@@ -5,6 +5,7 @@ import (
 	"errors"
 	"itisadb/internal/memory-balancer/servers"
 	"itisadb/pkg/logger"
+	"runtime"
 	"sync"
 )
 
@@ -67,6 +68,6 @@ func New(ctx context.Context, repository iStorage, logger logger.ILogger) (*UseC
 		storage: repository,
 		logger:  logger,
 		objects: objects,
-		pool:    make(chan struct{}, 30000), // TODO: MOVE TO CONFIG
+		pool:    make(chan struct{}, 10000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
 	}, nil
 }

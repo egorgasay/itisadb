@@ -10,8 +10,8 @@ type Config struct {
 }
 
 const (
-	defaultBalancer = "127.0.0.1:800"
-	defaultHost     = "127.0.0.1:80"
+	defaultBalancer = "127.0.0.1:8888"
+	defaultHost     = "127.0.0.1:8087"
 )
 
 type Flag struct {

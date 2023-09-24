@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -16,7 +18,8 @@ import (
 
 type UseCase struct {
 	storage *storage.Storage
-	conn    *grpc.ClientConn
+	conn    balancer.BalancerClient
+	cmds    *commands.Commands
 }
 
 func New(cfg *config.Config, storage *storage.Storage) *UseCase {
@@ -24,15 +27,16 @@ func New(cfg *config.Config, storage *storage.Storage) *UseCase {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &UseCase{conn: conn, storage: storage}
+	b := balancer.NewBalancerClient(conn)
+	cmds := commands.New(b)
+	return &UseCase{conn: b, storage: storage, cmds: cmds}
 }
 
 func (uc *UseCase) ProcessQuery(cookie string, line string) (string, error) {
 	uc.storage.SaveCommand(cookie, line)
-	cmds := commands.New(balancer.NewBalancerClient(uc.conn))
 	split := strings.Split(line, " ")
 
-	res, err := cmds.Do(commands.Action(strings.ToLower(split[0])), split[1:]...)
+	res, err := uc.cmds.Do(commands.Action(strings.ToLower(split[0])), split[1:]...)
 	if err != nil {
 		return res, err
 	}
@@ -45,7 +49,18 @@ func (uc *UseCase) History(cookie string) (string, error) {
 }
 
 func (uc *UseCase) Servers() (string, error) {
-	b := balancer.NewBalancerClient(uc.conn)
-	servers, err := b.Servers(context.TODO(), &balancer.BalancerServersRequest{})
+	servers, err := uc.conn.Servers(context.TODO(), &balancer.BalancerServersRequest{})
 	return servers.ServersInfo, err
+}
+
+func (uc *UseCase) Authenticate(ctx context.Context, username string, password string) error {
+	resp, err := uc.conn.Authenticate(ctx, &balancer.BalancerAuthRequest{Login: username, Password: password})
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to authenticate"))
+	}
+
+	// TODO: save token
+	_ = resp.Token
+
+	return nil
 }

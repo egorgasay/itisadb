@@ -5,23 +5,32 @@ option go_package = "./balancer";
 package api;
 
 service Balancer {
-  rpc Object(BalancerObjectRequest) returns (BalancerObjectResponse) {}
   rpc Set(BalancerSetRequest) returns (BalancerSetResponse) {}
-  rpc SetToObject(BalancerSetToObjectRequest) returns (BalancerSetToObjectResponse) {}
-  rpc AttachToObject(BalancerAttachToObjectRequest) returns (BalancerAttachToObjectResponse) {}
   rpc Get(BalancerGetRequest) returns (BalancerGetResponse) {}
+  rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+  rpc DeleteIfExists(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
+
+  rpc Object(BalancerObjectRequest) returns (BalancerObjectResponse) {}
+  rpc SetToObject(BalancerSetToObjectRequest) returns (BalancerSetToObjectResponse) {}
   rpc GetFromObject(BalancerGetFromObjectRequest) returns (BalancerGetFromObjectResponse) {}
-  rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
-  rpc Disconnect(BalancerDisconnectRequest) returns (BalancerDisconnectResponse) {}
-  rpc Servers(BalancerServersRequest) returns (BalancerServersResponse) {}
+  rpc AttachToObject(BalancerAttachToObjectRequest) returns (BalancerAttachToObjectResponse) {}
   rpc ObjectToJSON(BalancerObjectToJSONRequest) returns (BalancerObjectToJSONResponse) {}
   rpc IsObject(BalancerIsObjectRequest) returns (BalancerIsObjectResponse) {}
   rpc Size(BalancerObjectSizeRequest) returns (BalancerObjectSizeResponse) {}
-  rpc Delete(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
-  rpc DeleteIfExists(BalancerDeleteRequest) returns (BalancerDeleteResponse) {}
   rpc DeleteObject(BalancerDeleteObjectRequest) returns (BalancerDeleteObjectResponse) {}
   rpc DeleteAttr(BalancerDeleteAttrRequest) returns (BalancerDeleteAttrResponse) {}
+
+  rpc Authenticate(BalancerAuthRequest) returns (BalancerAuthResponse) {}
+  rpc Connect(BalancerConnectRequest) returns (BalancerConnectResponse) {}
+  rpc Disconnect(BalancerDisconnectRequest) returns (BalancerDisconnectResponse) {}
+  rpc Servers(BalancerServersRequest) returns (BalancerServersResponse) {}
 }
+
+/*
+
+   REQUESTS
+
+ */
 
 message BalancerSetRequest {
   string key = 1;
@@ -107,6 +116,18 @@ message BalancerGetResponse {
   string value = 1;
 }
 
+message BalancerAuthRequest {
+  string login = 1;
+  string password = 2;
+}
+
+
+/*
+
+   RESPONSES
+
+ */
+
 message BalancerIsObjectResponse {
   bool ok = 1;
 }
@@ -149,4 +170,8 @@ message BalancerDeleteObjectResponse{ }
 
 message BalancerServersResponse {
   string serversInfo = 1;
+}
+
+message BalancerAuthResponse {
+  string token = 1;
 }

@@ -10,7 +10,6 @@ type value struct {
 	name       string
 	values     *swiss.Map[string, ivalue]
 	mutex      *sync.RWMutex
-	isObject   bool
 	attachedTo map[string]bool
 }
 
@@ -45,7 +44,6 @@ func NewObject(name string, attachedTo map[string]bool) *value {
 		mutex:      &sync.RWMutex{},
 		values:     swiss.NewMap[string, ivalue](10),
 		attachedTo: attachedTo,
-		isObject:   true,
 		name:       name,
 	}
 }
@@ -86,7 +84,7 @@ func (v *value) Size() int {
 }
 
 func (v *value) IsObject() bool {
-	return v.isObject
+	return v.values != nil
 }
 
 func (v *value) IsAttached(name string) bool {
@@ -117,7 +115,6 @@ func (v *value) AttachObject(src ivalue) (err error) {
 	if v.values.Has(src.Name()) {
 		return nil
 	}
-	v.isObject = true
 	v.values.Put(src.Name(), src)
 	return nil
 }
