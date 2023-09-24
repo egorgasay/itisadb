@@ -9,7 +9,7 @@ Balancer = "127.0.0.1:8888"
 [Balancer]
 
 # Balancer IP:PORT
-Address = "127.0.0.1:8888"
+Address = ":8888"
 
 # Balancer RPS Limit
 MaxRPS = 35000

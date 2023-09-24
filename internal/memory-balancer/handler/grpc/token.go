@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"time"
 )
 
@@ -17,6 +19,20 @@ func createToken(key []byte) (token string) {
 	h.Write(src)
 
 	return hex.EncodeToString(h.Sum(nil)) + "-" + hex.EncodeToString(src)
+}
+
+func getToken(ctx context.Context) (token string, err error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "unauthenticated")
+	}
+
+	values := md.Get("token")
+	if len(values) == 0 {
+		return "", status.Error(codes.Unauthenticated, "no tokens in token")
+	}
+
+	return values[0], nil
 }
 
 func getOrCreateToken(ctx context.Context, key []byte) (token string, ok bool) {

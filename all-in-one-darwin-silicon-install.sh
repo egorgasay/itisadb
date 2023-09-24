@@ -1,0 +1,1 @@
+mv bin/itisadb-all-silicon /bin/itisadb
