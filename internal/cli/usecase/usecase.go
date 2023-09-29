@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"strings"
 
@@ -19,7 +20,11 @@ import (
 type UseCase struct {
 	storage *storage.Storage
 	conn    balancer.BalancerClient
-	cmds    *commands.Commands
+
+	// sdk *itisadb.Client
+
+	cmds   *commands.Commands
+	tokens map[string]string
 }
 
 func New(cfg *config.Config, storage *storage.Storage) *UseCase {
@@ -29,6 +34,7 @@ func New(cfg *config.Config, storage *storage.Storage) *UseCase {
 	}
 	b := balancer.NewBalancerClient(conn)
 	cmds := commands.New(b)
+
 	return &UseCase{conn: b, storage: storage, cmds: cmds}
 }
 
@@ -48,19 +54,20 @@ func (uc *UseCase) History(cookie string) (string, error) {
 	return uc.storage.GetHistory(cookie)
 }
 
-func (uc *UseCase) Servers() (string, error) {
-	servers, err := uc.conn.Servers(context.TODO(), &balancer.BalancerServersRequest{})
+func (uc *UseCase) Servers(ctx context.Context, token string) (string, error) {
+	servers, err := uc.conn.Servers(
+		metadata.NewOutgoingContext(ctx,
+			metadata.New(map[string]string{"token": token})), &balancer.BalancerServersRequest{})
 	return servers.ServersInfo, err
 }
 
-func (uc *UseCase) Authenticate(ctx context.Context, username string, password string) error {
+func (uc *UseCase) Authenticate(ctx context.Context, username, password string) (string, error) {
 	resp, err := uc.conn.Authenticate(ctx, &balancer.BalancerAuthRequest{Login: username, Password: password})
 	if err != nil {
-		return errors.Join(err, fmt.Errorf("failed to authenticate"))
+		return "", errors.Join(err, fmt.Errorf("failed to authenticate"))
 	}
 
 	// TODO: save token
-	_ = resp.Token
 
-	return nil
+	return resp.Token, nil
 }

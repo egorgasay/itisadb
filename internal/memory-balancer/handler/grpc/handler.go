@@ -203,7 +203,7 @@ func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersReque
 	fmt.Println(t)
 
 	servers := h.logic.Servers()
-	s := strings.Join(servers, "<br>")
+	s := strings.Join(servers, "\n")
 	return &api.BalancerServersResponse{
 		ServersInfo: s,
 	}, nil
@@ -212,6 +212,10 @@ func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersReque
 func (h *Handler) Authenticate(ctx context.Context, request *api.BalancerAuthRequest) (*api.BalancerAuthResponse, error) {
 	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
 	if err != nil {
+		if errors.Is(err, usecase.ErrWrongCredentials) {
+			return nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+
 		return nil, err
 	}
 

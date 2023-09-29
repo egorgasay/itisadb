@@ -19,7 +19,7 @@ require (
 	golang.org/x/net v0.14.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
-	modernc.org/strutil v1.1.0
+	modernc.org/strutil v1.2.0
 )
 
 require (
@@ -31,6 +31,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/maphash v0.0.0-20221220182448-74e1e1ea1577 // indirect
+	github.com/egorgasay/itisadb-go-sdk v0.8.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -56,5 +57,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/mathutil v1.2.2 // indirect
+	modernc.org/mathutil v1.6.0 // indirect
 )

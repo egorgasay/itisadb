@@ -113,7 +113,12 @@ func (h *Handler) History(c echo.Context) error {
 }
 
 func (h *Handler) Servers(c echo.Context) error {
-	servers, err := h.logic.Servers()
+	cookie, err := c.Cookie("session")
+	if cookie == nil || err != nil {
+		return c.Redirect(http.StatusMovedPermanently, "/auth")
+	}
+
+	servers, err := h.logic.Servers(c.Request().Context(), cookie.Value)
 	if servers == "" {
 		servers = "no available servers"
 	}
@@ -146,11 +151,12 @@ func (h *Handler) Authenticate(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	if err := h.logic.Authenticate(ctx, username, password); err != nil {
+	token, err := h.logic.Authenticate(ctx, username, password)
+	if err != nil {
 		return err
 	}
 
-	cookie = cookies.SetCookie()
+	cookie = cookies.SetCookie(token)
 	c.SetCookie(cookie)
 
 	return c.Redirect(http.StatusMovedPermanently, "/")

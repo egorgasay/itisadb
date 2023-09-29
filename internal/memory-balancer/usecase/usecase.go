@@ -10,6 +10,7 @@ import (
 
 var ErrNoServers = errors.New("no servers available")
 var ErrNotFound = errors.New("key not found")
+var ErrWrongCredentials = errors.New("wrong credentials")
 
 func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
 	if uc.servers.Len() == 0 {
@@ -173,5 +174,9 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 }
 
 func (uc *UseCase) Authenticate(ctx context.Context, login string, password string) (string, error) {
+	if password == "" {
+		return "", ErrWrongCredentials
+	}
+
 	return "token_for_" + login, nil
 }
