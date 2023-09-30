@@ -10,29 +10,29 @@ import (
 var ErrObjectNotFound = fmt.Errorf("object not found")
 var ErrServerNotFound = fmt.Errorf("server not found")
 
-func (uc *Core) Object(ctx context.Context, name string) (s int32, err error) {
-	return s, uc.withContext(ctx, func() error {
-		s, err = uc.object(ctx, name)
+func (c *Core) Object(ctx context.Context, name string) (s int32, err error) {
+	return s, c.withContext(ctx, func() error {
+		s, err = c.object(ctx, name)
 		return err
 	})
 }
 
-func (uc *Core) object(ctx context.Context, name string) (int32, error) {
+func (c *Core) object(ctx context.Context, name string) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
 
-	uc.mu.Lock()
-	defer uc.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	var ok bool
 	var cl *servers2.Server
 	var num int32
 
-	if num, ok = uc.objects[name]; ok {
-		cl, ok = uc.servers.GetServerByID(num)
+	if num, ok = c.objects[name]; ok {
+		cl, ok = c.servers.GetServerByID(num)
 	} else {
-		cl, ok = uc.servers.GetServer()
+		cl, ok = c.servers.GetServer()
 	}
 
 	if !ok || cl == nil {
@@ -45,30 +45,30 @@ func (uc *Core) object(ctx context.Context, name string) (int32, error) {
 	}
 
 	num = cl.GetNumber()
-	err = uc.storage.SaveObjectLoc(ctx, name, num)
+	err = c.storage.SaveObjectLoc(ctx, name, num)
 	if err != nil {
-		uc.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
+		c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
 	}
 
-	uc.objects[name] = num
+	c.objects[name] = num
 	return num, nil
 }
 
-func (uc *Core) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
-	return v, uc.withContext(ctx, func() error {
-		v, err = uc.getFromObject(ctx, object, key, serverNumber)
+func (c *Core) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
+	return v, c.withContext(ctx, func() error {
+		v, err = c.getFromObject(ctx, object, key, serverNumber)
 		return err
 	})
 }
 
-func (uc *Core) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
+func (c *Core) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[object]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[object]
+	c.mu.RUnlock()
 
 	if !ok && serverNumber == 0 {
 		return "", ErrObjectNotFound
@@ -76,7 +76,7 @@ func (uc *Core) getFromObject(ctx context.Context, object, key string, serverNum
 		num = serverNumber
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return "", ErrServerNotFound
 	}
@@ -92,27 +92,27 @@ func (uc *Core) getFromObject(ctx context.Context, object, key string, serverNum
 	return resp.Value, nil
 }
 
-func (uc *Core) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
-	return s, uc.withContext(ctx, func() error {
-		s, err = uc.setToObject(ctx, object, key, val, uniques)
+func (c *Core) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
+	return s, c.withContext(ctx, func() error {
+		s, err = c.setToObject(ctx, object, key, val, uniques)
 		return err
 	})
 }
 
-func (uc *Core) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
+func (c *Core) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[object]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[object]
+	c.mu.RUnlock()
 
 	if !ok {
 		return 0, ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return 0, ErrServerNotFound
 	}
@@ -125,20 +125,20 @@ func (uc *Core) setToObject(ctx context.Context, object, key, val string, unique
 	return num, nil
 }
 
-func (uc *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
+func (c *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[name]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[name]
+	c.mu.RUnlock()
 
 	if !ok {
 		return "", ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return "", ErrServerNotFound
 	}
@@ -151,39 +151,39 @@ func (uc *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
 	return res.Object, nil
 }
 
-func (uc *Core) IsObject(ctx context.Context, name string) (bool, error) {
+func (c *Core) IsObject(ctx context.Context, name string) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
 
-	uc.mu.RLock()
-	_, ok := uc.objects[name]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	_, ok := c.objects[name]
+	c.mu.RUnlock()
 
 	return ok, nil
 }
 
-func (uc *Core) Size(ctx context.Context, name string) (size uint64, err error) {
-	return size, uc.withContext(ctx, func() error {
-		size, err = uc.size(ctx, name)
+func (c *Core) Size(ctx context.Context, name string) (size uint64, err error) {
+	return size, c.withContext(ctx, func() error {
+		size, err = c.size(ctx, name)
 		return err
 	})
 }
 
-func (uc *Core) size(ctx context.Context, name string) (uint64, error) {
+func (c *Core) size(ctx context.Context, name string) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[name]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[name]
+	c.mu.RUnlock()
 
 	if !ok {
 		return 0, ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return 0, ErrServerNotFound
 	}
@@ -196,26 +196,26 @@ func (uc *Core) size(ctx context.Context, name string) (uint64, error) {
 	return res.Size, nil
 }
 
-func (uc *Core) DeleteObject(ctx context.Context, name string) error {
-	return uc.withContext(ctx, func() error {
-		return uc.deleteObject(ctx, name)
+func (c *Core) DeleteObject(ctx context.Context, name string) error {
+	return c.withContext(ctx, func() error {
+		return c.deleteObject(ctx, name)
 	})
 }
 
-func (uc *Core) deleteObject(ctx context.Context, name string) error {
+func (c *Core) deleteObject(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[name]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[name]
+	c.mu.RUnlock()
 
 	if !ok {
 		return ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return ErrServerNotFound
 	}
@@ -225,32 +225,32 @@ func (uc *Core) deleteObject(ctx context.Context, name string) error {
 		return err
 	}
 
-	uc.mu.Lock()
-	delete(uc.objects, name)
-	uc.mu.Unlock()
+	c.mu.Lock()
+	delete(c.objects, name)
+	c.mu.Unlock()
 
 	return nil
 }
 
-func (uc *Core) AttachToObject(ctx context.Context, dst string, src string) error {
-	return uc.withContext(ctx, func() error {
-		return uc.attachToObject(ctx, dst, src)
+func (c *Core) AttachToObject(ctx context.Context, dst string, src string) error {
+	return c.withContext(ctx, func() error {
+		return c.attachToObject(ctx, dst, src)
 	})
 }
 
-func (uc *Core) attachToObject(ctx context.Context, dst string, src string) error {
+func (c *Core) attachToObject(ctx context.Context, dst string, src string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	uc.mu.RLock()
-	num, ok := uc.objects[dst]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[dst]
+	c.mu.RUnlock()
 
 	if !ok {
 		return ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return ErrServerNotFound
 	}
@@ -262,26 +262,26 @@ func (uc *Core) attachToObject(ctx context.Context, dst string, src string) erro
 	return nil
 }
 
-func (uc *Core) DeleteAttr(ctx context.Context, attr string, object string) error {
-	return uc.withContext(ctx, func() error {
-		return uc.deleteAttr(ctx, attr, object)
+func (c *Core) DeleteAttr(ctx context.Context, attr string, object string) error {
+	return c.withContext(ctx, func() error {
+		return c.deleteAttr(ctx, attr, object)
 	})
 }
 
-func (uc *Core) deleteAttr(ctx context.Context, attr string, object string) error {
+func (c *Core) deleteAttr(ctx context.Context, attr string, object string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
-	uc.mu.RLock()
-	num, ok := uc.objects[object]
-	uc.mu.RUnlock()
+	c.mu.RLock()
+	num, ok := c.objects[object]
+	c.mu.RUnlock()
 
 	if !ok {
 		return ErrObjectNotFound
 	}
 
-	cl, ok := uc.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return ErrServerNotFound
 	}

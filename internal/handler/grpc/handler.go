@@ -6,84 +6,84 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	core2 "itisadb/internal/core"
+	"itisadb/internal/core"
 	"itisadb/internal/handler/mocks/usecase"
 	"itisadb/internal/servers"
-	api "itisadb/pkg/api/balancer"
+	"itisadb/pkg/api"
 	"strings"
 )
 
 type Handler struct {
-	api.UnimplementedBalancerServer
+	api.UnimplementedItisaDBServer
 	logic mocks.IUseCase
 }
 
 func New(logic mocks.IUseCase) *Handler {
 	return &Handler{logic: logic}
 }
-func (h *Handler) Set(ctx context.Context, r *api.BalancerSetRequest) (*api.BalancerSetResponse, error) {
-	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server, r.Uniques)
+func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
+	setTo, err := h.logic.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerSetResponse{
+	return &api.SetResponse{
 		SavedTo: setTo,
 	}, nil
 }
 
-func (h *Handler) SetToObject(ctx context.Context, r *api.BalancerSetToObjectRequest) (*api.BalancerSetToObjectResponse, error) {
-	setTo, err := h.logic.SetToObject(ctx, r.Object, r.Key, r.Value, r.Uniques)
+func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*api.SetToObjectResponse, error) {
+	setTo, err := h.logic.SetToObject(ctx, r.Server, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerSetToObjectResponse{
+	return &api.SetToObjectResponse{
 		SavedTo: setTo,
 	}, nil
 }
 
-func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
-	value, err := h.logic.Get(ctx, r.Key, r.Server)
+func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
+	value, err := h.logic.Get(ctx, r.Server, r.Key)
 	if err != nil {
-		if errors.Is(err, core2.ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, core2.ErrUnknownServer) {
+		if errors.Is(err, core.ErrUnknownServer) {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 
 		return nil, err
 	}
 
-	return &api.BalancerGetResponse{
+	return &api.GetResponse{
 		Value: value,
 	}, nil
 }
 
-func (h *Handler) GetFromObject(ctx context.Context, r *api.BalancerGetFromObjectRequest) (*api.BalancerGetFromObjectResponse, error) {
-	value, err := h.logic.GetFromObject(ctx, r.GetObject(), r.GetKey(), r.GetServer())
+func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest) (*api.GetFromObjectResponse, error) {
+	value, err := h.logic.GetFromObject(ctx, r.Server, r.GetObject(), r.GetKey())
 	if err != nil {
-		if errors.Is(err, core2.ErrNoData) {
+		if errors.Is(err, core.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, core2.ErrUnknownServer) {
+		if errors.Is(err, core.ErrUnknownServer) {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 
 		return nil, err
 	}
 
-	return &api.BalancerGetFromObjectResponse{
+	return &api.GetFromObjectResponse{
 		Value: value,
 	}, nil
 }
 
-func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*api.BalancerDeleteResponse, error) {
-	err := h.logic.Delete(ctx, r.Key, r.Server)
-	resp := &api.BalancerDeleteResponse{}
+func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
+	err := h.logic.Delete(ctx, r.GetServer(), r.Key)
+	resp := &api.DeleteResponse{}
 	if err != nil {
 		return nil, err
 	}
@@ -91,28 +91,28 @@ func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*ap
 	return resp, nil
 }
 
-func (h *Handler) AttachToObject(ctx context.Context, r *api.BalancerAttachToObjectRequest) (*api.BalancerAttachToObjectResponse, error) {
+func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectRequest) (*api.AttachToObjectResponse, error) {
 	err := h.logic.AttachToObject(ctx, r.Dst, r.Src)
 	if err != nil {
-		if errors.Is(err, core2.ErrObjectNotFound) {
-			return nil, status.Error(codes.ResourceExhausted, core2.ErrObjectNotFound.Error())
+		if errors.Is(err, core.ErrObjectNotFound) {
+			return nil, status.Error(codes.ResourceExhausted, core.ErrObjectNotFound.Error())
 		}
 		return nil, err
 	}
 
-	return &api.BalancerAttachToObjectResponse{}, nil
+	return &api.AttachToObjectResponse{}, nil
 }
 
-func (h *Handler) DeleteObject(ctx context.Context, r *api.BalancerDeleteObjectRequest) (*api.BalancerDeleteObjectResponse, error) {
+func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) (*api.DeleteObjectResponse, error) {
 	err := h.logic.DeleteObject(ctx, r.Object)
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerDeleteObjectResponse{}, nil
+	return &api.DeleteObjectResponse{}, nil
 }
 
-func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectRequest) (*api.BalancerConnectResponse, error) {
+func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
 	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal(), request.Server)
 	if err != nil {
 		if errors.Is(err, servers.ErrInternal) {
@@ -121,68 +121,68 @@ func (h *Handler) Connect(ctx context.Context, request *api.BalancerConnectReque
 		return nil, err
 	}
 
-	return &api.BalancerConnectResponse{
+	return &api.ConnectResponse{
 		Status:       "connected successfully",
 		ServerNumber: serverNum,
 	}, nil
 }
 
-func (h *Handler) Object(ctx context.Context, request *api.BalancerObjectRequest) (*api.BalancerObjectResponse, error) {
+func (h *Handler) Object(ctx context.Context, request *api.ObjectRequest) (*api.ObjectResponse, error) {
 	_, err := h.logic.Object(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerObjectResponse{}, nil
+	return &api.ObjectResponse{}, nil
 }
 
-func (h *Handler) ObjectToJSON(ctx context.Context, request *api.BalancerObjectToJSONRequest) (*api.BalancerObjectToJSONResponse, error) {
+func (h *Handler) ObjectToJSON(ctx context.Context, request *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
 	m, err := h.logic.ObjectToJSON(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerObjectToJSONResponse{
+	return &api.ObjectToJSONResponse{
 		Object: m,
 	}, nil
 }
 
-func (h *Handler) IsObject(ctx context.Context, request *api.BalancerIsObjectRequest) (*api.BalancerIsObjectResponse, error) {
+func (h *Handler) IsObject(ctx context.Context, request *api.IsObjectRequest) (*api.IsObjectResponse, error) {
 	ok, err := h.logic.IsObject(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerIsObjectResponse{
+	return &api.IsObjectResponse{
 		Ok: ok,
 	}, nil
 }
 
-func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrRequest) (*api.BalancerDeleteAttrResponse, error) {
+func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
 	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetObject())
 	if err != nil {
-		if errors.Is(err, core2.ErrObjectNotFound) {
-			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, core2.ErrObjectNotFound.Error())
+		if errors.Is(err, core.ErrObjectNotFound) {
+			return &api.DeleteAttrResponse{}, status.Error(codes.ResourceExhausted, core.ErrObjectNotFound.Error())
 		}
 
-		return &api.BalancerDeleteAttrResponse{}, err
+		return &api.DeleteAttrResponse{}, err
 	}
 
-	return &api.BalancerDeleteAttrResponse{}, nil
+	return &api.DeleteAttrResponse{}, nil
 }
 
-func (h *Handler) Size(ctx context.Context, request *api.BalancerObjectSizeRequest) (*api.BalancerObjectSizeResponse, error) {
+func (h *Handler) Size(ctx context.Context, request *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
 	size, err := h.logic.Size(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.BalancerObjectSizeResponse{
+	return &api.ObjectSizeResponse{
 		Size: size,
 	}, nil
 }
 
-func (h *Handler) Disconnect(ctx context.Context, request *api.BalancerDisconnectRequest) (*api.BalancerDisconnectResponse, error) {
+func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {
 	err := h.logic.Disconnect(ctx, request.GetServerNumber())
 	if err != nil {
 		if errors.Is(err, context.Canceled) { // TODO: add everywhere
@@ -191,10 +191,10 @@ func (h *Handler) Disconnect(ctx context.Context, request *api.BalancerDisconnec
 		return nil, err
 	}
 
-	return &api.BalancerDisconnectResponse{}, nil
+	return &api.DisconnectResponse{}, nil
 }
 
-func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersRequest) (*api.BalancerServersResponse, error) {
+func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*api.ServersResponse, error) {
 	t, err := getToken(ctx)
 	if err != nil {
 		return nil, err
@@ -204,20 +204,20 @@ func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersReque
 
 	servers := h.logic.Servers()
 	s := strings.Join(servers, "\n")
-	return &api.BalancerServersResponse{
+	return &api.ServersResponse{
 		ServersInfo: s,
 	}, nil
 }
 
-func (h *Handler) Authenticate(ctx context.Context, request *api.BalancerAuthRequest) (*api.BalancerAuthResponse, error) {
+func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*api.AuthResponse, error) {
 	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
 	if err != nil {
-		if errors.Is(err, core2.ErrWrongCredentials) {
+		if errors.Is(err, core.ErrWrongCredentials) {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
 
 		return nil, err
 	}
 
-	return &api.BalancerAuthResponse{Token: token}, nil
+	return &api.AuthResponse{Token: token}, nil
 }
