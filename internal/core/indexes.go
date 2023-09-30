@@ -10,26 +10,34 @@ import (
 var ErrObjectNotFound = fmt.Errorf("object not found")
 var ErrServerNotFound = fmt.Errorf("server not found")
 
-func (c *Core) Object(ctx context.Context, name string) (s int32, err error) {
+func (c *Core) Object(ctx context.Context, server *int32, name string) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
-		s, err = c.object(ctx, name)
+		s, err = c.object(ctx, server, name)
 		return err
 	})
 }
 
-func (c *Core) object(ctx context.Context, name string) (int32, error) {
-	if ctx.Err() != nil {
-		return 0, ctx.Err()
-	}
+func (c *Core) object(ctx context.Context, server *int32, name string) (int32, error) {
+	num, ok := c.objects[name]
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	var ok bool
-	var cl *servers2.Server
-	var num int32
+	if c.useMainStorage(server) {
+		if ok {
+			return mainStorage, nil
+		}
 
-	if num, ok = c.objects[name]; ok {
+		if err := c.storage.CreateObject(name); err != nil {
+			return 0, fmt.Errorf("can't create object: %w", err)
+		}
+
+		return mainStorage, nil
+	}
+
+	var cl *servers2.Server
+
+	if ok {
 		cl, ok = c.servers.GetServerByID(num)
 	} else {
 		cl, ok = c.servers.GetServer()
@@ -54,14 +62,14 @@ func (c *Core) object(ctx context.Context, name string) (int32, error) {
 	return num, nil
 }
 
-func (c *Core) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
+func (c *Core) GetFromObject(ctx context.Context, server *int32, object, key string) (v string, err error) {
 	return v, c.withContext(ctx, func() error {
-		v, err = c.getFromObject(ctx, object, key, serverNumber)
+		v, err = c.getFromObject(ctx, server, object, key)
 		return err
 	})
 }
 
-func (c *Core) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
+func (c *Core) getFromObject(ctx context.Context, server *int32, object, key string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -69,6 +77,8 @@ func (c *Core) getFromObject(ctx context.Context, object, key string, serverNumb
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
+
+	serverNumber := toServerNumber(server)
 
 	if !ok && serverNumber == 0 {
 		return "", ErrObjectNotFound
@@ -92,14 +102,14 @@ func (c *Core) getFromObject(ctx context.Context, object, key string, serverNumb
 	return resp.Value, nil
 }
 
-func (c *Core) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
+func (c *Core) SetToObject(ctx context.Context, server *int32, object, key, val string, uniques bool) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
-		s, err = c.setToObject(ctx, object, key, val, uniques)
+		s, err = c.setToObject(ctx, server, object, key, val, uniques)
 		return err
 	})
 }
 
-func (c *Core) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
+func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val string, uniques bool) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -125,7 +135,7 @@ func (c *Core) setToObject(ctx context.Context, object, key, val string, uniques
 	return num, nil
 }
 
-func (c *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
+func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -151,7 +161,7 @@ func (c *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
 	return res.Object, nil
 }
 
-func (c *Core) IsObject(ctx context.Context, name string) (bool, error) {
+func (c *Core) IsObject(ctx context.Context, server *int32, name string) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
@@ -163,14 +173,14 @@ func (c *Core) IsObject(ctx context.Context, name string) (bool, error) {
 	return ok, nil
 }
 
-func (c *Core) Size(ctx context.Context, name string) (size uint64, err error) {
+func (c *Core) Size(ctx context.Context, server *int32, name string) (size uint64, err error) {
 	return size, c.withContext(ctx, func() error {
-		size, err = c.size(ctx, name)
+		size, err = c.size(ctx, server, name)
 		return err
 	})
 }
 
-func (c *Core) size(ctx context.Context, name string) (uint64, error) {
+func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -196,13 +206,13 @@ func (c *Core) size(ctx context.Context, name string) (uint64, error) {
 	return res.Size, nil
 }
 
-func (c *Core) DeleteObject(ctx context.Context, name string) error {
+func (c *Core) DeleteObject(ctx context.Context, server *int32, name string) error {
 	return c.withContext(ctx, func() error {
-		return c.deleteObject(ctx, name)
+		return c.deleteObject(ctx, server, name)
 	})
 }
 
-func (c *Core) deleteObject(ctx context.Context, name string) error {
+func (c *Core) deleteObject(ctx context.Context, server *int32, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -232,13 +242,13 @@ func (c *Core) deleteObject(ctx context.Context, name string) error {
 	return nil
 }
 
-func (c *Core) AttachToObject(ctx context.Context, dst string, src string) error {
+func (c *Core) AttachToObject(ctx context.Context, server *int32, dst string, src string) error {
 	return c.withContext(ctx, func() error {
-		return c.attachToObject(ctx, dst, src)
+		return c.attachToObject(ctx, server, dst, src)
 	})
 }
 
-func (c *Core) attachToObject(ctx context.Context, dst string, src string) error {
+func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, src string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -262,13 +272,13 @@ func (c *Core) attachToObject(ctx context.Context, dst string, src string) error
 	return nil
 }
 
-func (c *Core) DeleteAttr(ctx context.Context, attr string, object string) error {
+func (c *Core) DeleteAttr(ctx context.Context, server *int32, attr string, object string) error {
 	return c.withContext(ctx, func() error {
-		return c.deleteAttr(ctx, attr, object)
+		return c.deleteAttr(ctx, server, attr, object)
 	})
 }
 
-func (c *Core) deleteAttr(ctx context.Context, attr string, object string) error {
+func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, object string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

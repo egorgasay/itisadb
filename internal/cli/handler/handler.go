@@ -3,10 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"itisadb/internal/cli/config"
 	"itisadb/internal/cli/cookies"
 	"itisadb/internal/cli/schema"
 	"itisadb/internal/cli/usecase"
@@ -15,13 +14,12 @@ import (
 )
 
 type Handler struct {
-	cfg   *config.Config
 	logic *usecase.UseCase
 	logger.ILogger
 }
 
-func New(cfg *config.Config, logic *usecase.UseCase, loggerInstance logger.ILogger) *Handler {
-	return &Handler{cfg: cfg, logic: logic, ILogger: loggerInstance}
+func New(logic *usecase.UseCase, loggerInstance logger.ILogger) *Handler {
+	return &Handler{logic: logic, ILogger: loggerInstance}
 }
 
 func (h *Handler) MainPage(c echo.Context) error {

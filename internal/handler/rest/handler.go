@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"itisadb/internal/domains"
 	"itisadb/internal/handler/converterr"
-	"itisadb/internal/handler/mocks/usecase"
 	"itisadb/internal/schema"
 	servers2 "itisadb/internal/servers"
 	"strings"
 )
 
 type Handler struct {
-	logic mocks.IUseCase
+	core domains.Core
 }
 
-func New(logic mocks.IUseCase) *Handler {
-	return &Handler{logic: logic}
+func New(logic domains.Core) *Handler {
+	return &Handler{core: logic}
 }
 
 func BindJSON(body []byte, v interface{}) error {
@@ -85,7 +85,7 @@ func (h *Handler) get(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	value, err := h.logic.Get(ctx, r.Key, r.Server)
+	value, err := h.core.Get(ctx, r.Server, r.Key)
 	if err != nil {
 		err = converterr.Get(err)
 		if errors.Is(err, converterr.ErrNotFound) {
@@ -109,7 +109,7 @@ func (h *Handler) set(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	setTo, err := h.logic.Set(ctx, r.Key, r.Value, r.Server, r.Uniques)
+	setTo, err := h.core.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		err = converterr.Set(err)
 		if errors.Is(err, converterr.ErrExists) {
@@ -133,7 +133,7 @@ func (h *Handler) del(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.logic.Delete(ctx, r.Key, r.Server)
+	err = h.core.Delete(ctx, r.Server, r.Key)
 	if err != nil {
 		err = converterr.Del(err)
 		if errors.Is(err, converterr.ErrNotFound) {
@@ -156,7 +156,7 @@ func (h *Handler) getFromObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	value, err := h.logic.GetFromObject(ctx, r.Object, r.Key, r.Server)
+	value, err := h.core.GetFromObject(ctx, r.Server, r.Object, r.Key)
 	if err != nil {
 		err = converterr.GetFromObject(err)
 		if errors.Is(err, converterr.ErrNotFound) {
@@ -182,7 +182,7 @@ func (h *Handler) setToObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	v, err := h.logic.SetToObject(ctx, r.Object, r.Key, r.Value, r.Uniques)
+	v, err := h.core.SetToObject(ctx, r.Server, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		err = converterr.SetToObject(err)
 		if errors.Is(err, converterr.ErrExists) {
@@ -208,7 +208,7 @@ func (h *Handler) delFromObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.logic.DeleteAttr(ctx, r.Object, r.Key)
+	err = h.core.DeleteAttr(ctx, r.Server, r.Object, r.Key)
 	if err != nil {
 		err = converterr.DelFromObject(err)
 		if errors.Is(err, converterr.ErrNotFound) {
@@ -227,7 +227,7 @@ func (h *Handler) delFromObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) servers(ctx *fasthttp.RequestCtx) {
-	servers := h.logic.Servers()
+	servers := h.core.Servers()
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.SetBody([]byte(strings.Join(servers, "<br>")))
 }
@@ -239,7 +239,7 @@ func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	value, err := h.logic.ObjectToJSON(ctx, r.Object)
+	value, err := h.core.ObjectToJSON(ctx, r.Server, r.Object)
 	if err != nil {
 		err = converterr.ObjectToJSON(err)
 		if errors.Is(err, converterr.ErrObjectNotFound) {
@@ -272,7 +272,7 @@ func (h *Handler) object(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	_, err = h.logic.Object(ctx, r.Object)
+	_, err = h.core.Object(ctx, r.Server, r.Object)
 	if err != nil {
 		err = converterr.Object(err)
 		if errors.Is(err, converterr.ErrExists) {
@@ -297,7 +297,7 @@ func (h *Handler) delObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.logic.DeleteObject(ctx, r.Object)
+	err = h.core.DeleteObject(ctx, r.Server, r.Object)
 	if err != nil {
 		err = converterr.DelObject(err)
 		if errors.Is(err, converterr.ErrObjectNotFound) {
@@ -320,7 +320,7 @@ func (h *Handler) objectSize(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	size, err := h.logic.Size(ctx, r.Object)
+	size, err := h.core.Size(ctx, r.Server, r.Object)
 	if err != nil {
 		err = converterr.SizeObject(err)
 		if errors.Is(err, converterr.ErrObjectNotFound) {
@@ -344,7 +344,7 @@ func (h *Handler) isObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	is, err := h.logic.IsObject(ctx, r.Name)
+	is, err := h.core.IsObject(ctx, r.Server, r.Name)
 	if err != nil {
 		err = converterr.IsObject(err)
 		if errors.Is(err, converterr.ErrObjectNotFound) {
@@ -369,7 +369,7 @@ func (h *Handler) attachObject(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.logic.AttachToObject(ctx, r.Dst, r.Src)
+	err = h.core.AttachToObject(ctx, r.Server, r.Dst, r.Src)
 	if err != nil {
 		err = converterr.AttachObject(err)
 		if errors.Is(err, converterr.ErrObjectNotFound) {
@@ -394,7 +394,7 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	snum, err := h.logic.Connect(r.Address, r.Available, r.Total, r.Server)
+	snum, err := h.core.Connect(r.Address, r.Available, r.Total)
 	if err != nil {
 		if errors.Is(err, servers2.ErrAlreadyExists) {
 			ctx.Error(err.Error(), fasthttp.StatusConflict)
@@ -416,7 +416,7 @@ func (h *Handler) disconnect(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.logic.Disconnect(ctx, r.Server)
+	err = h.core.Disconnect(ctx, r.Server)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			ctx.Error(err.Error(), fasthttp.StatusRequestTimeout)

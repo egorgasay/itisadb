@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/core"
-	"itisadb/internal/handler/mocks/usecase"
+	"itisadb/internal/domains"
 	"itisadb/internal/servers"
 	"itisadb/pkg/api"
 	"strings"
@@ -15,14 +15,14 @@ import (
 
 type Handler struct {
 	api.UnimplementedItisaDBServer
-	logic mocks.IUseCase
+	core domains.Core
 }
 
-func New(logic mocks.IUseCase) *Handler {
-	return &Handler{logic: logic}
+func New(logic domains.Core) *Handler {
+	return &Handler{core: logic}
 }
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	setTo, err := h.logic.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
+	setTo, err := h.core.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 }
 
 func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*api.SetToObjectResponse, error) {
-	setTo, err := h.logic.SetToObject(ctx, r.Server, r.Object, r.Key, r.Value, r.Uniques)
+	setTo, err := h.core.SetToObject(ctx, r.Server, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
-	value, err := h.logic.Get(ctx, r.Server, r.Key)
+	value, err := h.core.Get(ctx, r.Server, r.Key)
 	if err != nil {
 		if errors.Is(err, core.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -63,7 +63,7 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 }
 
 func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest) (*api.GetFromObjectResponse, error) {
-	value, err := h.logic.GetFromObject(ctx, r.Server, r.GetObject(), r.GetKey())
+	value, err := h.core.GetFromObject(ctx, r.Server, r.GetObject(), r.GetKey())
 	if err != nil {
 		if errors.Is(err, core.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -82,7 +82,7 @@ func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest
 }
 
 func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
-	err := h.logic.Delete(ctx, r.GetServer(), r.Key)
+	err := h.core.Delete(ctx, r.Server, r.Key)
 	resp := &api.DeleteResponse{}
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 }
 
 func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectRequest) (*api.AttachToObjectResponse, error) {
-	err := h.logic.AttachToObject(ctx, r.Dst, r.Src)
+	err := h.core.AttachToObject(ctx, r.Server, r.Dst, r.Src)
 	if err != nil {
 		if errors.Is(err, core.ErrObjectNotFound) {
 			return nil, status.Error(codes.ResourceExhausted, core.ErrObjectNotFound.Error())
@@ -104,7 +104,7 @@ func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectReque
 }
 
 func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) (*api.DeleteObjectResponse, error) {
-	err := h.logic.DeleteObject(ctx, r.Object)
+	err := h.core.DeleteObject(ctx, r.Server, r.Object)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) 
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	serverNum, err := h.logic.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal(), request.Server)
+	serverNum, err := h.core.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal())
 	if err != nil {
 		if errors.Is(err, servers.ErrInternal) {
 			return nil, status.Error(codes.Internal, err.Error())
@@ -122,13 +122,13 @@ func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*ap
 	}
 
 	return &api.ConnectResponse{
-		Status:       "connected successfully",
-		ServerNumber: serverNum,
+		Status: "connected successfully",
+		Server: serverNum,
 	}, nil
 }
 
-func (h *Handler) Object(ctx context.Context, request *api.ObjectRequest) (*api.ObjectResponse, error) {
-	_, err := h.logic.Object(ctx, request.GetName())
+func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.ObjectResponse, error) {
+	_, err := h.core.Object(ctx, r.Server, r.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -136,8 +136,8 @@ func (h *Handler) Object(ctx context.Context, request *api.ObjectRequest) (*api.
 	return &api.ObjectResponse{}, nil
 }
 
-func (h *Handler) ObjectToJSON(ctx context.Context, request *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
-	m, err := h.logic.ObjectToJSON(ctx, request.GetName())
+func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
+	m, err := h.core.ObjectToJSON(ctx, r.Server, r.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +147,8 @@ func (h *Handler) ObjectToJSON(ctx context.Context, request *api.ObjectToJSONReq
 	}, nil
 }
 
-func (h *Handler) IsObject(ctx context.Context, request *api.IsObjectRequest) (*api.IsObjectResponse, error) {
-	ok, err := h.logic.IsObject(ctx, request.GetName())
+func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.IsObjectResponse, error) {
+	ok, err := h.core.IsObject(ctx, r.Server, r.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (h *Handler) IsObject(ctx context.Context, request *api.IsObjectRequest) (*
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
-	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetObject())
+	err := h.core.DeleteAttr(ctx, r.Server, r.GetKey(), r.GetObject())
 	if err != nil {
 		if errors.Is(err, core.ErrObjectNotFound) {
 			return &api.DeleteAttrResponse{}, status.Error(codes.ResourceExhausted, core.ErrObjectNotFound.Error())
@@ -171,8 +171,8 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 	return &api.DeleteAttrResponse{}, nil
 }
 
-func (h *Handler) Size(ctx context.Context, request *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
-	size, err := h.logic.Size(ctx, request.GetName())
+func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
+	size, err := h.core.Size(ctx, r.Server, r.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +182,8 @@ func (h *Handler) Size(ctx context.Context, request *api.ObjectSizeRequest) (*ap
 	}, nil
 }
 
-func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest) (*api.DisconnectResponse, error) {
-	err := h.logic.Disconnect(ctx, request.GetServerNumber())
+func (h *Handler) Disconnect(ctx context.Context, r *api.DisconnectRequest) (*api.DisconnectResponse, error) {
+	err := h.core.Disconnect(ctx, r.Server)
 	if err != nil {
 		if errors.Is(err, context.Canceled) { // TODO: add everywhere
 			return nil, status.Error(codes.Canceled, context.Canceled.Error())
@@ -194,7 +194,7 @@ func (h *Handler) Disconnect(ctx context.Context, request *api.DisconnectRequest
 	return &api.DisconnectResponse{}, nil
 }
 
-func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*api.ServersResponse, error) {
+func (h *Handler) Servers(ctx context.Context, r *api.ServersRequest) (*api.ServersResponse, error) {
 	t, err := getToken(ctx)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*ap
 
 	fmt.Println(t)
 
-	servers := h.logic.Servers()
+	servers := h.core.Servers()
 	s := strings.Join(servers, "\n")
 	return &api.ServersResponse{
 		ServersInfo: s,
@@ -210,7 +210,7 @@ func (h *Handler) Servers(ctx context.Context, request *api.ServersRequest) (*ap
 }
 
 func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*api.AuthResponse, error) {
-	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
+	token, err := h.core.Authenticate(ctx, request.GetLogin(), request.GetPassword())
 	if err != nil {
 		if errors.Is(err, core.ErrWrongCredentials) {
 			return nil, status.Error(codes.Unauthenticated, err.Error())

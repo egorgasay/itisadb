@@ -11,15 +11,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/cli/commands"
-	"itisadb/internal/cli/config"
-	"itisadb/pkg/api/balancer"
+	"itisadb/internal/config"
+	"itisadb/pkg/api"
 
 	"itisadb/internal/cli/storage"
 )
 
 type UseCase struct {
 	storage *storage.Storage
-	conn    balancer.BalancerClient
+	conn    api.ItisaDBClient
 
 	// sdk *itisadb.Client
 
@@ -28,11 +28,11 @@ type UseCase struct {
 }
 
 func New(cfg *config.Config, storage *storage.Storage) *UseCase {
-	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := balancer.NewBalancerClient(conn)
+	b := api.NewItisaDBClient(conn)
 	cmds := commands.New(b)
 
 	return &UseCase{conn: b, storage: storage, cmds: cmds}
@@ -57,12 +57,12 @@ func (uc *UseCase) History(cookie string) (string, error) {
 func (uc *UseCase) Servers(ctx context.Context, token string) (string, error) {
 	servers, err := uc.conn.Servers(
 		metadata.NewOutgoingContext(ctx,
-			metadata.New(map[string]string{"token": token})), &balancer.BalancerServersRequest{})
+			metadata.New(map[string]string{"token": token})), &api.ServersRequest{})
 	return servers.ServersInfo, err
 }
 
 func (uc *UseCase) Authenticate(ctx context.Context, username, password string) (string, error) {
-	resp, err := uc.conn.Authenticate(ctx, &balancer.BalancerAuthRequest{Login: username, Password: password})
+	resp, err := uc.conn.Authenticate(ctx, &api.AuthRequest{Login: username, Password: password})
 	if err != nil {
 		return "", errors.Join(err, fmt.Errorf("failed to authenticate"))
 	}

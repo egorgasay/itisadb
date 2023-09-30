@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"itisadb/pkg/api/storage"
+	"itisadb/pkg/api"
 	"os"
 	"runtime"
 	"strconv"
@@ -32,12 +32,12 @@ func New() (*Servers, error) {
 
 	s := make(map[int32]*Server, 10)
 
-	max := runtime.GOMAXPROCS(0) * 100
+	maxProc := runtime.GOMAXPROCS(0) * 100
 
 	servers := &Servers{
 		servers: s,
 		freeID:  1,
-		poolCh:  make(chan struct{}, max),
+		poolCh:  make(chan struct{}, maxProc),
 	}
 
 	scanner := bufio.NewScanner(f)
@@ -61,14 +61,14 @@ func (s *Servers) GetServer() (*Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
-	max := 0.0
+	best := 0.0
 	var serverNumber int32 = 0
 
 	for num, cl := range s.servers {
 		r := cl.GetRAM()
-		if val := float64(r.available) / float64(r.total) * 100; val > max {
+		if val := float64(r.available) / float64(r.total) * 100; val > best {
 			serverNumber = num
-			max = val
+			best = val
 		}
 	}
 
@@ -98,14 +98,14 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 		return 0, errors.Wrap(ErrInternal, err.Error())
 	}
 
-	cl := storage.NewStorageClient(conn)
+	cl := api.NewItisaDBClient(conn)
 
 	// add test connection
 
 	var stClient = &Server{
-		storage: cl,
-		ram:     RAM{available: available, total: total},
-		mu:      &sync.RWMutex{},
+		client: cl,
+		ram:    RAM{available: available, total: total},
+		mu:     &sync.RWMutex{},
 	}
 
 	if server != 0 {

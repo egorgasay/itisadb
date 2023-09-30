@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"itisadb/internal/domains"
-	servers2 "itisadb/internal/servers"
+	"itisadb/internal/servers"
 	"itisadb/pkg/logger"
 	"runtime"
 	"sync"
@@ -43,7 +43,7 @@ type Core struct {
 }
 
 func New(ctx context.Context, repository domains.Storage, logger logger.ILogger) (*Core, error) {
-	s, err := servers2.New()
+	s, err := servers.New()
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +69,23 @@ func New(ctx context.Context, repository domains.Storage, logger logger.ILogger)
 	}, nil
 }
 
-func (c *Core) Set(ctx context.Context, server *int32, key, val string, serverNumber int32, uniques bool) (int32, error) {
-	if !c.balancing || c.servers.Len() == 0 {
-		if err := c.storage.Set(key, val, uniques); err != nil {
-			return 0, err
-		}
+func toServerNumber(server *int32) int32 {
+	if server == nil {
+		return mainStorage
 	}
+
+	return *server
+}
+
+func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques bool) (int32, error) {
+	if c.useMainStorage(server) {
+		if err := c.storage.Set(key, val, uniques); err != nil {
+			return mainStorage, err
+		}
+		return mainStorage, nil
+	}
+
+	serverNumber := toServerNumber(server)
 
 	if serverNumber == setToAll {
 		failedServers := c.servers.SetToAll(ctx, key, val, uniques)
@@ -84,7 +95,7 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, serverNu
 		return setToAll, nil
 	}
 
-	var cl *servers2.Server
+	var cl *servers.Server
 	var ok bool
 
 	if serverNumber > 0 {
@@ -109,6 +120,7 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, serverNu
 
 func (c *Core) Get(ctx context.Context, server *int32, key string) (val string, err error) {
 	return val, c.withContext(ctx, func() error {
+		val, err = c.get(ctx, server, key)
 		return err
 	})
 }
@@ -128,11 +140,11 @@ func (c *Core) get(ctx context.Context, server *int32, key string) (string, erro
 		return v, nil
 	}
 
-	serverNumber := *server
+	serverNumber := toServerNumber(server)
 
 	if serverNumber == searchEverywhere {
 		v, err := c.servers.DeepSearch(ctx, key)
-		if err != nil && errors.Is(err, servers2.ErrNotFound) {
+		if err != nil && errors.Is(err, servers.ErrNotFound) {
 			return "", ErrNotFound
 		}
 		return v, err
@@ -209,21 +221,26 @@ func (c *Core) withContext(ctx context.Context, fn func() error) (err error) {
 	}
 }
 
-func (c *Core) Delete(ctx context.Context, server *int32, key string, num int32) (err error) {
+func (c *Core) Delete(ctx context.Context, server *int32, key string) (err error) {
 	return c.withContext(ctx, func() error {
-		return c.delete(ctx, server, key, num)
+		return c.delete(ctx, server, key)
 	})
 }
 
-func (c *Core) delete(ctx context.Context, server *int32, key string, num int32) error {
-	if ctx.Err() != nil {
-		return ctx.Err()
+func (c *Core) delete(ctx context.Context, server *int32, key string) error {
+	if c.useMainStorage(server) {
+		if err := c.storage.Delete(key); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if num == deleteFromAll {
+	serverNumber := toServerNumber(server)
+
+	if serverNumber == deleteFromAll {
 		atLeastOnce := c.servers.DelFromAll(ctx, key)
 		if !atLeastOnce {
 			return ErrNotFound
@@ -231,7 +248,7 @@ func (c *Core) delete(ctx context.Context, server *int32, key string, num int32)
 		return nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
+	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
 		return ErrUnknownServer
 	}

@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"itisadb/pkg/api/balancer"
+	"itisadb/pkg/api"
 	"strconv"
 	"strings"
 )
 
 type Commands struct {
-	cl balancer.BalancerClient
+	cl api.ItisaDBClient
 }
 
-func New(cl balancer.BalancerClient) *Commands {
+func New(cl api.ItisaDBClient) *Commands {
 	return &Commands{
 		cl: cl,
 	}
@@ -134,7 +134,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 }
 
 func (c *Commands) newObject(name string) (string, error) {
-	_, err := c.cl.Object(context.Background(), &balancer.BalancerObjectRequest{Name: name})
+	_, err := c.cl.Object(context.Background(), &api.ObjectRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
@@ -143,7 +143,7 @@ func (c *Commands) newObject(name string) (string, error) {
 }
 
 func (c *Commands) showObject(name string) (string, error) {
-	m, err := c.cl.ObjectToJSON(context.Background(), &balancer.BalancerObjectToJSONRequest{Name: name})
+	m, err := c.cl.ObjectToJSON(context.Background(), &api.ObjectToJSONRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
@@ -164,7 +164,7 @@ func (c *Commands) object(act, name, key, value string) (string, error) {
 }
 
 func (c *Commands) setObject(name, key, value string) (string, error) {
-	r, err := c.cl.SetToObject(context.Background(), &balancer.BalancerSetToObjectRequest{
+	r, err := c.cl.SetToObject(context.Background(), &api.SetToObjectRequest{
 		Object: name,
 		Key:    key,
 		Value:  value,
@@ -178,7 +178,7 @@ func (c *Commands) setObject(name, key, value string) (string, error) {
 }
 
 func (c *Commands) ObjectToJSON(name, key string) (string, error) {
-	r, err := c.cl.GetFromObject(context.Background(), &balancer.BalancerGetFromObjectRequest{
+	r, err := c.cl.GetFromObject(context.Background(), &api.GetFromObjectRequest{
 		Object: name,
 		Key:    key,
 	})
@@ -191,7 +191,7 @@ func (c *Commands) ObjectToJSON(name, key string) (string, error) {
 }
 
 func (c *Commands) get(key string, server int32) (string, error) {
-	resp, err := c.cl.Get(context.Background(), &balancer.BalancerGetRequest{Key: key, Server: server})
+	resp, err := c.cl.Get(context.Background(), &api.GetRequest{Key: key, Server: &server})
 	if err != nil {
 		return "", err
 	}
@@ -203,7 +203,7 @@ func (c *Commands) get(key string, server int32) (string, error) {
 }
 
 func (c *Commands) attach(dst string, src string) error {
-	_, err := c.cl.AttachToObject(context.Background(), &balancer.BalancerAttachToObjectRequest{
+	_, err := c.cl.AttachToObject(context.Background(), &api.AttachToObjectRequest{
 		Dst: dst,
 		Src: src,
 	})
@@ -227,7 +227,7 @@ func (c *Commands) attach(dst string, src string) error {
 }
 
 func (c *Commands) set(key, value string, server int32, uniques bool) (string, error) {
-	response, err := c.cl.Set(context.Background(), &balancer.BalancerSetRequest{Key: key, Value: value, Server: server,
+	response, err := c.cl.Set(context.Background(), &api.SetRequest{Key: key, Value: value, Server: &server,
 		Uniques: uniques})
 	if err != nil {
 		return "", err

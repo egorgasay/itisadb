@@ -3,35 +3,19 @@ package core
 import (
 	"fmt"
 	"github.com/pbnjay/memory"
-	"itisadb/internal/grpc-storage/storage"
-	tlogger "itisadb/internal/grpc-storage/transaction-logger"
+	"itisadb/internal/domains"
+	tlogger "itisadb/internal/transaction-logger"
 	"itisadb/pkg/logger"
 )
 
 type Keeper struct {
-	storage   storage.IStorage
+	storage   domains.Storage
 	logger    logger.ILogger
 	isTLogger bool
 	tLogger   *tlogger.TransactionLogger
 }
 
-//go:generate mockgen -destination=mocks/usecase/mock_usecase.go -package=mocks . IUseCase
-type ICore interface {
-	Set(key string, val string, uniques bool) (RAM, error)
-	SetToObject(name string, key string, val string, uniques bool) (RAM, error)
-	Get(key string) (RAM, string, error)
-	GetFromObject(name string, key string) (RAM, string, error)
-	ObjectToJSON(name string) (RAM, string, error)
-	NewObject(name string) (RAM, error)
-	Size(name string) (RAM, uint64, error)
-	DeleteObject(name string) (RAM, error)
-	AttachToObject(dst string, src string) (RAM, error)
-	DeleteIfExists(key string) RAM
-	Delete(key string) (RAM, error)
-	DeleteAttr(name string, key string) (RAM, error)
-}
-
-func newKeeper(storage storage.IStorage, logger logger.ILogger, enableTLogger bool) (*Keeper, error) {
+func newKeeper(storage domains.Storage, logger logger.ILogger, enableTLogger bool) (*Keeper, error) {
 	if !enableTLogger {
 		logger.Info("Transaction logger disabled")
 		return &Keeper{storage: storage, logger: logger, isTLogger: false}, nil

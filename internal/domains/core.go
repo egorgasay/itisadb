@@ -1,12 +1,11 @@
-package mocks
+package domains
 
 import "context"
 
-//go:generate mockgen -destination=mock_usecase.go -package=mocks . IUseCase
-type IUseCase interface {
+type Core interface {
 	Get(ctx context.Context, server *int32, key string) (string, error)
 	Set(ctx context.Context, server *int32, key string, val string, uniques bool) (int32, error)
-	Delete(ctx context.Context, server int32, key string) error
+	Delete(ctx context.Context, server *int32, key string) error
 
 	Object(ctx context.Context, server *int32, name string) (int32, error)
 	ObjectToJSON(ctx context.Context, server *int32, name string) (string, error)
@@ -19,8 +18,8 @@ type IUseCase interface {
 	SetToObject(ctx context.Context, server *int32, object string, key string, val string, uniques bool) (int32, error)
 	DeleteAttr(ctx context.Context, server *int32, attr string, object string) error
 
-	Connect(server *int32, address string, available uint64, total uint64) (int32, error)
-	Disconnect(server *int32, ctx context.Context, number int32) error
+	Connect(address string, available uint64, total uint64) (int32, error)
+	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
 	Authenticate(ctx context.Context, login string, password string) (string, error)
 }
