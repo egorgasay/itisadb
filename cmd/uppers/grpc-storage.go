@@ -45,7 +45,7 @@ func UpGRPCStorage(ctx context.Context) {
 
 	logic, err := usecase.New(store, logger.New(loggerInstance), cfg.IsTLogger)
 	if err != nil {
-		log.Fatalf("Failed to initialize usecase layer: %v", err)
+		log.Fatalf("Failed to initialize core layer: %v", err)
 	}
 
 	conn, err := grpc.Dial(cfg.Balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))

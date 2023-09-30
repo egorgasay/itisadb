@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	mocks "itisadb/internal/memory-balancer/handler/mocks/usecase"
-	"itisadb/internal/memory-balancer/servers"
-	"itisadb/internal/memory-balancer/usecase"
+	core2 "itisadb/internal/core"
+	"itisadb/internal/handler/mocks/usecase"
+	"itisadb/internal/servers"
 	api "itisadb/pkg/api/balancer"
 	"strings"
 )
@@ -46,11 +46,11 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.BalancerSetToObjectReq
 func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.BalancerGetResponse, error) {
 	value, err := h.logic.Get(ctx, r.Key, r.Server)
 	if err != nil {
-		if errors.Is(err, usecase.ErrNotFound) {
+		if errors.Is(err, core2.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, usecase.ErrUnknownServer) {
+		if errors.Is(err, core2.ErrUnknownServer) {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 
@@ -65,11 +65,11 @@ func (h *Handler) Get(ctx context.Context, r *api.BalancerGetRequest) (*api.Bala
 func (h *Handler) GetFromObject(ctx context.Context, r *api.BalancerGetFromObjectRequest) (*api.BalancerGetFromObjectResponse, error) {
 	value, err := h.logic.GetFromObject(ctx, r.GetObject(), r.GetKey(), r.GetServer())
 	if err != nil {
-		if errors.Is(err, usecase.ErrNoData) {
+		if errors.Is(err, core2.ErrNoData) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		if errors.Is(err, usecase.ErrUnknownServer) {
+		if errors.Is(err, core2.ErrUnknownServer) {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 
@@ -94,8 +94,8 @@ func (h *Handler) Delete(ctx context.Context, r *api.BalancerDeleteRequest) (*ap
 func (h *Handler) AttachToObject(ctx context.Context, r *api.BalancerAttachToObjectRequest) (*api.BalancerAttachToObjectResponse, error) {
 	err := h.logic.AttachToObject(ctx, r.Dst, r.Src)
 	if err != nil {
-		if errors.Is(err, usecase.ErrObjectNotFound) {
-			return nil, status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error())
+		if errors.Is(err, core2.ErrObjectNotFound) {
+			return nil, status.Error(codes.ResourceExhausted, core2.ErrObjectNotFound.Error())
 		}
 		return nil, err
 	}
@@ -161,8 +161,8 @@ func (h *Handler) IsObject(ctx context.Context, request *api.BalancerIsObjectReq
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.BalancerDeleteAttrRequest) (*api.BalancerDeleteAttrResponse, error) {
 	err := h.logic.DeleteAttr(ctx, r.GetKey(), r.GetObject())
 	if err != nil {
-		if errors.Is(err, usecase.ErrObjectNotFound) {
-			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error())
+		if errors.Is(err, core2.ErrObjectNotFound) {
+			return &api.BalancerDeleteAttrResponse{}, status.Error(codes.ResourceExhausted, core2.ErrObjectNotFound.Error())
 		}
 
 		return &api.BalancerDeleteAttrResponse{}, err
@@ -212,7 +212,7 @@ func (h *Handler) Servers(ctx context.Context, request *api.BalancerServersReque
 func (h *Handler) Authenticate(ctx context.Context, request *api.BalancerAuthRequest) (*api.BalancerAuthResponse, error) {
 	token, err := h.logic.Authenticate(ctx, request.GetLogin(), request.GetPassword())
 	if err != nil {
-		if errors.Is(err, usecase.ErrWrongCredentials) {
+		if errors.Is(err, core2.ErrWrongCredentials) {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
 

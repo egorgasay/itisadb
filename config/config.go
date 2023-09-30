@@ -2,8 +2,8 @@ package config
 
 import (
 	"github.com/BurntSushi/toml"
+	balancercfg "itisadb/internal/config"
 	storagecfg "itisadb/internal/grpc-storage/config"
-	balancercfg "itisadb/internal/memory-balancer/config"
 )
 
 const DefaultConfigPath = "config/default-config.toml"

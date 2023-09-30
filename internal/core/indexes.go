@@ -1,23 +1,23 @@
-package usecase
+package core
 
 import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"itisadb/internal/memory-balancer/servers"
+	servers2 "itisadb/internal/servers"
 )
 
 var ErrObjectNotFound = fmt.Errorf("object not found")
 var ErrServerNotFound = fmt.Errorf("server not found")
 
-func (uc *UseCase) Object(ctx context.Context, name string) (s int32, err error) {
+func (uc *Core) Object(ctx context.Context, name string) (s int32, err error) {
 	return s, uc.withContext(ctx, func() error {
 		s, err = uc.object(ctx, name)
 		return err
 	})
 }
 
-func (uc *UseCase) object(ctx context.Context, name string) (int32, error) {
+func (uc *Core) object(ctx context.Context, name string) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -26,7 +26,7 @@ func (uc *UseCase) object(ctx context.Context, name string) (int32, error) {
 	defer uc.mu.Unlock()
 
 	var ok bool
-	var cl *servers.Server
+	var cl *servers2.Server
 	var num int32
 
 	if num, ok = uc.objects[name]; ok {
@@ -54,14 +54,14 @@ func (uc *UseCase) object(ctx context.Context, name string) (int32, error) {
 	return num, nil
 }
 
-func (uc *UseCase) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
+func (uc *Core) GetFromObject(ctx context.Context, object, key string, serverNumber int32) (v string, err error) {
 	return v, uc.withContext(ctx, func() error {
 		v, err = uc.getFromObject(ctx, object, key, serverNumber)
 		return err
 	})
 }
 
-func (uc *UseCase) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
+func (uc *Core) getFromObject(ctx context.Context, object, key string, serverNumber int32) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -83,7 +83,7 @@ func (uc *UseCase) getFromObject(ctx context.Context, object, key string, server
 
 	resp, err := cl.GetFromObject(ctx, object, key)
 	if err != nil {
-		if errors.Is(err, servers.ErrNotFound) {
+		if errors.Is(err, servers2.ErrNotFound) {
 			return "", ErrNoData
 		}
 		return "", err
@@ -92,14 +92,14 @@ func (uc *UseCase) getFromObject(ctx context.Context, object, key string, server
 	return resp.Value, nil
 }
 
-func (uc *UseCase) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
+func (uc *Core) SetToObject(ctx context.Context, object, key, val string, uniques bool) (s int32, err error) {
 	return s, uc.withContext(ctx, func() error {
 		s, err = uc.setToObject(ctx, object, key, val, uniques)
 		return err
 	})
 }
 
-func (uc *UseCase) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
+func (uc *Core) setToObject(ctx context.Context, object, key, val string, uniques bool) (int32, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -125,7 +125,7 @@ func (uc *UseCase) setToObject(ctx context.Context, object, key, val string, uni
 	return num, nil
 }
 
-func (uc *UseCase) ObjectToJSON(ctx context.Context, name string) (string, error) {
+func (uc *Core) ObjectToJSON(ctx context.Context, name string) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -151,7 +151,7 @@ func (uc *UseCase) ObjectToJSON(ctx context.Context, name string) (string, error
 	return res.Object, nil
 }
 
-func (uc *UseCase) IsObject(ctx context.Context, name string) (bool, error) {
+func (uc *Core) IsObject(ctx context.Context, name string) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
@@ -163,14 +163,14 @@ func (uc *UseCase) IsObject(ctx context.Context, name string) (bool, error) {
 	return ok, nil
 }
 
-func (uc *UseCase) Size(ctx context.Context, name string) (size uint64, err error) {
+func (uc *Core) Size(ctx context.Context, name string) (size uint64, err error) {
 	return size, uc.withContext(ctx, func() error {
 		size, err = uc.size(ctx, name)
 		return err
 	})
 }
 
-func (uc *UseCase) size(ctx context.Context, name string) (uint64, error) {
+func (uc *Core) size(ctx context.Context, name string) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -196,13 +196,13 @@ func (uc *UseCase) size(ctx context.Context, name string) (uint64, error) {
 	return res.Size, nil
 }
 
-func (uc *UseCase) DeleteObject(ctx context.Context, name string) error {
+func (uc *Core) DeleteObject(ctx context.Context, name string) error {
 	return uc.withContext(ctx, func() error {
 		return uc.deleteObject(ctx, name)
 	})
 }
 
-func (uc *UseCase) deleteObject(ctx context.Context, name string) error {
+func (uc *Core) deleteObject(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -232,13 +232,13 @@ func (uc *UseCase) deleteObject(ctx context.Context, name string) error {
 	return nil
 }
 
-func (uc *UseCase) AttachToObject(ctx context.Context, dst string, src string) error {
+func (uc *Core) AttachToObject(ctx context.Context, dst string, src string) error {
 	return uc.withContext(ctx, func() error {
 		return uc.attachToObject(ctx, dst, src)
 	})
 }
 
-func (uc *UseCase) attachToObject(ctx context.Context, dst string, src string) error {
+func (uc *Core) attachToObject(ctx context.Context, dst string, src string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -262,13 +262,13 @@ func (uc *UseCase) attachToObject(ctx context.Context, dst string, src string) e
 	return nil
 }
 
-func (uc *UseCase) DeleteAttr(ctx context.Context, attr string, object string) error {
+func (uc *Core) DeleteAttr(ctx context.Context, attr string, object string) error {
 	return uc.withContext(ctx, func() error {
 		return uc.deleteAttr(ctx, attr, object)
 	})
 }
 
-func (uc *UseCase) deleteAttr(ctx context.Context, attr string, object string) error {
+func (uc *Core) deleteAttr(ctx context.Context, attr string, object string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

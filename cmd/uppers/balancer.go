@@ -7,11 +7,11 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"itisadb/internal/memory-balancer/config"
-	grpchandler "itisadb/internal/memory-balancer/handler/grpc"
-	resthandler "itisadb/internal/memory-balancer/handler/rest"
-	"itisadb/internal/memory-balancer/storage"
-	"itisadb/internal/memory-balancer/usecase"
+	"itisadb/internal/config"
+	"itisadb/internal/core"
+	grpchandler "itisadb/internal/handler/grpc"
+	resthandler "itisadb/internal/handler/rest"
+	"itisadb/internal/storage"
 	"itisadb/pkg"
 	"itisadb/pkg/api/balancer"
 	"itisadb/pkg/logger"
@@ -32,7 +32,7 @@ func UpBalancer(ctx context.Context) {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
 
-	logic, err := usecase.New(ctx, store, logger.New(loggerInstance))
+	logic, err := core.New(ctx, store, logger.New(loggerInstance))
 	if err != nil {
 		log.Fatalf("failed to inizialise logic layer: %v", err)
 	}
@@ -47,7 +47,7 @@ func UpBalancer(ctx context.Context) {
 	}
 }
 
-func runBalancerGRPC(ctx context.Context, l *zap.Logger, logic *usecase.UseCase, cfg *config.Config) {
+func runBalancerGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.Config) {
 	h := grpchandler.New(logic)
 	grpcServer := grpc.NewServer()
 
@@ -75,7 +75,7 @@ func runBalancerGRPC(ctx context.Context, l *zap.Logger, logic *usecase.UseCase,
 	}
 }
 
-func runBalancerREST(ctx context.Context, l *zap.Logger, logic *usecase.UseCase, cfg *config.Config) {
+func runBalancerREST(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.Config) {
 	handler := resthandler.New(logic)
 	lis, err := net.Listen("tcp", cfg.REST)
 	if err != nil {

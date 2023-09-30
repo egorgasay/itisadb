@@ -6,18 +6,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"os"
 	"strconv"
-	"sync"
 )
-
-type Storage struct {
-	mu *sync.RWMutex
-}
-
-func New() (*Storage, error) {
-	return &Storage{
-		mu: &sync.RWMutex{},
-	}, nil
-}
 
 // RestoreObjects restores object names.
 func (s *Storage) RestoreObjects(ctx context.Context) (map[string]int32, error) {

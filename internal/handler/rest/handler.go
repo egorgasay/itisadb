@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"itisadb/internal/memory-balancer/handler/converterr"
-	mocks "itisadb/internal/memory-balancer/handler/mocks/usecase"
-	"itisadb/internal/memory-balancer/schema"
-	"itisadb/internal/memory-balancer/servers"
+	"itisadb/internal/handler/converterr"
+	"itisadb/internal/handler/mocks/usecase"
+	"itisadb/internal/schema"
+	servers2 "itisadb/internal/servers"
 	"strings"
 )
 
@@ -396,10 +396,10 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 
 	snum, err := h.logic.Connect(r.Address, r.Available, r.Total, r.Server)
 	if err != nil {
-		if errors.Is(err, servers.ErrAlreadyExists) {
+		if errors.Is(err, servers2.ErrAlreadyExists) {
 			ctx.Error(err.Error(), fasthttp.StatusConflict)
 		}
-		if errors.Is(err, servers.ErrInternal) {
+		if errors.Is(err, servers2.ErrInternal) {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
 		return

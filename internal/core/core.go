@@ -1,10 +1,13 @@
-package usecase
+package core
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"itisadb/internal/memory-balancer/servers"
+	"itisadb/internal/domains"
+	servers2 "itisadb/internal/servers"
+	"itisadb/pkg/logger"
+	"runtime"
 	"sync"
 )
 
@@ -12,7 +15,57 @@ var ErrNoServers = errors.New("no servers available")
 var ErrNotFound = errors.New("key not found")
 var ErrWrongCredentials = errors.New("wrong credentials")
 
-func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
+var ErrNoData = errors.New("the value is not found")
+var ErrUnknownServer = errors.New("unknown server")
+
+const (
+	searchEverywhere = iota * -1
+	setToAll
+)
+
+const (
+	deleteFromAll = -1
+)
+
+type Core struct {
+	servers domains.Servers
+	logger  logger.ILogger
+	storage domains.Storage
+
+	objects map[string]int32
+	mu      sync.RWMutex
+
+	pool   chan struct{} // TODO: ADD TO CONFIG
+	keeper *Keeper
+}
+
+func New(ctx context.Context, repository domains.Storage, logger logger.ILogger) (*Core, error) {
+	s, err := servers2.New()
+	if err != nil {
+		return nil, err
+	}
+
+	objects, err := repository.RestoreObjects(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to restore objects: %w", err)
+	}
+
+	keeper, err := newKeeper(repository, logger, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create keeper: %w", err)
+	}
+
+	return &Core{
+		servers: s,
+		storage: repository,
+		logger:  logger,
+		objects: objects,
+		keeper:  keeper,
+		pool:    make(chan struct{}, 10000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+	}, nil
+}
+
+func (uc *Core) Set(ctx context.Context, key, val string, serverNumber int32, uniques bool) (int32, error) {
 	if uc.servers.Len() == 0 {
 		return 0, ErrNoServers
 	}
@@ -25,7 +78,7 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 		return setToAll, nil
 	}
 
-	var cl *servers.Server
+	var cl *servers2.Server
 	var ok bool
 
 	if serverNumber > 0 {
@@ -48,21 +101,21 @@ func (uc *UseCase) Set(ctx context.Context, key, val string, serverNumber int32,
 	return cl.GetNumber(), nil
 }
 
-func (uc *UseCase) Get(ctx context.Context, key string, serverNumber int32) (val string, err error) {
+func (uc *Core) Get(ctx context.Context, key string, serverNumber int32) (val string, err error) {
 	return val, uc.withContext(ctx, func() error {
 		val, err = uc.get(ctx, key, serverNumber)
 		return err
 	})
 }
 
-func (uc *UseCase) get(ctx context.Context, key string, serverNumber int32) (string, error) {
+func (uc *Core) get(ctx context.Context, key string, serverNumber int32) (string, error) {
 	if uc.servers.Len() == 0 {
 		return "", ErrNoServers
 	}
 
 	if serverNumber == searchEverywhere {
 		v, err := uc.servers.DeepSearch(ctx, key)
-		if err != nil && errors.Is(err, servers.ErrNotFound) {
+		if err != nil && errors.Is(err, servers2.ErrNotFound) {
 			return "", ErrNotFound
 		}
 		return v, err
@@ -95,7 +148,7 @@ func (uc *UseCase) get(ctx context.Context, key string, serverNumber int32) (str
 	return "", ErrNotFound
 }
 
-func (uc *UseCase) Connect(address string, available, total uint64, server int32) (int32, error) {
+func (uc *Core) Connect(address string, available, total uint64, server int32) (int32, error) {
 	uc.logger.Info("New request for connect from " + address)
 	number, err := uc.servers.AddServer(address, available, total, server)
 	if err != nil {
@@ -106,18 +159,18 @@ func (uc *UseCase) Connect(address string, available, total uint64, server int32
 	return number, nil
 }
 
-func (uc *UseCase) Disconnect(ctx context.Context, number int32) error {
+func (uc *Core) Disconnect(ctx context.Context, number int32) error {
 	return uc.withContext(ctx, func() error {
 		uc.servers.Disconnect(number)
 		return nil
 	})
 }
 
-func (uc *UseCase) Servers() []string {
+func (uc *Core) Servers() []string {
 	return uc.servers.GetServers()
 }
 
-func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error) {
+func (uc *Core) withContext(ctx context.Context, fn func() error) (err error) {
 	ch := make(chan struct{})
 
 	once := sync.Once{}
@@ -139,13 +192,13 @@ func (uc *UseCase) withContext(ctx context.Context, fn func() error) (err error)
 	}
 }
 
-func (uc *UseCase) Delete(ctx context.Context, key string, num int32) (err error) {
+func (uc *Core) Delete(ctx context.Context, key string, num int32) (err error) {
 	return uc.withContext(ctx, func() error {
 		return uc.delete(ctx, key, num)
 	})
 }
 
-func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
+func (uc *Core) delete(ctx context.Context, key string, num int32) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -173,7 +226,7 @@ func (uc *UseCase) delete(ctx context.Context, key string, num int32) error {
 	return nil
 }
 
-func (uc *UseCase) Authenticate(ctx context.Context, login string, password string) (string, error) {
+func (uc *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
 	if password == "" {
 		return "", ErrWrongCredentials
 	}

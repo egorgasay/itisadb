@@ -7,10 +7,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"itisadb/internal/core"
 	"itisadb/internal/grpc-storage/storage"
-	mockusecase "itisadb/internal/memory-balancer/handler/mocks/usecase"
-	"itisadb/internal/memory-balancer/servers"
-	"itisadb/internal/memory-balancer/usecase"
+	mockusecase "itisadb/internal/handler/mocks/usecase"
+	servers2 "itisadb/internal/servers"
 	api "itisadb/pkg/api/balancer"
 	"reflect"
 	"testing"
@@ -60,10 +60,10 @@ func TestHandler_AttachToObject(t *testing.T) {
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().AttachToObject(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					usecase.ErrObjectNotFound)
+					core.ErrObjectNotFound)
 			},
 			want:    &api.BalancerAttachToObjectResponse{},
-			wantErr: status.Error(codes.ResourceExhausted, usecase.ErrObjectNotFound.Error()),
+			wantErr: status.Error(codes.ResourceExhausted, core.ErrObjectNotFound.Error()),
 		},
 		{
 			name: "notFound#2",
@@ -161,9 +161,9 @@ func TestHandler_Connect(t *testing.T) {
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(int32(0), servers.ErrInternal)
+					Return(int32(0), servers2.ErrInternal)
 			},
-			wantErr: status.Error(codes.Internal, servers.ErrInternal.Error()),
+			wantErr: status.Error(codes.Internal, servers2.ErrInternal.Error()),
 		},
 	}
 	for _, tt := range tests {
@@ -376,9 +376,9 @@ func TestHandler_DeleteObject(t *testing.T) {
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().DeleteObject(gomock.Any(), gomock.Any()).
-					Return(status.Error(codes.Unavailable, servers.ErrUnavailable.Error()))
+					Return(status.Error(codes.Unavailable, servers2.ErrUnavailable.Error()))
 			},
-			wantErr: status.Error(codes.Unavailable, servers.ErrUnavailable.Error()),
+			wantErr: status.Error(codes.Unavailable, servers2.ErrUnavailable.Error()),
 		},
 	}
 	for _, tt := range tests {
