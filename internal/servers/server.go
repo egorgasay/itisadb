@@ -2,7 +2,6 @@ package servers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"itisadb/pkg/api"
 	client "itisadb/pkg/api"
@@ -20,9 +19,6 @@ func NewServer(client api.ItisaDBClient, number int32) *Server {
 		tries:  atomic.Uint32{},
 	}
 }
-
-var ErrAlreadyExists = errors.New("already exists")
-var ErrUnavailable = errors.New("server is unavailable")
 
 type Server struct {
 	tries  atomic.Uint32

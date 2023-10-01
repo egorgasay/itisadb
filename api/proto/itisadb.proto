@@ -25,11 +25,12 @@ service ItisaDB {
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc Servers(ServersRequest) returns (ServersResponse) {}
+  rpc GetRam(GetRamRequest) returns (GetRamResponse) {}
 }
 
 /*
 
-   MESSAGES
+   MODELS
 
  */
 
@@ -145,6 +146,9 @@ message AuthRequest {
   string password = 2;
 }
 
+message GetRamRequest {
+}
+
 
 /*
 
@@ -153,72 +157,58 @@ message AuthRequest {
  */
 
 message GetResponse {
-  optional Ram ram = 1;
-  string value = 2;
+  string value = 1;
 }
 
 message NewObjectResponse {
-  optional Ram ram = 1;
-  string name = 2;
+  string name = 1;
 }
 
 
 message IsObjectResponse {
-  optional Ram ram = 1;
-  bool ok = 2;
+  bool ok = 1;
 }
 
 message ObjectToJSONResponse {
-  optional Ram ram = 1;
-  string object = 2;
+  string object = 1;
 }
 
 message SetResponse {
-  optional Ram ram = 1;
-  int32 savedTo = 2;
+  int32 savedTo = 1;
 }
 
 message ConnectResponse {
-  optional Ram ram = 1;
-  string status = 2;
-  int32 server = 3;
+  string status = 1;
+  int32 server = 2;
 }
 
 message AttachToObjectResponse {
-  optional Ram ram = 1;
 }
 
 message DeleteResponse {
-  optional Ram ram = 1;
 }
 message DeleteAttrResponse {
-  optional Ram ram = 1;
 }
 
 message DisconnectResponse{
 }
 
 message SetToObjectResponse {
-  optional Ram ram = 1;
-  int32 savedTo = 2;
+  int32 savedTo = 1;
 }
 
 message ObjectSizeResponse {
-  optional Ram ram = 1;
-  uint64 size = 2;
+  uint64 size = 1;
 }
 
 message GetFromObjectResponse {
-  optional Ram ram = 1;
-  string value = 2;
+  string value = 1;
 }
 
 message ObjectResponse{
-  optional Ram ram = 1;
 }
 
 message DeleteObjectResponse{
-  optional Ram ram = 1;
 }
 
 message ServersResponse {
@@ -227,4 +217,8 @@ message ServersResponse {
 
 message AuthResponse {
   string token = 1;
+}
+
+message GetRamResponse {
+  Ram ram = 1;
 }

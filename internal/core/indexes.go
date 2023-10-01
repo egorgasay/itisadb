@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	servers2 "itisadb/internal/servers"
+	"itisadb/internal/constants"
+	servers "itisadb/internal/servers"
 )
-
-var ErrObjectNotFound = fmt.Errorf("object not found")
-var ErrServerNotFound = fmt.Errorf("server not found")
 
 func (c *Core) Object(ctx context.Context, server *int32, name string) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
@@ -35,7 +33,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 		return mainStorage, nil
 	}
 
-	var cl *servers2.Server
+	var cl *servers.Server
 
 	if ok {
 		cl, ok = c.servers.GetServerByID(num)
@@ -44,7 +42,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 	}
 
 	if !ok || cl == nil {
-		return 0, ErrServerNotFound
+		return 0, constants.ErrServerNotFound
 	}
 
 	err := cl.NewObject(ctx, name)
@@ -81,20 +79,20 @@ func (c *Core) getFromObject(ctx context.Context, server *int32, object, key str
 	serverNumber := toServerNumber(server)
 
 	if !ok && serverNumber == 0 {
-		return "", ErrObjectNotFound
+		return "", constants.ErrObjectNotFound
 	} else if serverNumber != 0 {
 		num = serverNumber
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return "", ErrServerNotFound
+		return "", constants.ErrServerNotFound
 	}
 
 	resp, err := cl.GetFromObject(ctx, object, key)
 	if err != nil {
-		if errors.Is(err, servers2.ErrNotFound) {
-			return "", ErrNoData
+		if errors.Is(err, constants.ErrNotFound) {
+			return "", constants.ErrNoData
 		}
 		return "", err
 	}
@@ -119,12 +117,12 @@ func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val 
 	c.mu.RUnlock()
 
 	if !ok {
-		return 0, ErrObjectNotFound
+		return 0, constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return 0, ErrServerNotFound
+		return 0, constants.ErrServerNotFound
 	}
 
 	err := cl.SetToObject(ctx, object, key, val, uniques)
@@ -145,12 +143,12 @@ func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (st
 	c.mu.RUnlock()
 
 	if !ok {
-		return "", ErrObjectNotFound
+		return "", constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return "", ErrServerNotFound
+		return "", constants.ErrServerNotFound
 	}
 
 	res, err := cl.ObjectToJSON(ctx, name)
@@ -190,12 +188,12 @@ func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, er
 	c.mu.RUnlock()
 
 	if !ok {
-		return 0, ErrObjectNotFound
+		return 0, constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return 0, ErrServerNotFound
+		return 0, constants.ErrServerNotFound
 	}
 
 	res, err := cl.Size(ctx, name)
@@ -222,12 +220,12 @@ func (c *Core) deleteObject(ctx context.Context, server *int32, name string) err
 	c.mu.RUnlock()
 
 	if !ok {
-		return ErrObjectNotFound
+		return constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return ErrServerNotFound
+		return constants.ErrServerNotFound
 	}
 
 	err := cl.DeleteObject(ctx, name)
@@ -257,12 +255,12 @@ func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, sr
 	c.mu.RUnlock()
 
 	if !ok {
-		return ErrObjectNotFound
+		return constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return ErrServerNotFound
+		return constants.ErrServerNotFound
 	}
 
 	err := cl.AttachToObject(ctx, dst, src)
@@ -288,12 +286,12 @@ func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, objec
 	c.mu.RUnlock()
 
 	if !ok {
-		return ErrObjectNotFound
+		return constants.ErrObjectNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
-		return ErrServerNotFound
+		return constants.ErrServerNotFound
 	}
 
 	err := cl.DeleteAttr(ctx, attr, object)

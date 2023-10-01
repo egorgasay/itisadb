@@ -37,6 +37,7 @@ const (
 	ItisaDB_Connect_FullMethodName        = "/api.ItisaDB/Connect"
 	ItisaDB_Disconnect_FullMethodName     = "/api.ItisaDB/Disconnect"
 	ItisaDB_Servers_FullMethodName        = "/api.ItisaDB/Servers"
+	ItisaDB_GetRam_FullMethodName         = "/api.ItisaDB/GetRam"
 )
 
 // ItisaDBClient is the client API for ItisaDB service.
@@ -61,6 +62,7 @@ type ItisaDBClient interface {
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
 	Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error)
+	GetRam(ctx context.Context, in *GetRamRequest, opts ...grpc.CallOption) (*GetRamResponse, error)
 }
 
 type itisaDBClient struct {
@@ -233,6 +235,15 @@ func (c *itisaDBClient) Servers(ctx context.Context, in *ServersRequest, opts ..
 	return out, nil
 }
 
+func (c *itisaDBClient) GetRam(ctx context.Context, in *GetRamRequest, opts ...grpc.CallOption) (*GetRamResponse, error) {
+	out := new(GetRamResponse)
+	err := c.cc.Invoke(ctx, ItisaDB_GetRam_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ItisaDBServer is the server API for ItisaDB service.
 // All implementations must embed UnimplementedItisaDBServer
 // for forward compatibility
@@ -255,6 +266,7 @@ type ItisaDBServer interface {
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
 	Servers(context.Context, *ServersRequest) (*ServersResponse, error)
+	GetRam(context.Context, *GetRamRequest) (*GetRamResponse, error)
 	mustEmbedUnimplementedItisaDBServer()
 }
 
@@ -315,6 +327,9 @@ func (UnimplementedItisaDBServer) Disconnect(context.Context, *DisconnectRequest
 }
 func (UnimplementedItisaDBServer) Servers(context.Context, *ServersRequest) (*ServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Servers not implemented")
+}
+func (UnimplementedItisaDBServer) GetRam(context.Context, *GetRamRequest) (*GetRamResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRam not implemented")
 }
 func (UnimplementedItisaDBServer) mustEmbedUnimplementedItisaDBServer() {}
 
@@ -653,6 +668,24 @@ func _ItisaDB_Servers_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ItisaDB_GetRam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRamRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItisaDBServer).GetRam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ItisaDB_GetRam_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItisaDBServer).GetRam(ctx, req.(*GetRamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ItisaDB_ServiceDesc is the grpc.ServiceDesc for ItisaDB service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -731,6 +764,10 @@ var ItisaDB_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Servers",
 			Handler:    _ItisaDB_Servers_Handler,
+		},
+		{
+			MethodName: "GetRam",
+			Handler:    _ItisaDB_GetRam_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"itisadb/internal/constants"
 	"itisadb/pkg/api"
 	"os"
 	"runtime"
@@ -20,8 +21,6 @@ type Servers struct {
 	freeID  int32
 	sync.RWMutex
 }
-
-var ErrNotFound = errors.New("the value was not found")
 
 func New() (*Servers, error) {
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
@@ -191,7 +190,7 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 		cancel()
 		return v, nil
 	case <-allIsDone:
-		return "", ErrNotFound
+		return "", constants.ErrNotFound
 	}
 }
 

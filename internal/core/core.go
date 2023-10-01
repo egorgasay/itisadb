@@ -4,19 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/servers"
 	"itisadb/pkg/logger"
 	"runtime"
 	"sync"
 )
-
-var ErrNoServers = errors.New("no servers available")
-var ErrNotFound = errors.New("key not found")
-var ErrWrongCredentials = errors.New("wrong credentials")
-
-var ErrNoData = errors.New("the value is not found")
-var ErrUnknownServer = errors.New("unknown server")
 
 const (
 	searchEverywhere = iota * -1
@@ -77,12 +71,13 @@ func toServerNumber(server *int32) int32 {
 	return *server
 }
 
-func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques bool) (int32, error) {
+func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques bool) (int32, RAM, error) {
 	if c.useMainStorage(server) {
-		if err := c.storage.Set(key, val, uniques); err != nil {
-			return mainStorage, err
+		ram, err := c.keeper.Set(key, val, uniques)
+		if err != nil {
+			return mainStorage, RAM{}, err
 		}
-		return mainStorage, nil
+		return mainStorage, ram, nil
 	}
 
 	serverNumber := toServerNumber(server)
@@ -90,9 +85,9 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques 
 	if serverNumber == setToAll {
 		failedServers := c.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
-			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return setToAll, RAM{}, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
-		return setToAll, nil
+		return setToAll, RAM{}, nil
 	}
 
 	var cl *servers.Server
@@ -101,21 +96,21 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques 
 	if serverNumber > 0 {
 		cl, ok = c.servers.GetServerByID(serverNumber)
 		if !ok || cl == nil {
-			return 0, ErrUnknownServer
+			return 0, RAM{}, constants.ErrUnknownServer
 		}
 	} else {
 		cl, ok = c.servers.GetServer()
 		if !ok || cl == nil {
-			return 0, ErrNoServers
+			return 0, RAM{}, constants.ErrNoServers
 		}
 	}
 
 	err := cl.Set(context.Background(), key, val, uniques)
 	if err != nil {
-		return 0, err
+		return 0, RAM{}, err
 	}
 
-	return cl.GetNumber(), nil
+	return cl.GetNumber(), RAM{}, nil
 }
 
 func (c *Core) Get(ctx context.Context, server *int32, key string) (val string, err error) {
@@ -144,17 +139,17 @@ func (c *Core) get(ctx context.Context, server *int32, key string) (string, erro
 
 	if serverNumber == searchEverywhere {
 		v, err := c.servers.DeepSearch(ctx, key)
-		if err != nil && errors.Is(err, servers.ErrNotFound) {
-			return "", ErrNotFound
+		if err != nil && errors.Is(err, constants.ErrNotFound) {
+			return "", constants.ErrNotFound
 		}
 		return v, err
 	} else if !c.servers.Exists(serverNumber) {
-		return "", ErrNotFound
+		return "", constants.ErrNotFound
 	}
 
 	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
-		return "", ErrUnknownServer
+		return "", constants.ErrUnknownServer
 	}
 
 	res, err := cl.Get(context.Background(), key)
@@ -174,7 +169,7 @@ func (c *Core) get(ctx context.Context, server *int32, key string) (string, erro
 		}
 	}
 
-	return "", ErrNotFound
+	return "", constants.ErrNotFound
 }
 
 func (c *Core) Connect(address string, available, total uint64) (int32, error) {
@@ -243,14 +238,14 @@ func (c *Core) delete(ctx context.Context, server *int32, key string) error {
 	if serverNumber == deleteFromAll {
 		atLeastOnce := c.servers.DelFromAll(ctx, key)
 		if !atLeastOnce {
-			return ErrNotFound
+			return constants.ErrNotFound
 		}
 		return nil
 	}
 
 	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
-		return ErrUnknownServer
+		return constants.ErrUnknownServer
 	}
 
 	err := cl.Delete(ctx, key)
@@ -262,7 +257,7 @@ func (c *Core) delete(ctx context.Context, server *int32, key string) error {
 
 func (c *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
 	if password == "" {
-		return "", ErrWrongCredentials
+		return "", constants.ErrWrongCredentials
 	}
 
 	return "token_for_" + login, nil
