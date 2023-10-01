@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"itisadb/internal/constants"
 	servers "itisadb/internal/servers"
 )
@@ -18,20 +17,25 @@ func (c *Core) Object(ctx context.Context, server *int32, name string) (s int32,
 func (c *Core) object(ctx context.Context, server *int32, name string) (int32, error) {
 	num, ok := c.objects[name]
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if c.useMainStorage(server) {
 		if ok {
+			if num != mainStorage {
+				return 0, constants.ErrServerNotFound
+			}
 			return mainStorage, nil
 		}
 
-		if err := c.storage.CreateObject(name); err != nil {
+		if err := c.keeper.NewObject(name); err != nil {
 			return 0, fmt.Errorf("can't create object: %w", err)
 		}
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.objects[name] = mainStorage
 
 		return mainStorage, nil
 	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	var cl *servers.Server
 
@@ -68,32 +72,32 @@ func (c *Core) GetFromObject(ctx context.Context, server *int32, object, key str
 }
 
 func (c *Core) getFromObject(ctx context.Context, server *int32, object, key string) (string, error) {
-	if ctx.Err() != nil {
-		return "", ctx.Err()
-	}
-
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
 
-	serverNumber := toServerNumber(server)
+	if c.useMainStorage(server) {
+		if ok && num != mainStorage {
+			return "", constants.ErrServerNotFound
+		}
 
-	if !ok && serverNumber == 0 {
-		return "", constants.ErrObjectNotFound
-	} else if serverNumber != 0 {
-		num = serverNumber
+		v, err := c.keeper.GetFromObject(object, key)
+		if err != nil {
+			return "", err
+		}
+
+		return v, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
+	serverNumber := toServerNumber(server)
+
+	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
 		return "", constants.ErrServerNotFound
 	}
 
 	resp, err := cl.GetFromObject(ctx, object, key)
 	if err != nil {
-		if errors.Is(err, constants.ErrNotFound) {
-			return "", constants.ErrNoData
-		}
 		return "", err
 	}
 
@@ -108,16 +112,25 @@ func (c *Core) SetToObject(ctx context.Context, server *int32, object, key, val 
 }
 
 func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val string, uniques bool) (int32, error) {
-	if ctx.Err() != nil {
-		return 0, ctx.Err()
-	}
-
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
 
 	if !ok {
 		return 0, constants.ErrObjectNotFound
+	}
+
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return 0, constants.ErrServerNotFound
+		}
+
+		err := c.keeper.SetToObject(object, key, val, uniques)
+		if err != nil {
+			return 0, err
+		}
+
+		return mainStorage, nil
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
@@ -223,6 +236,23 @@ func (c *Core) deleteObject(ctx context.Context, server *int32, name string) err
 		return constants.ErrObjectNotFound
 	}
 
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return constants.ErrServerNotFound
+		}
+
+		err := c.keeper.DeleteObject(name)
+		if err != nil {
+			return err
+		}
+
+		c.mu.Lock()
+		delete(c.objects, name)
+		c.mu.Unlock()
+
+		return nil
+	}
+
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return constants.ErrServerNotFound
@@ -287,6 +317,19 @@ func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, objec
 
 	if !ok {
 		return constants.ErrObjectNotFound
+	}
+
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return constants.ErrServerNotFound
+		}
+
+		err := c.keeper.DeleteAttr(object, attr)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	cl, ok := c.servers.GetServerByID(num)

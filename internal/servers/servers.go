@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/constants"
+	"itisadb/internal/models"
 	"itisadb/pkg/api"
 	"os"
 	"runtime"
@@ -65,7 +66,7 @@ func (s *Servers) GetServer() (*Server, bool) {
 
 	for num, cl := range s.servers {
 		r := cl.GetRAM()
-		if val := float64(r.available) / float64(r.total) * 100; val > best {
+		if val := float64(r.Available) / float64(r.Total) * 100; val > best {
 			serverNumber = num
 			best = val
 		}
@@ -103,7 +104,7 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 
 	var stClient = &Server{
 		client: cl,
-		ram:    RAM{available: available, total: total},
+		ram:    models.RAM{Available: available, Total: total},
 		mu:     &sync.RWMutex{},
 	}
 
@@ -148,7 +149,7 @@ func (s *Servers) GetServers() []string {
 	for _, cl := range s.servers {
 		r := cl.GetRAM()
 		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB",
-			cl.GetNumber(), r.available, r.total))
+			cl.GetNumber(), r.Available, r.Total))
 	}
 
 	return servers

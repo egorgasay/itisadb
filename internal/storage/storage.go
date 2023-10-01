@@ -2,20 +2,13 @@ package storage
 
 import (
 	"encoding/json"
-	"errors"
 	_ "github.com/egorgasay/dockerdb/v2"
+	"itisadb/internal/constants"
 	"strings"
 	"sync"
 
 	"github.com/dolthub/swiss"
 )
-
-var ErrNotFound = errors.New("the value does not exist")
-var ErrAlreadyExists = errors.New("the value already exists")
-var ErrObjectNotFound = errors.New("object not found")
-var ErrSomethingExists = errors.New("something with this name already exists")
-var ErrEmptyObjectName = errors.New("object name is empty")
-var ErrCircularAttachment = errors.New("circular attachment not allowed")
 
 type Storage struct {
 	ramStorage ramStorage
@@ -25,21 +18,19 @@ type Storage struct {
 
 type ramStorage struct {
 	*swiss.Map[string, string]
-	path string
 	*sync.RWMutex
 }
 
 type objects struct {
 	*swiss.Map[string, ivalue]
 	*sync.RWMutex
-	path string
 }
 
 func New() (*Storage, error) {
 	st := &Storage{
 		mu:         &sync.RWMutex{},
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
-		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}, path: "C:\\tmp"},
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}},
+		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
 	}
 
 	return st, nil
@@ -49,7 +40,7 @@ func (s *Storage) Set(key, val string, unique bool) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
 	if unique && s.ramStorage.Has(key) {
-		return ErrAlreadyExists
+		return constants.ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
 
@@ -62,7 +53,7 @@ func (s *Storage) Get(key string) (string, error) {
 
 	val, ok := s.ramStorage.Get(key)
 	if !ok {
-		return "", ErrNotFound
+		return "", constants.ErrNotFound
 	}
 
 	return val, nil
@@ -84,7 +75,7 @@ func (s *Storage) SetToObject(name, key, value string, uniques bool) error {
 	}
 
 	if uniques && object.Has(key) {
-		return ErrAlreadyExists
+		return constants.ErrAlreadyExists
 	}
 
 	object.Set(key, value)
@@ -103,7 +94,7 @@ func (s *Storage) AttachToObject(dst, src string) error {
 	}
 
 	if object2.IsAttached(object1.Name()) {
-		return ErrCircularAttachment
+		return constants.ErrCircularAttachment
 	}
 
 	err = object1.AttachObject(object2)
@@ -111,20 +102,45 @@ func (s *Storage) AttachToObject(dst, src string) error {
 }
 
 func (s *Storage) DeleteObject(name string) error {
-	val, err := s.findObject(name)
+	split := strings.Split(name, ".")
+	if name == "" || len(split) == 0 {
+		return constants.ErrEmptyObjectName
+	}
+	objName := split[len(split)-1]
+
+	parent := name
+	if len(split) > 1 {
+		parent = strings.Join(split[:len(split)-1], ".")
+	} else {
+		if !s.objects.Has(name) {
+			return constants.ErrNotFound
+		}
+		s.objects.Delete(name)
+		return nil
+	}
+
+	par, err := s.findObject(parent)
 	if err != nil {
 		return err
 	}
 
-	val.DeleteObject()
-
-	return nil
+	return par.Delete(objName)
 }
 
+/*
+    Maybe we should come back to this ?
+	if !val.IsObject() {
+		return ErrSomethingExists
+	} else if val.IsEmpty() {
+		val.RecreateObject()
+	}
+*/
+
+// CreateObject ..
 func (s *Storage) CreateObject(name string) (err error) {
 	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
-		return ErrEmptyObjectName
+		return constants.ErrEmptyObjectName
 	}
 
 	val, ok := s.objects.Get(path[0])
@@ -140,7 +156,7 @@ func (s *Storage) CreateObject(name string) (err error) {
 	for _, objectName := range path {
 		val = val.NextOrCreate(objectName)
 		if !val.IsObject() {
-			return ErrSomethingExists
+			return constants.ErrSomethingExists
 		} else if val.IsEmpty() {
 			val.RecreateObject()
 		}
@@ -191,12 +207,12 @@ func (s *Storage) findObject(name string) (ivalue, error) {
 	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
-		return nil, ErrObjectNotFound
+		return nil, constants.ErrObjectNotFound
 	}
 
 	val, ok := s.objects.Get(path[0])
 	if !ok {
-		return nil, ErrObjectNotFound
+		return nil, constants.ErrObjectNotFound
 	}
 
 	path = path[1:]
@@ -206,15 +222,15 @@ func (s *Storage) findObject(name string) (ivalue, error) {
 		case true:
 			val, ok = val.GetIValue(objectName)
 			if !ok {
-				return nil, ErrObjectNotFound
+				return nil, constants.ErrObjectNotFound
 			}
 		default:
-			return nil, ErrSomethingExists
+			return nil, constants.ErrSomethingExists
 		}
 	}
 
 	if !val.IsObject() || val.IsEmpty() {
-		return nil, ErrObjectNotFound
+		return nil, constants.ErrObjectNotFound
 	}
 
 	return val, nil
@@ -247,7 +263,7 @@ func (s *Storage) Delete(key string) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
 	if _, ok := s.ramStorage.Get(key); !ok {
-		return ErrNotFound
+		return constants.ErrNotFound
 	}
 
 	s.ramStorage.Delete(key)

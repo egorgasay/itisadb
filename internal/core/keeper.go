@@ -40,86 +40,86 @@ func newKeeper(storage domains.Storage, logger logger.ILogger, enableTLogger boo
 	return &Keeper{storage: storage, logger: logger, isTLogger: true, tLogger: tl}, nil
 }
 
-func (uc *Keeper) Set(key, val string, uniques bool) (models.RAM, error) {
+func (uc *Keeper) Set(key, val string, uniques bool) error {
 	err := uc.storage.Set(key, val, uniques)
 	if err != nil {
-		return ram.Update(), err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteSet(key, val)
 	}
-	return ram.Update(), nil
+	return nil
 }
 
 var ram = models.RAM{}
 
-func (uc *Keeper) SetToObject(name, key, val string, uniques bool) (models.RAM, error) {
+func (uc *Keeper) SetToObject(name, key, val string, uniques bool) error {
 	err := uc.storage.SetToObject(name, key, val, uniques)
 	if err != nil {
-		return ram.Update(), err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteSetToObject(name, key, val)
 	}
-	return ram.Update(), err
+	return err
 }
 
-func (uc *Keeper) Get(key string) (models.RAM, string, error) {
+func (uc *Keeper) Get(key string) (string, error) {
 	s, err := uc.storage.Get(key)
-	return ram.Update(), s, err
+	return s, err
 }
 
-func (uc *Keeper) GetFromObject(name, key string) (models.RAM, string, error) {
+func (uc *Keeper) GetFromObject(name, key string) (string, error) {
 	s, err := uc.storage.GetFromObject(name, key)
-	return ram.Update(), s, err
+	return s, err
 }
 
-func (uc *Keeper) ObjectToJSON(name string) (models.RAM, string, error) {
+func (uc *Keeper) ObjectToJSON(name string) (string, error) {
 	object, err := uc.storage.ObjectToJSON(name)
-	return ram.Update(), object, err
+	return object, err
 }
 
-func (uc *Keeper) NewObject(name string) (models.RAM, error) {
-	r, err := ram.Update(), uc.storage.CreateObject(name)
+func (uc *Keeper) NewObject(name string) error {
+	err := uc.storage.CreateObject(name)
 	if err != nil {
-		return r, err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteCreateObject(name)
 	}
-	return r, err
+	return err
 }
 
-func (uc *Keeper) Size(name string) (models.RAM, uint64, error) {
+func (uc *Keeper) Size(name string) (uint64, error) {
 	size, err := uc.storage.Size(name)
-	return ram.Update(), size, err
+	return size, err
 }
 
-func (uc *Keeper) DeleteObject(name string) (models.RAM, error) {
-	r, err := ram.Update(), uc.storage.DeleteObject(name)
+func (uc *Keeper) DeleteObject(name string) error {
+	err := uc.storage.DeleteObject(name)
 	if err != nil {
-		return r, err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteDeleteObject(name)
 	}
-	return r, err
+	return err
 }
 
-func (uc *Keeper) AttachToObject(dst, src string) (models.RAM, error) {
-	r, err := ram.Update(), uc.storage.AttachToObject(dst, src)
+func (uc *Keeper) AttachToObject(dst, src string) error {
+	err := uc.storage.AttachToObject(dst, src)
 	if err != nil {
-		return r, err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteAttach(dst, src)
 	}
-	return r, err
+	return err
 }
 
 func (uc *Keeper) DeleteIfExists(key string) models.RAM {
@@ -131,22 +131,22 @@ func (uc *Keeper) DeleteIfExists(key string) models.RAM {
 	return ram.Update()
 }
 
-func (uc *Keeper) Delete(key string) (models.RAM, error) {
+func (uc *Keeper) Delete(key string) error {
 	err := uc.storage.Delete(key)
 	if uc.isTLogger {
 		uc.tLogger.WriteDelete(key)
 	}
-	return ram.Update(), err
+	return err
 }
 
-func (uc *Keeper) DeleteAttr(name, key string) (models.RAM, error) {
-	r, err := ram.Update(), uc.storage.DeleteAttr(name, key)
+func (uc *Keeper) DeleteAttr(name, key string) error {
+	err := uc.storage.DeleteAttr(name, key)
 	if err != nil {
-		return r, err
+		return err
 	}
 
 	if uc.isTLogger {
 		uc.tLogger.WriteDeleteAttr(name, key)
 	}
-	return r, err
+	return err
 }

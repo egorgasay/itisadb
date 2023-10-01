@@ -71,13 +71,13 @@ func toServerNumber(server *int32) int32 {
 	return *server
 }
 
-func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques bool) (int32, RAM, error) {
+func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques bool) (int32, error) {
 	if c.useMainStorage(server) {
-		ram, err := c.keeper.Set(key, val, uniques)
+		err := c.keeper.Set(key, val, uniques)
 		if err != nil {
-			return mainStorage, RAM{}, err
+			return mainStorage, err
 		}
-		return mainStorage, ram, nil
+		return mainStorage, nil
 	}
 
 	serverNumber := toServerNumber(server)
@@ -85,32 +85,25 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques 
 	if serverNumber == setToAll {
 		failedServers := c.servers.SetToAll(ctx, key, val, uniques)
 		if len(failedServers) != 0 {
-			return setToAll, RAM{}, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
-		return setToAll, RAM{}, nil
+		return setToAll, nil
 	}
 
 	var cl *servers.Server
 	var ok bool
 
-	if serverNumber > 0 {
-		cl, ok = c.servers.GetServerByID(serverNumber)
-		if !ok || cl == nil {
-			return 0, RAM{}, constants.ErrUnknownServer
-		}
-	} else {
-		cl, ok = c.servers.GetServer()
-		if !ok || cl == nil {
-			return 0, RAM{}, constants.ErrNoServers
-		}
+	cl, ok = c.servers.GetServerByID(serverNumber)
+	if !ok || cl == nil {
+		return 0, constants.ErrUnknownServer
 	}
 
 	err := cl.Set(context.Background(), key, val, uniques)
 	if err != nil {
-		return 0, RAM{}, err
+		return 0, err
 	}
 
-	return cl.GetNumber(), RAM{}, nil
+	return cl.GetNumber(), nil
 }
 
 func (c *Core) Get(ctx context.Context, server *int32, key string) (val string, err error) {

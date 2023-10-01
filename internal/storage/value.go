@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/dolthub/swiss"
+	"itisadb/internal/constants"
 	"sync"
 )
 
@@ -71,7 +72,7 @@ func (v *value) Get(name string) (string, error) {
 	val, ok := v.values.Get(name)
 	v.mutex.RUnlock()
 	if !ok {
-		return "", ErrNotFound
+		return "", constants.ErrNotFound
 	}
 
 	return val.GetValue(), nil
@@ -164,7 +165,7 @@ func (v *value) SetValueUnique(val string) error {
 	defer v.mutex.Unlock()
 
 	if v.values.Has(val) {
-		return ErrAlreadyExists
+		return constants.ErrAlreadyExists
 	}
 
 	v.value = val
@@ -192,7 +193,7 @@ func (v *value) Delete(key string) error {
 	defer v.mutex.Unlock()
 
 	if !v.values.Has(key) {
-		return ErrNotFound
+		return constants.ErrNotFound
 	}
 
 	v.values.Delete(key)

@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"itisadb/internal/constants"
 	"itisadb/internal/domains"
-	"itisadb/internal/handler/converterr"
 	"itisadb/internal/schema"
-	servers2 "itisadb/internal/servers"
 	"strings"
 )
 
@@ -87,11 +86,10 @@ func (h *Handler) get(ctx *fasthttp.RequestCtx) {
 
 	value, err := h.core.Get(ctx, r.Server, r.Key)
 	if err != nil {
-		err = converterr.Get(err)
-		if errors.Is(err, converterr.ErrNotFound) {
-			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		if errors.Is(err, constants.ErrNotFound) {
+			ctx.Error(constants.ErrNotFound.Error(), fasthttp.StatusNotFound)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -111,11 +109,10 @@ func (h *Handler) set(ctx *fasthttp.RequestCtx) {
 
 	setTo, err := h.core.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
 	if err != nil {
-		err = converterr.Set(err)
-		if errors.Is(err, converterr.ErrExists) {
+		if errors.Is(err, constants.ErrAlreadyExists) {
 			ctx.Error(fmt.Sprint(setTo), fasthttp.StatusConflict)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -135,11 +132,10 @@ func (h *Handler) del(ctx *fasthttp.RequestCtx) {
 
 	err = h.core.Delete(ctx, r.Server, r.Key)
 	if err != nil {
-		err = converterr.Del(err)
-		if errors.Is(err, converterr.ErrNotFound) {
-			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		if errors.Is(err, constants.ErrNotFound) {
+			ctx.Error(constants.ErrNotFound.Error(), fasthttp.StatusNotFound)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -158,13 +154,12 @@ func (h *Handler) getFromObject(ctx *fasthttp.RequestCtx) {
 
 	value, err := h.core.GetFromObject(ctx, r.Server, r.Object, r.Key)
 	if err != nil {
-		err = converterr.GetFromObject(err)
-		if errors.Is(err, converterr.ErrNotFound) {
-			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrObjectNotFound) {
-			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		if errors.Is(err, constants.ErrNotFound) {
+			ctx.Error(constants.ErrNotFound.Error(), fasthttp.StatusNotFound)
+		} else if errors.Is(err, constants.ErrObjectNotFound) {
+			ctx.Error(constants.ErrObjectNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -184,13 +179,12 @@ func (h *Handler) setToObject(ctx *fasthttp.RequestCtx) {
 
 	v, err := h.core.SetToObject(ctx, r.Server, r.Object, r.Key, r.Value, r.Uniques)
 	if err != nil {
-		err = converterr.SetToObject(err)
-		if errors.Is(err, converterr.ErrExists) {
+		if errors.Is(err, constants.ErrAlreadyExists) {
 			ctx.Error(fmt.Sprint(v), fasthttp.StatusConflict)
-		} else if errors.Is(err, converterr.ErrObjectNotFound) {
-			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		} else if errors.Is(err, constants.ErrObjectNotFound) {
+			ctx.Error(constants.ErrObjectNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -210,13 +204,12 @@ func (h *Handler) delFromObject(ctx *fasthttp.RequestCtx) {
 
 	err = h.core.DeleteAttr(ctx, r.Server, r.Object, r.Key)
 	if err != nil {
-		err = converterr.DelFromObject(err)
-		if errors.Is(err, converterr.ErrNotFound) {
-			ctx.Error(converterr.ErrNotFound.Error(), fasthttp.StatusNotFound)
-		} else if errors.Is(err, converterr.ErrObjectNotFound) {
-			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		if errors.Is(err, constants.ErrNotFound) {
+			ctx.Error(constants.ErrNotFound.Error(), fasthttp.StatusNotFound)
+		} else if errors.Is(err, constants.ErrObjectNotFound) {
+			ctx.Error(constants.ErrObjectNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -241,11 +234,10 @@ func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {
 
 	value, err := h.core.ObjectToJSON(ctx, r.Server, r.Object)
 	if err != nil {
-		err = converterr.ObjectToJSON(err)
-		if errors.Is(err, converterr.ErrObjectNotFound) {
-			ctx.Error(converterr.ErrObjectNotFound.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
-			ctx.Error(converterr.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
+		if errors.Is(err, constants.ErrObjectNotFound) {
+			ctx.Error(constants.ErrObjectNotFound.Error(), fasthttp.StatusGone)
+		} else if errors.Is(err, constants.ErrUnavailable) {
+			ctx.Error(constants.ErrUnavailable.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
@@ -274,12 +266,11 @@ func (h *Handler) object(ctx *fasthttp.RequestCtx) {
 
 	_, err = h.core.Object(ctx, r.Server, r.Object)
 	if err != nil {
-		err = converterr.Object(err)
-		if errors.Is(err, converterr.ErrExists) {
+		if errors.Is(err, constants.ErrAlreadyExists) {
 			ctx.Error(err.Error(), fasthttp.StatusConflict)
-		} else if errors.Is(err, converterr.ErrInvalidName) {
+		} else if errors.Is(err, constants.ErrInvalidName) {
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
+		} else if errors.Is(err, constants.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
@@ -299,10 +290,9 @@ func (h *Handler) delObject(ctx *fasthttp.RequestCtx) {
 
 	err = h.core.DeleteObject(ctx, r.Server, r.Object)
 	if err != nil {
-		err = converterr.DelObject(err)
-		if errors.Is(err, converterr.ErrObjectNotFound) {
+		if errors.Is(err, constants.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
+		} else if errors.Is(err, constants.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
@@ -322,10 +312,9 @@ func (h *Handler) objectSize(ctx *fasthttp.RequestCtx) {
 
 	size, err := h.core.Size(ctx, r.Server, r.Object)
 	if err != nil {
-		err = converterr.SizeObject(err)
-		if errors.Is(err, converterr.ErrObjectNotFound) {
+		if errors.Is(err, constants.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
+		} else if errors.Is(err, constants.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
@@ -346,10 +335,9 @@ func (h *Handler) isObject(ctx *fasthttp.RequestCtx) {
 
 	is, err := h.core.IsObject(ctx, r.Server, r.Name)
 	if err != nil {
-		err = converterr.IsObject(err)
-		if errors.Is(err, converterr.ErrObjectNotFound) {
+		if errors.Is(err, constants.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
+		} else if errors.Is(err, constants.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
@@ -371,12 +359,11 @@ func (h *Handler) attachObject(ctx *fasthttp.RequestCtx) {
 
 	err = h.core.AttachToObject(ctx, r.Server, r.Dst, r.Src)
 	if err != nil {
-		err = converterr.AttachObject(err)
-		if errors.Is(err, converterr.ErrObjectNotFound) {
+		if errors.Is(err, constants.ErrObjectNotFound) {
 			ctx.Error(err.Error(), fasthttp.StatusGone)
-		} else if errors.Is(err, converterr.ErrUnavailable) {
+		} else if errors.Is(err, constants.ErrUnavailable) {
 			ctx.Error(err.Error(), fasthttp.StatusServiceUnavailable)
-		} else if errors.Is(err, converterr.ErrCircularAttachment) {
+		} else if errors.Is(err, constants.ErrCircularAttachment) {
 			ctx.Error(err.Error(), fasthttp.StatusForbidden)
 		} else {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
@@ -396,10 +383,10 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 
 	snum, err := h.core.Connect(r.Address, r.Available, r.Total)
 	if err != nil {
-		if errors.Is(err, servers2.ErrAlreadyExists) {
+		if errors.Is(err, constants.ErrAlreadyExists) {
 			ctx.Error(err.Error(), fasthttp.StatusConflict)
 		}
-		if errors.Is(err, servers2.ErrInternal) {
+		if errors.Is(err, constants.ErrInternal) {
 			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		}
 		return
