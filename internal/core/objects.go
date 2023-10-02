@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"itisadb/internal/constants"
-	servers "itisadb/internal/servers"
 )
 
 func (c *Core) Object(ctx context.Context, server *int32, name string) (s int32, err error) {
@@ -37,14 +36,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	var cl *servers.Server
-
-	if ok {
-		cl, ok = c.servers.GetServerByID(num)
-	} else {
-		cl, ok = c.servers.GetServer()
-	}
-
+	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return 0, constants.ErrServerNotFound
 	}
@@ -159,6 +151,19 @@ func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (st
 		return "", constants.ErrObjectNotFound
 	}
 
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return "", constants.ErrServerNotFound
+		}
+
+		objJSON, err := c.keeper.ObjectToJSON(name)
+		if err != nil {
+			return "", err
+		}
+
+		return objJSON, nil
+	}
+
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
 		return "", constants.ErrServerNotFound
@@ -202,6 +207,19 @@ func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, er
 
 	if !ok {
 		return 0, constants.ErrObjectNotFound
+	}
+
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return 0, constants.ErrServerNotFound
+		}
+
+		size, err := c.keeper.Size(name)
+		if err != nil {
+			return 0, err
+		}
+
+		return size, nil
 	}
 
 	cl, ok := c.servers.GetServerByID(num)
@@ -286,6 +304,19 @@ func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, sr
 
 	if !ok {
 		return constants.ErrObjectNotFound
+	}
+
+	if c.useMainStorage(server) {
+		if num != mainStorage {
+			return constants.ErrServerNotFound
+		}
+
+		err := c.keeper.AttachToObject(dst, src)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	cl, ok := c.servers.GetServerByID(num)

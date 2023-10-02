@@ -89,11 +89,7 @@ func (c *Core) Set(ctx context.Context, server *int32, key, val string, uniques 
 		}
 		return setToAll, nil
 	}
-
-	var cl *servers.Server
-	var ok bool
-
-	cl, ok = c.servers.GetServerByID(serverNumber)
+	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
 		return 0, constants.ErrUnknownServer
 	}

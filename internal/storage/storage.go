@@ -127,15 +127,6 @@ func (s *Storage) DeleteObject(name string) error {
 	return par.Delete(objName)
 }
 
-/*
-    Maybe we should come back to this ?
-	if !val.IsObject() {
-		return ErrSomethingExists
-	} else if val.IsEmpty() {
-		val.RecreateObject()
-	}
-*/
-
 // CreateObject ..
 func (s *Storage) CreateObject(name string) (err error) {
 	path := strings.Split(name, ".")
