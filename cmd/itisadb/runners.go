@@ -27,8 +27,10 @@ import (
 )
 
 func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.Config) {
-	h := grpchandler.New(logic)
-	grpcServer := grpc.NewServer()
+	h := grpchandler.New(logic, l)
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(h.AuthMiddleware),
+	)
 
 	lis, err := net.Listen("tcp", cfg.GRPC)
 	if err != nil {
@@ -126,7 +128,7 @@ func runWebCLI(ctx context.Context, l *zap.Logger) {
 		}
 
 		return nil
-	}, make(chan struct{}), func() {
+	}, make(chan struct{}, 1), func() {
 		l.Info("Stopping CLI HTTP server")
 		lis.Close()
 	})

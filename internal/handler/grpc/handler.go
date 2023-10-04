@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"fmt"
+	"go.uber.org/zap"
 	"itisadb/internal/domains"
 	"itisadb/internal/handler/converterr"
 	"itisadb/pkg/api"
@@ -11,12 +11,14 @@ import (
 
 type Handler struct {
 	api.UnimplementedItisaDBServer
-	core domains.Core
+	core   domains.Core
+	logger *zap.Logger
 }
 
-func New(logic domains.Core) *Handler {
-	return &Handler{core: logic}
+func New(logic domains.Core, l *zap.Logger) *Handler {
+	return &Handler{core: logic, logger: l}
 }
+
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
 	setTo, err := h.core.Set(ctx, r.Server, r.Key, r.Value, r.Uniques)
 	if err != nil {
@@ -161,13 +163,6 @@ func (h *Handler) Disconnect(ctx context.Context, r *api.DisconnectRequest) (*ap
 }
 
 func (h *Handler) Servers(ctx context.Context, r *api.ServersRequest) (*api.ServersResponse, error) {
-	t, err := getToken(ctx)
-	if err != nil {
-		return nil, converterr.ToGRPC(err)
-	}
-
-	fmt.Println(t)
-
 	servers := h.core.Servers()
 	s := strings.Join(servers, "\n")
 	return &api.ServersResponse{
