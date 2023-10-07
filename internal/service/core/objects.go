@@ -24,7 +24,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 			return mainStorage, nil
 		}
 
-		if err := c.keeper.NewObject(name); err != nil {
+		if err := c.keeper.CreateObject(name); err != nil {
 			return 0, fmt.Errorf("can't create object: %w", err)
 		}
 		c.mu.Lock()
@@ -47,9 +47,12 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 	}
 
 	num = cl.GetNumber()
-	err = c.tlogger.SaveObjectLoc(ctx, name, num)
-	if err != nil {
-		c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
+
+	if c.cfg.TransactionLoggerConfig.On {
+		err = c.tlogger.SaveObjectLoc(ctx, name, num)
+		if err != nil {
+			c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
+		}
 	}
 
 	c.objects[name] = num

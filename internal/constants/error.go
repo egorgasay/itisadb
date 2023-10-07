@@ -23,4 +23,19 @@ var (
 
 	ErrSomethingExists = errors.New("something with this name already exists")
 	ErrEmptyObjectName = errors.New("object name is empty")
+
+	/*
+	 JWT Errors
+	*/
+
+	ErrInvalidGUID   = errors.New("invalid GUID")
+	ErrSignToken     = errors.New("can't sign token")
+	ErrInvalidToken  = errors.New("invalid token")
+	ErrGenerateToken = errors.New("can't generate token")
+
+	/*
+		Session Errors
+	*/
+
+	ErrInvalidPassword = errors.New("invalid password")
 )

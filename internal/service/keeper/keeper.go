@@ -7,25 +7,25 @@ import (
 )
 
 type Keeper struct {
-	storage   domains.Storage
+	domains.Storage
 	logger    *zap.Logger
 	isTLogger bool
 	tLogger   domains.TransactionLogger
 }
 
-func New(storage domains.Storage, l *zap.Logger, tlogger domains.TransactionLogger) (*Keeper, error) {
+func New(Storage domains.Storage, l *zap.Logger, tlogger domains.TransactionLogger) (*Keeper, error) {
 
 	l = l.Named("KEEPER")
 	if tlogger == nil {
 		l.Info("Transaction logger disabled")
-		return &Keeper{storage: storage, logger: l, isTLogger: false}, nil
+		return &Keeper{Storage: Storage, logger: l, isTLogger: false}, nil
 	}
 
-	return &Keeper{storage: storage, logger: l, isTLogger: true, tLogger: tlogger}, nil
+	return &Keeper{Storage: Storage, logger: l, isTLogger: true, tLogger: tlogger}, nil
 }
 
 func (k *Keeper) Set(key, val string, uniques bool) error {
-	err := k.storage.Set(key, val, uniques)
+	err := k.Storage.Set(key, val, uniques)
 	if err != nil {
 		k.logger.Warn("Failed to set", zap.Error(err))
 		return err
@@ -40,7 +40,7 @@ func (k *Keeper) Set(key, val string, uniques bool) error {
 var ram = models.RAM{}
 
 func (k *Keeper) SetToObject(name, key, val string, uniques bool) error {
-	err := k.storage.SetToObject(name, key, val, uniques)
+	err := k.Storage.SetToObject(name, key, val, uniques)
 	if err != nil {
 		k.logger.Warn("Failed to set to object", zap.Error(err))
 		return err
@@ -52,26 +52,8 @@ func (k *Keeper) SetToObject(name, key, val string, uniques bool) error {
 	return nil
 }
 
-func (k *Keeper) Get(key string) (string, error) {
-	s, err := k.storage.Get(key)
-	if err != nil {
-		k.logger.Warn("Failed to get", zap.Error(err))
-		return "", err
-	}
-	return s, nil
-}
-
-func (k *Keeper) GetFromObject(name, key string) (string, error) {
-	s, err := k.storage.GetFromObject(name, key)
-	if err != nil {
-		k.logger.Warn("Failed to get from object", zap.Error(err))
-		return "", err
-	}
-	return s, nil
-}
-
 func (k *Keeper) ObjectToJSON(name string) (string, error) {
-	object, err := k.storage.ObjectToJSON(name)
+	object, err := k.Storage.ObjectToJSON(name)
 	if err != nil {
 		k.logger.Warn("Failed to get object", zap.Error(err))
 		return "", err
@@ -79,8 +61,8 @@ func (k *Keeper) ObjectToJSON(name string) (string, error) {
 	return object, nil
 }
 
-func (k *Keeper) NewObject(name string) error {
-	err := k.storage.CreateObject(name)
+func (k *Keeper) CreateObject(name string) error {
+	err := k.Storage.CreateObject(name)
 	if err != nil {
 		k.logger.Warn("Failed to create object", zap.Error(err))
 		return err
@@ -93,7 +75,7 @@ func (k *Keeper) NewObject(name string) error {
 }
 
 func (k *Keeper) Size(name string) (uint64, error) {
-	size, err := k.storage.Size(name)
+	size, err := k.Storage.Size(name)
 	if err != nil {
 		k.logger.Warn("Failed to get size", zap.Error(err))
 		return 0, err
@@ -102,7 +84,7 @@ func (k *Keeper) Size(name string) (uint64, error) {
 }
 
 func (k *Keeper) DeleteObject(name string) error {
-	err := k.storage.DeleteObject(name)
+	err := k.Storage.DeleteObject(name)
 	if err != nil {
 		k.logger.Warn("Failed to delete object", zap.Error(err))
 		return err
@@ -115,7 +97,7 @@ func (k *Keeper) DeleteObject(name string) error {
 }
 
 func (k *Keeper) AttachToObject(dst, src string) error {
-	err := k.storage.AttachToObject(dst, src)
+	err := k.Storage.AttachToObject(dst, src)
 	if err != nil {
 		k.logger.Warn("Failed to attach object", zap.Error(err))
 		return nil
@@ -127,17 +109,16 @@ func (k *Keeper) AttachToObject(dst, src string) error {
 	return nil
 }
 
-func (k *Keeper) DeleteIfExists(key string) models.RAM {
-	k.storage.DeleteIfExists(key)
+func (k *Keeper) DeleteIfExists(key string) {
+	k.Storage.DeleteIfExists(key)
 
 	if k.isTLogger {
 		k.tLogger.WriteDelete(key)
 	}
-	return ram.Update()
 }
 
 func (k *Keeper) Delete(key string) error {
-	err := k.storage.Delete(key)
+	err := k.Storage.Delete(key)
 	if err != nil {
 		k.logger.Warn("Failed to delete", zap.Error(err))
 		return err
@@ -150,7 +131,7 @@ func (k *Keeper) Delete(key string) error {
 }
 
 func (k *Keeper) DeleteAttr(name, key string) error {
-	err := k.storage.DeleteAttr(name, key)
+	err := k.Storage.DeleteAttr(name, key)
 	if err != nil {
 		k.logger.Warn("Failed to delete attr", zap.Error(err))
 		return err
@@ -162,16 +143,16 @@ func (k *Keeper) DeleteAttr(name, key string) error {
 	return err
 }
 
-func (k *Keeper) CreateUser(user models.User) error {
-	err := k.storage.CreateUser(user)
+func (k *Keeper) CreateUser(user models.User) (id int, err error) {
+	id, err = k.Storage.CreateUser(user)
 	if err != nil {
 		k.logger.Warn("Failed to create user", zap.Error(err))
-		return err
+		return 0, err
 	}
 
 	if k.isTLogger {
 		k.tLogger.WriteCreateUser(user)
 	}
 
-	return nil
+	return id, nil
 }

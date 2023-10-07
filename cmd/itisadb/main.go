@@ -6,8 +6,10 @@ import (
 	"itisadb/config"
 	"itisadb/internal/domains"
 	"itisadb/internal/service/core"
+	"itisadb/internal/service/generator"
 	"itisadb/internal/service/keeper"
 	"itisadb/internal/service/servers"
+	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
 	"log"
@@ -63,7 +65,10 @@ func main() {
 		lg.Fatal("failed to inizialise keeper: %v", zap.Error(err))
 	}
 
-	logic, err := core.New(ctx, cfg, lg, k, tl, s)
+	gen := generator.New(lg)
+	ses := session.New(k, gen, lg)
+
+	logic, err := core.New(ctx, cfg, lg, k, tl, s, ses)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}

@@ -151,7 +151,7 @@ func (h *Handler) Authenticate(c echo.Context) error {
 
 	token, err := h.logic.Authenticate(ctx, username, password)
 	if err != nil {
-		return err
+		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 
 	cookie = cookies.SetCookie(token)

@@ -5,27 +5,58 @@ import (
 	"itisadb/internal/models"
 )
 
-func (s *Storage) CreateUser(user models.User) error {
+func (s *Storage) CreateUser(user models.User) (id int, err error) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
-	if s.users.Has(user.Username) {
-		return constants.ErrAlreadyExists
+	s.users.Iter(func(k int, v models.User) (stop bool) {
+		if v.Username == user.Username {
+			id = k
+			return true
+		}
+		return false
+	})
+
+	if id != 0 {
+		return id, constants.ErrAlreadyExists
 	}
 
-	s.users.Put(user.Username, user)
+	id = s.users.Count()
+	s.users.Put(id, user)
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetUser(username string) (models.User, error) {
+func (s *Storage) GetUserByID(id int) (models.User, error) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
-	val, ok := s.users.Get(username)
+	val, ok := s.users.Get(id)
 	if !ok {
 		return models.User{}, constants.ErrNotFound
 	}
 
 	return val, nil
+}
+
+func (s *Storage) GetUserByName(username string) (id int, u models.User, err error) {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	find := false
+	s.users.Iter(func(k int, v models.User) (stop bool) {
+		if v.Username == username {
+			id = k
+			u = v
+			find = true
+			return true
+		}
+		return false
+	})
+
+	if !find {
+		return id, u, constants.ErrNotFound
+	}
+
+	return id, u, nil
 }

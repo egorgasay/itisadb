@@ -8,6 +8,7 @@ import (
 	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
+	"itisadb/internal/models"
 	"runtime"
 	"sync"
 )
@@ -29,11 +30,12 @@ type Core struct {
 	servers domains.Servers
 	keeper  domains.Keeper
 	tlogger domains.TransactionLogger
+	session domains.Session
 
-	balancing bool
-	tlogging  bool
-	objects   map[string]int32
-	mu        sync.RWMutex
+	objects map[string]int32
+	mu      sync.RWMutex
+
+	cfg *config.Config
 
 	pool chan struct{} // TODO: ADD TO CONFIG
 }
@@ -45,6 +47,7 @@ func New(
 	keeper domains.Keeper,
 	tlogger domains.TransactionLogger,
 	servers domains.Servers,
+	session domains.Session,
 ) (*Core, error) {
 	var err error
 
@@ -56,14 +59,19 @@ func New(
 		}
 	}
 
+	_, err = keeper.CreateUser(models.User{Username: "itisadb", Password: "itisadb"})
+	if err != nil && !errors.Is(err, constants.ErrAlreadyExists) {
+		return nil, err
+	}
+
 	return &Core{
-		servers:   servers,
-		logger:    logger,
-		objects:   objects,
-		keeper:    keeper,
-		pool:      make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
-		balancing: cfg.Balancer.On,
-		tlogging:  cfg.TransactionLoggerConfig.On,
+		servers: servers,
+		logger:  logger,
+		objects: objects,
+		keeper:  keeper,
+		pool:    make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+		cfg:     cfg,
+		session: session,
 	}, nil
 }
 
@@ -114,7 +122,7 @@ func (c *Core) Get(ctx context.Context, server *int32, key string) (val string, 
 }
 
 func (c *Core) useMainStorage(server *int32) bool {
-	return !c.balancing ||
+	return !c.cfg.TransactionLoggerConfig.On ||
 		c.servers.Len() == 0 ||
 		(server != nil && *server == mainStorage)
 }
@@ -249,7 +257,10 @@ func (c *Core) delete(ctx context.Context, server *int32, key string) error {
 }
 
 func (c *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
-	//user, err := c.keeper.GetUser(login)
+	token, err := c.session.AuthByPassword(ctx, login, password)
+	if err != nil {
+		return "", fmt.Errorf("failed to authenticate: %w", err)
+	}
 
-	return "token_for_" + login, nil
+	return token, nil
 }

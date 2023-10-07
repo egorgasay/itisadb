@@ -29,7 +29,7 @@ type objects struct {
 }
 
 type users struct {
-	*swiss.Map[string, models.User]
+	*swiss.Map[int, models.User]
 	*sync.RWMutex
 }
 
@@ -38,7 +38,7 @@ func New() (*Storage, error) {
 		mu:         &sync.RWMutex{},
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}},
 		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
-		users:      users{Map: swiss.NewMap[string, models.User](100), RWMutex: &sync.RWMutex{}},
+		users:      users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
 	return st, nil

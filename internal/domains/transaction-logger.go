@@ -29,5 +29,5 @@ type Restorer interface {
 	DeleteObject(name string) error
 	CreateObject(name string) error
 	AttachToObject(dst, src string) error
-	CreateUser(user models.User) error
+	CreateUser(user models.User) (int, error)
 }

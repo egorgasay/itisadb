@@ -21,6 +21,7 @@ type Storage interface {
 	IsObject(name string) bool
 	DeleteAttr(name string, key string) error
 
-	CreateUser(user models.User) error
-	GetUser(username string) (models.User, error)
+	CreateUser(user models.User) (id int, err error)
+	GetUserByID(id int) (models.User, error)
+	GetUserByName(username string) (int, models.User, error)
 }
