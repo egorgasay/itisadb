@@ -1,26 +1,52 @@
 package config
 
 import (
+	"flag"
+	"fmt"
 	"github.com/BurntSushi/toml"
-	balancercfg "itisadb/internal/config"
-	storagecfg "itisadb/internal/grpc-storage/config"
 )
 
-const DefaultConfigPath = "config/default-config.toml"
-
 type Config struct {
-	Storage  *storagecfg.Config
-	Balancer *balancercfg.Config
+	TransactionLoggerConfig TransactionLoggerConfig `toml:"TransactionLogger"`
+	NetworkConfig           NetworkConfig           `toml:"Network"`
+	EncryptionConfig        EncryptionConfig        `toml:"Encryption"`
+	WebAppConfig            WebAppConfig            `toml:"WebApp"`
+	Balancer                BalancerConfig          `toml:"Balancer"`
 }
 
-func New() *Config {
-	return &Config{}
+type TransactionLoggerConfig struct {
+	On              bool   `toml:"On"`
+	BackupDirectory string `toml:"BackupDirectory"`
 }
 
-func (c *Config) FromTOML(f string) error {
-	_, err := toml.DecodeFile(f, c)
+type NetworkConfig struct {
+	GRPC string `toml:"GRPC"`
+	REST string `toml:"FastHTTP"`
+}
+
+type EncryptionConfig struct {
+	On  bool   `toml:"On"`
+	Key string `toml:"Key"`
+}
+
+type WebAppConfig struct {
+	On   bool   `toml:"On"`
+	Host string `toml:"Host"`
+}
+
+type BalancerConfig struct {
+	On      bool     `toml:"On"`
+	Servers []string `toml:"Servers"`
+}
+
+func New() (*Config, error) {
+	flag.Parse()
+
+	cfg := &Config{}
+	_, err := toml.DecodeFile("config/default-config.toml", cfg)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
-	return nil
+
+	return cfg, nil
 }

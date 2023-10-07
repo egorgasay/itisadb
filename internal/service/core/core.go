@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
+	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
-	"itisadb/internal/servers"
-	"itisadb/pkg/logger"
 	"runtime"
 	"sync"
 )
@@ -24,42 +24,46 @@ const (
 )
 
 type Core struct {
+	logger *zap.Logger
+
 	servers domains.Servers
-	logger  logger.ILogger
-	storage domains.Storage
+	keeper  domains.Keeper
+	tlogger domains.TransactionLogger
 
 	balancing bool
+	tlogging  bool
 	objects   map[string]int32
 	mu        sync.RWMutex
 
-	pool   chan struct{} // TODO: ADD TO CONFIG
-	keeper *Keeper
+	pool chan struct{} // TODO: ADD TO CONFIG
 }
 
-func New(ctx context.Context, repository domains.Storage, logger logger.ILogger) (*Core, error) {
-	s, err := servers.New()
-	if err != nil {
-		return nil, err
-	}
+func New(
+	ctx context.Context,
+	cfg *config.Config,
+	logger *zap.Logger,
+	keeper domains.Keeper,
+	tlogger domains.TransactionLogger,
+	servers domains.Servers,
+) (*Core, error) {
+	var err error
 
-	objects, err := repository.RestoreObjects(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to restore objects: %w", err)
-	}
-
-	keeper, err := newKeeper(repository, logger, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create keeper: %w", err)
+	objects := make(map[string]int32)
+	if tlogger != nil {
+		objects, err = tlogger.RestoreObjects(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to restore objects: %w", err)
+		}
 	}
 
 	return &Core{
-		servers:   s,
-		storage:   repository,
+		servers:   servers,
 		logger:    logger,
 		objects:   objects,
 		keeper:    keeper,
-		pool:      make(chan struct{}, 10000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
-		balancing: false,                                       // TODO: MOVE TO CONFIG
+		pool:      make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+		balancing: cfg.Balancer.On,
+		tlogging:  cfg.TransactionLoggerConfig.On,
 	}, nil
 }
 
@@ -117,7 +121,7 @@ func (c *Core) useMainStorage(server *int32) bool {
 
 func (c *Core) get(ctx context.Context, server *int32, key string) (string, error) {
 	if c.useMainStorage(server) {
-		v, err := c.storage.Get(key)
+		v, err := c.keeper.Get(key)
 		if err != nil {
 			return v, err
 		}
@@ -213,7 +217,7 @@ func (c *Core) Delete(ctx context.Context, server *int32, key string) (err error
 
 func (c *Core) delete(ctx context.Context, server *int32, key string) error {
 	if c.useMainStorage(server) {
-		if err := c.storage.Delete(key); err != nil {
+		if err := c.keeper.Delete(key); err != nil {
 			return err
 		}
 		return nil
@@ -245,9 +249,7 @@ func (c *Core) delete(ctx context.Context, server *int32, key string) error {
 }
 
 func (c *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
-	if password == "" {
-		return "", constants.ErrWrongCredentials
-	}
+	//user, err := c.keeper.GetUser(login)
 
 	return "token_for_" + login, nil
 }

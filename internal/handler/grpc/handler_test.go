@@ -11,6 +11,7 @@ import (
 	"itisadb/internal/grpc-storage/storage"
 	mockusecase "itisadb/internal/handler/mocks/usecase"
 	servers2 "itisadb/internal/servers"
+	"itisadb/internal/service/servers"
 	api "itisadb/pkg/api/balancer"
 	"reflect"
 	"testing"
@@ -161,9 +162,9 @@ func TestHandler_Connect(t *testing.T) {
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(int32(0), servers2.ErrInternal)
+					Return(int32(0), servers.ErrInternal)
 			},
-			wantErr: status.Error(codes.Internal, servers2.ErrInternal.Error()),
+			wantErr: status.Error(codes.Internal, servers.ErrInternal.Error()),
 		},
 	}
 	for _, tt := range tests {

@@ -227,26 +227,27 @@ func (c *Commands) attach(dst string, src string) error {
 }
 
 func (c *Commands) set(key, value string, server int32, uniques bool) (string, error) {
-	response, err := c.cl.Set(context.Background(), &api.SetRequest{Key: key, Value: value, Server: &server,
-		Uniques: uniques})
-	if err != nil {
-		return "", err
-	}
+	//response, err := c.cl.Set(context.Background(), &api.SetRequest{Key: key, Value: value, Server: &server,
+	//	Uniques: uniques})
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//resp := ""
 
-	resp := ""
+	//switch response.SavedTo {
+	//case 0:
+	//	resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
+	//case dbOnly:
+	//	resp = fmt.Sprintf("status: ok, saved on the database")
+	//case setToAll:
+	//	resp = fmt.Sprintf("status: ok, saved on all servers")
+	//case AllAndDB:
+	//	resp = fmt.Sprintf("status: ok, saved on all servers and in the database")
+	//default:
+	//	resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
+	//}
 
-	switch response.SavedTo {
-	case 0:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
-	case dbOnly:
-		resp = fmt.Sprintf("status: ok, saved on the database")
-	case setToAll:
-		resp = fmt.Sprintf("status: ok, saved on all servers")
-	case AllAndDB:
-		resp = fmt.Sprintf("status: ok, saved on all servers and in the database")
-	default:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
-	}
-
-	return resp, nil
+	// return resp, nil
+	return "", nil
 }

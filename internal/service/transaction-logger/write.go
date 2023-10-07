@@ -1,5 +1,7 @@
 package transactionlogger
 
+import "itisadb/internal/models"
+
 func (t *TransactionLogger) WriteSet(key, value string) {
 	t.events <- Event{EventType: Set, Name: key, Value: value}
 }
@@ -26,4 +28,8 @@ func (t *TransactionLogger) WriteAttach(dst string, src string) {
 
 func (t *TransactionLogger) WriteDeleteAttr(name string, key string) {
 	t.events <- Event{EventType: DeleteAttr, Name: name + "." + key}
+}
+
+func (t *TransactionLogger) WriteCreateUser(user models.User) {
+	t.events <- Event{EventType: CreateUser, Name: user.Username, Value: user.Password}
 }

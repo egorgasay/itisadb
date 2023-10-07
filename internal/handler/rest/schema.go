@@ -1,4 +1,4 @@
-package schema
+package rest
 
 type SetRequest struct {
 	Server  *int32 `json:"server,omitempty"`

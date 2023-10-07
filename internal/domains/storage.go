@@ -1,6 +1,8 @@
 package domains
 
-import "context"
+import (
+	"itisadb/internal/models"
+)
 
 //go:generate mockgen -destination=mocks/storage/mock_storage.go -package=mocks . Storage
 type Storage interface {
@@ -19,6 +21,6 @@ type Storage interface {
 	IsObject(name string) bool
 	DeleteAttr(name string, key string) error
 
-	RestoreObjects(ctx context.Context) (map[string]int32, error)
-	SaveObjectLoc(ctx context.Context, object string, server int32) error
+	CreateUser(user models.User) error
+	GetUser(username string) (models.User, error)
 }

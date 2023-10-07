@@ -2,7 +2,7 @@ package domains
 
 import (
 	"context"
-	servers2 "itisadb/internal/servers"
+	servers2 "itisadb/internal/service/servers"
 )
 
 //go:generate mockgen -destination=mocks/servers/mock_servers.go -package=mocks . Servers

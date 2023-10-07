@@ -17,6 +17,7 @@ const (
 	CreateObject
 	Attach
 	DeleteObject
+	CreateUser
 )
 
 type Event struct {

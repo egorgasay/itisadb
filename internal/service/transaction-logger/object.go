@@ -1,4 +1,4 @@
-package storage
+package transactionlogger
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 )
 
 // RestoreObjects restores object names.
-func (s *Storage) RestoreObjects(ctx context.Context) (map[string]int32, error) {
+func (t *TransactionLogger) RestoreObjects(ctx context.Context) (map[string]int32, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	err := os.MkdirAll(".objects", 0755)
 	if err != nil && !os.IsExist(err) {
@@ -61,13 +61,13 @@ func (s *Storage) RestoreObjects(ctx context.Context) (map[string]int32, error) 
 }
 
 // SaveObjectLoc saves object location.
-func (s *Storage) SaveObjectLoc(ctx context.Context, object string, server int32) error {
+func (t *TransactionLogger) SaveObjectLoc(ctx context.Context, object string, server int32) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	f, err := os.OpenFile(fmt.Sprintf(".objects/%d", server), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil && !os.IsExist(err) {

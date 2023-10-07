@@ -1,4 +1,4 @@
-package storage
+package transactionlogger
 
 import (
 	"bufio"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"itisadb/internal/storage"
 	"os"
 	"reflect"
 	"sync"
@@ -44,7 +45,7 @@ func TestStorage_RestoreObjects(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Storage{
+			s := &storage.Storage{
 				mu: &sync.RWMutex{},
 			}
 			if !tt.wantErr {
@@ -104,7 +105,7 @@ func TestStorage_SaveObjects(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Storage{
+			s := &storage.Storage{
 				mu: &sync.RWMutex{},
 			}
 

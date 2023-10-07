@@ -8,7 +8,6 @@ import (
 	"github.com/valyala/fasthttp"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
-	"itisadb/internal/schema"
 	"strings"
 )
 
@@ -78,7 +77,7 @@ func dataFromRequest[T any](r *fasthttp.Request) (t T, err error) {
 }
 
 func (h *Handler) get(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.GetRequest](&ctx.Request)
+	r, err := dataFromRequest[GetRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -101,7 +100,7 @@ func (h *Handler) get(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) set(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.SetRequest](&ctx.Request)
+	r, err := dataFromRequest[SetRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -124,7 +123,7 @@ func (h *Handler) set(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) del(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DelRequest](&ctx.Request)
+	r, err := dataFromRequest[DelRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -146,7 +145,7 @@ func (h *Handler) del(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) getFromObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.GetFromObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[GetFromObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -171,7 +170,7 @@ func (h *Handler) getFromObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) setToObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.SetToObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[SetToObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -196,7 +195,7 @@ func (h *Handler) setToObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) delFromObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DelFromObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[DelFromObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -226,7 +225,7 @@ func (h *Handler) servers(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.ObjectToJSONRequest](&ctx.Request)
+	r, err := dataFromRequest[ObjectToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -258,7 +257,7 @@ func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) object(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.ObjectToJSONRequest](&ctx.Request)
+	r, err := dataFromRequest[ObjectToJSONRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -282,7 +281,7 @@ func (h *Handler) object(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) delObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DelObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[DelObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -304,7 +303,7 @@ func (h *Handler) delObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) objectSize(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.SizeObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[SizeObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -327,7 +326,7 @@ func (h *Handler) objectSize(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) isObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.IsObjectRequest](&ctx.Request)
+	r, err := dataFromRequest[IsObjectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -351,7 +350,7 @@ func (h *Handler) isObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) attachObject(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.AttachRequest](&ctx.Request)
+	r, err := dataFromRequest[AttachRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -375,7 +374,7 @@ func (h *Handler) attachObject(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.ConnectRequest](&ctx.Request)
+	r, err := dataFromRequest[ConnectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -397,7 +396,7 @@ func (h *Handler) connect(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *Handler) disconnect(ctx *fasthttp.RequestCtx) {
-	r, err := dataFromRequest[schema.DisconnectRequest](&ctx.Request)
+	r, err := dataFromRequest[DisconnectRequest](&ctx.Request)
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return

@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"google.golang.org/grpc/metadata"
+	"itisadb/config"
 	"log"
 	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/cli/commands"
-	"itisadb/internal/config"
 	"itisadb/pkg/api"
 
 	"itisadb/internal/cli/storage"
@@ -27,8 +27,8 @@ type UseCase struct {
 	tokens map[string]string
 }
 
-func New(cfg *config.Config, storage *storage.Storage) *UseCase {
-	conn, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string) *UseCase {
+	conn, err := grpc.Dial(balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}

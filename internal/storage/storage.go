@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	_ "github.com/egorgasay/dockerdb/v2"
 	"itisadb/internal/constants"
+	"itisadb/internal/models"
 	"strings"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 type Storage struct {
 	ramStorage ramStorage
 	objects    objects
+	users      users
 	mu         *sync.RWMutex
 }
 
@@ -26,11 +28,17 @@ type objects struct {
 	*sync.RWMutex
 }
 
+type users struct {
+	*swiss.Map[string, models.User]
+	*sync.RWMutex
+}
+
 func New() (*Storage, error) {
 	st := &Storage{
 		mu:         &sync.RWMutex{},
 		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}},
 		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
+		users:      users{Map: swiss.NewMap[string, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
 	return st, nil

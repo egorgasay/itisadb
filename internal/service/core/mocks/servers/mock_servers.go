@@ -6,7 +6,7 @@ package mocks
 
 import (
 	context "context"
-	"itisadb/internal/servers"
+	"itisadb/internal/service/servers"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

@@ -6,11 +6,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	serversmock "itisadb/internal/core/mocks/servers"
 	servers2 "itisadb/internal/servers"
+	serversmock "itisadb/internal/service/core/mocks/servers"
+	"itisadb/internal/service/servers"
 	repo "itisadb/internal/storage"
 	"itisadb/pkg/api/storage"
-	"itisadb/pkg/api/storage/gomocks"
 	"itisadb/pkg/logger"
 	"reflect"
 	"sync"
@@ -22,7 +22,7 @@ type gStorageBehavior func(cl *storagemock.MockStorageClient)
 
 func TestUseCase_AttachToObject(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -103,7 +103,7 @@ func TestUseCase_AttachToObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -128,7 +128,7 @@ func TestUseCase_AttachToObject(t *testing.T) {
 
 func TestUseCase_DeleteAttr(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -209,7 +209,7 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -233,7 +233,7 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 
 func TestUseCase_DeleteObject(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -310,7 +310,7 @@ func TestUseCase_DeleteObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -333,7 +333,7 @@ func TestUseCase_DeleteObject(t *testing.T) {
 
 func TestUseCase_GetFromObject(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -426,7 +426,7 @@ func TestUseCase_GetFromObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -455,7 +455,7 @@ func TestUseCase_GetFromObject(t *testing.T) {
 
 func TestUseCase_ObjectToJSON(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -539,7 +539,7 @@ func TestUseCase_ObjectToJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -568,7 +568,7 @@ func TestUseCase_ObjectToJSON(t *testing.T) {
 
 func TestUseCase_Object(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -642,7 +642,7 @@ func TestUseCase_Object(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -671,7 +671,7 @@ func TestUseCase_Object(t *testing.T) {
 
 func TestUseCase_IsObject(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -713,7 +713,7 @@ func TestUseCase_IsObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 			s := serversmock.NewMockIServers(c)
 
 			uc := &Core{
@@ -739,7 +739,7 @@ func TestUseCase_IsObject(t *testing.T) {
 
 func TestUseCase_SetToObject(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -835,7 +835,7 @@ func TestUseCase_SetToObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -864,7 +864,7 @@ func TestUseCase_SetToObject(t *testing.T) {
 
 func TestUseCase_Size(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -945,7 +945,7 @@ func TestUseCase_Size(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)

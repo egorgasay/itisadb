@@ -2,21 +2,14 @@ package transactionlogger
 
 import (
 	"fmt"
+	"itisadb/internal/domains"
+	"itisadb/internal/models"
 	"strings"
 )
 
-type restorer interface {
-	Set(key, value string, uniques bool) error
-	Delete(key string) error
-	SetToObject(name, key, value string, uniques bool) error
-	DeleteObject(name string) error
-	CreateObject(name string) error
-	AttachToObject(dst, src string) error
-}
-
 var ErrCorruptedConfigFile = fmt.Errorf("corrupted config file")
 
-func (t *TransactionLogger) handleEvents(r restorer, events <-chan Event, errs <-chan error) error {
+func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event, errs <-chan error) error {
 	e, ok := Event{}, true
 	var err error
 
@@ -49,13 +42,19 @@ func (t *TransactionLogger) handleEvents(r restorer, events <-chan Event, errs <
 			case DeleteObject:
 				r.DeleteObject(e.Name)
 				// TODO: case Detach:
+			case CreateUser:
+				r.CreateUser(models.User{
+					Username: e.Name,
+					Password: e.Value,
+				})
+
 			}
 		}
 	}
 	return nil
 }
 
-func (t *TransactionLogger) Restore(r restorer) error {
+func (t *TransactionLogger) Restore(r domains.Restorer) error {
 	events, errs := t.readEvents()
 	return t.handleEvents(r, events, errs)
 }

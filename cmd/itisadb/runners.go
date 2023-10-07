@@ -12,13 +12,13 @@ import (
 	"google.golang.org/grpc"
 	"html/template"
 	"io"
+	"itisadb/config"
 	"itisadb/internal/cli/handler"
 	"itisadb/internal/cli/storage"
 	"itisadb/internal/cli/usecase"
-	"itisadb/internal/config"
-	"itisadb/internal/core"
 	grpchandler "itisadb/internal/handler/grpc"
 	resthandler "itisadb/internal/handler/rest"
+	"itisadb/internal/service/core"
 	"itisadb/pkg"
 	"itisadb/pkg/api"
 	"itisadb/pkg/logger"
@@ -26,7 +26,7 @@ import (
 	"net/http"
 )
 
-func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.Config) {
+func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg config.NetworkConfig) {
 	h := grpchandler.New(logic, l)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(h.AuthMiddleware),
@@ -56,7 +56,7 @@ func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.C
 	}
 }
 
-func runREST(ctx context.Context, l *zap.Logger, logic *core.Core, cfg *config.Config) {
+func runREST(ctx context.Context, l *zap.Logger, logic *core.Core, cfg config.NetworkConfig) {
 	handler := resthandler.New(logic)
 	lis, err := net.Listen("tcp", cfg.REST)
 	if err != nil {
@@ -95,10 +95,9 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func runWebCLI(ctx context.Context, l *zap.Logger) {
-	cfg := config.New()
+func runWebCLI(ctx context.Context, cfg config.WebAppConfig, l *zap.Logger, balancer string) {
 	store := storage.New()
-	logic := usecase.New(cfg, store)
+	logic := usecase.New(cfg, store, balancer)
 
 	e := echo.New()
 
@@ -114,14 +113,14 @@ func runWebCLI(ctx context.Context, l *zap.Logger) {
 
 	//router.Use(gzip.Gzip(gzip.BestSpeed))
 
-	lis, err := net.Listen("tcp", cfg.WebApp)
+	lis, err := net.Listen("tcp", cfg.Host)
 	if err != nil {
 		l.Fatal("failed to listen: %v", zap.Error(err))
 		return
 	}
 
 	err = pkg.WithContext(ctx, func() error {
-		l.Info("Starting CLI HTTP server", zap.String("address", cfg.WebApp))
+		l.Info("Starting CLI HTTP server", zap.String("address", cfg.Host))
 		err = http.Serve(lis, e)
 		if err != nil {
 			return fmt.Errorf("http.Serve: %w", err)

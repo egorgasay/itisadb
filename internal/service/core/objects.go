@@ -47,7 +47,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 	}
 
 	num = cl.GetNumber()
-	err = c.storage.SaveObjectLoc(ctx, name, num)
+	err = c.tlogger.SaveObjectLoc(ctx, name, num)
 	if err != nil {
 		c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
 	}

@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"go.uber.org/zap"
-	"itisadb/internal/config"
-	"itisadb/internal/core"
+	"itisadb/config"
+	"itisadb/internal/domains"
+	"itisadb/internal/service/core"
+	"itisadb/internal/service/keeper"
+	"itisadb/internal/service/servers"
+	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
-	"itisadb/pkg/logger"
 	"log"
 	"os"
 	"os/signal"
@@ -20,24 +23,56 @@ func main() {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
 
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		lg.Fatal("failed to inizialise config: %v", zap.Error(err))
+	}
+
 	store, err := storage.New()
 	if err != nil {
 		lg.Fatal("failed to inizialise storage: %v", zap.String("error", err.Error()))
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	s, err := servers.New()
+	if err != nil {
+		lg.Fatal("failed to inizialise servers: %v", zap.Error(err))
+	}
 
-	logic, err := core.New(ctx, store, logger.New(lg))
+	var tl domains.TransactionLogger
+	if cfg.TransactionLoggerConfig.On {
+		tl, err = transactionlogger.New()
+		if err != nil {
+			lg.Fatal("failed to inizialise transaction logger: %v", zap.Error(err))
+		}
+
+		lg.Info("Transaction logger enabled")
+
+		lg.Info("Starting recovery from transaction logger")
+		if err = tl.Restore(store); err != nil {
+			lg.Fatal("failed to restore transaction logger: %v", zap.Error(err))
+		}
+		lg.Info("Transaction logger recovery completed")
+
+		tl.Run()
+		lg.Info("Transaction logger started")
+	}
+
+	k, err := keeper.New(store, lg, tl)
+	if err != nil {
+		lg.Fatal("failed to inizialise keeper: %v", zap.Error(err))
+	}
+
+	logic, err := core.New(ctx, cfg, lg, k, tl, s)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}
 
-	go runGRPC(ctx, lg, logic, cfg)
-	go runWebCLI(ctx, lg)
+	go runGRPC(ctx, lg, logic, cfg.NetworkConfig)
+	go runWebCLI(ctx, cfg.WebAppConfig, lg, cfg.NetworkConfig.GRPC)
 
-	if cfg.REST != "" {
-		go runREST(ctx, lg, logic, cfg)
+	if cfg.NetworkConfig.REST != "" {
+		go runREST(ctx, lg, logic, cfg.NetworkConfig)
 	}
 
 	quit := make(chan os.Signal, 1)

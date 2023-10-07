@@ -7,8 +7,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	serversmock "itisadb/internal/core/mocks/servers"
 	servers2 "itisadb/internal/servers"
+	serversmock "itisadb/internal/service/core/mocks/servers"
+	"itisadb/internal/service/servers"
 	gstorage "itisadb/pkg/api/storage"
 	storagemock "itisadb/pkg/api/storage/gomocks"
 	"itisadb/pkg/logger"
@@ -18,7 +19,7 @@ import (
 
 func TestUseCase_Connect(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -76,7 +77,7 @@ func TestUseCase_Connect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -105,7 +106,7 @@ func TestUseCase_Connect(t *testing.T) {
 
 func TestUseCase_Delete(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 	type args struct {
 		ctx context.Context
@@ -176,7 +177,7 @@ func TestUseCase_Delete(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
 
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -200,7 +201,7 @@ func TestUseCase_Delete(t *testing.T) {
 
 func TestUseCase_Disconnect(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -232,7 +233,7 @@ func TestUseCase_Disconnect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -257,7 +258,7 @@ func TestUseCase_Disconnect(t *testing.T) {
 
 func TestUseCase_Get(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 
 	type args struct {
@@ -340,7 +341,7 @@ func TestUseCase_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			s := serversmock.NewMockIServers(c)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			tt.grpcStorageBehavior(sc)
 			tt.serversBehavior(s)
@@ -369,7 +370,7 @@ func TestUseCase_Get(t *testing.T) {
 
 func TestUseCase_Set(t *testing.T) {
 	srv := struct {
-		serv *servers2.Server
+		serv *servers.Server
 	}{}
 	type args struct {
 		ctx          context.Context
@@ -435,7 +436,7 @@ func TestUseCase_Set(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			s := serversmock.NewMockIServers(c)
-			srv.serv = servers2.NewServer(sc, 1)
+			srv.serv = servers.NewServer(sc, 1)
 
 			tt.grpcStorageBehavior(sc)
 			tt.serversBehavior(s)

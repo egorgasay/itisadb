@@ -1,15 +1,46 @@
-[Storage]
+# Network settings.
+[Network]
 
-# Storage will save transactions to disk in case of a failure.
-TransactionLoggerDir = true
+# Address of the gRPC server.
+# Example: ":8888"
+GRPC = ":8888"
 
-# Balancer IP:PORT
-Balancer = "127.0.0.1:8888"
+# Address of the REST server. If empty, no REST server is started.
+# Example: ":6071"
+FastHTTP = ""
 
+# Mechanism for balancing within servers.
 [Balancer]
+On = false
 
-# Balancer IP:PORT
-Address = ":8888"
+# List of servers to balance.
+# Example:
+# Servers = [
+# 	"127.0.0.1:8889",
+# 	"127.0.0.1:8890",
+# ]
+Servers = []
 
-# Balancer RPS Limit
-MaxRPS = 35000
+# Mechanism for transaction logging.
+[TransactionLogger]
+On = false
+
+# Directory where transaction logs are stored.
+# Example: "transaction-logger"
+BackupDirectory = ""
+
+# Encryption parameters.
+[Encryption]
+On = false
+
+# Key that is used to encrypt data.
+# Example: "jdvbe3j1hve11jhv2js1vdvuvs1yud"
+Key = "CHANGE ME"
+
+# Web application settings.
+[WebApp]
+On = true
+
+# Host of the web application.
+# Example: "127.0.0.1:8080"
+Host = ":8080"
