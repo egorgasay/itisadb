@@ -23,7 +23,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 		case e, ok = <-events:
 			switch e.EventType {
 			case Set:
-				r.Set(e.Name, e.Value, false)
+				r.Set(e.Name, e.Value, models.SetOptions{})
 			case Delete:
 				r.Delete(e.Name)
 			case SetToObject:
@@ -32,11 +32,11 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 				key, value := split[len(split)-1], e.Value
-				r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, false)
+				r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, models.SetToObjectOptions{})
 			case DeleteAttr:
 				r.Delete(e.Name)
 			case CreateObject:
-				r.CreateObject(e.Name)
+				r.CreateObject(e.Name, models.ObjectOptions{})
 			case Attach:
 				r.AttachToObject(e.Name, e.Value)
 			case DeleteObject:

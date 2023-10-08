@@ -34,9 +34,11 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/maphash v0.0.0-20221220182448-74e1e1ea1577 // indirect
+	github.com/egorgasay/itisadb-go-sdk v0.8.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/labstack/echo/v4 v4.1.10 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect

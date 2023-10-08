@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 	"itisadb/internal/constants"
+	"itisadb/internal/models"
 )
 
-func (c *Core) Object(ctx context.Context, server *int32, name string) (s int32, err error) {
+func (c *Core) Object(ctx context.Context, userID uint, name string, opts models.ObjectOptions) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
-		s, err = c.object(ctx, server, name)
+		s, err = c.object(ctx, userID, name, opts)
 		return err
 	})
 }
 
-func (c *Core) object(ctx context.Context, server *int32, name string) (int32, error) {
+func (c *Core) object(ctx context.Context, userID uint, name string, opts models.ObjectOptions) (int32, error) {
 	num, ok := c.objects[name]
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if ok {
 			if num != mainStorage {
 				return 0, constants.ErrServerNotFound
@@ -24,9 +25,14 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 			return mainStorage, nil
 		}
 
-		if err := c.keeper.CreateObject(name); err != nil {
+		if err := c.storage.CreateObject(name, opts); err != nil {
 			return 0, fmt.Errorf("can't create object: %w", err)
 		}
+
+		if c.cfg.TransactionLoggerConfig.On {
+			c.tlogger.WriteCreateObject(name)
+		}
+
 		c.mu.Lock()
 		defer c.mu.Unlock()
 		c.objects[name] = mainStorage
@@ -41,7 +47,7 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 		return 0, constants.ErrServerNotFound
 	}
 
-	err := cl.NewObject(ctx, name)
+	err := cl.NewObject(ctx, name, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -59,24 +65,24 @@ func (c *Core) object(ctx context.Context, server *int32, name string) (int32, e
 	return num, nil
 }
 
-func (c *Core) GetFromObject(ctx context.Context, server *int32, object, key string) (v string, err error) {
+func (c *Core) GetFromObject(ctx context.Context, userID uint, object, key string, opts models.GetFromObjectOptions) (v string, err error) {
 	return v, c.withContext(ctx, func() error {
-		v, err = c.getFromObject(ctx, server, object, key)
+		v, err = c.getFromObject(ctx, userID, object, key, opts)
 		return err
 	})
 }
 
-func (c *Core) getFromObject(ctx context.Context, server *int32, object, key string) (string, error) {
+func (c *Core) getFromObject(ctx context.Context, userID uint, object, key string, opts models.GetFromObjectOptions) (string, error) {
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if ok && num != mainStorage {
 			return "", constants.ErrServerNotFound
 		}
 
-		v, err := c.keeper.GetFromObject(object, key)
+		v, err := c.storage.GetFromObject(object, key)
 		if err != nil {
 			return "", err
 		}
@@ -84,14 +90,14 @@ func (c *Core) getFromObject(ctx context.Context, server *int32, object, key str
 		return v, nil
 	}
 
-	serverNumber := toServerNumber(server)
+	serverNumber := toServerNumber(opts.Server)
 
 	cl, ok := c.servers.GetServerByID(serverNumber)
 	if !ok || cl == nil {
 		return "", constants.ErrServerNotFound
 	}
 
-	resp, err := cl.GetFromObject(ctx, object, key)
+	resp, err := cl.GetFromObject(ctx, object, key, opts)
 	if err != nil {
 		return "", err
 	}
@@ -99,14 +105,14 @@ func (c *Core) getFromObject(ctx context.Context, server *int32, object, key str
 	return resp.Value, nil
 }
 
-func (c *Core) SetToObject(ctx context.Context, server *int32, object, key, val string, uniques bool) (s int32, err error) {
+func (c *Core) SetToObject(ctx context.Context, userID uint, object, key, val string, opts models.SetToObjectOptions) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
-		s, err = c.setToObject(ctx, server, object, key, val, uniques)
+		s, err = c.setToObject(ctx, userID, object, key, val, opts)
 		return err
 	})
 }
 
-func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val string, uniques bool) (int32, error) {
+func (c *Core) setToObject(ctx context.Context, userID uint, object, key, val string, opts models.SetToObjectOptions) (int32, error) {
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
@@ -115,14 +121,18 @@ func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val 
 		return 0, constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return 0, constants.ErrServerNotFound
 		}
 
-		err := c.keeper.SetToObject(object, key, val, uniques)
+		err := c.storage.SetToObject(object, key, val, opts)
 		if err != nil {
 			return 0, err
+		}
+
+		if c.cfg.TransactionLoggerConfig.On {
+			c.tlogger.WriteSetToObject(object, key, val)
 		}
 
 		return mainStorage, nil
@@ -133,7 +143,9 @@ func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val 
 		return 0, constants.ErrServerNotFound
 	}
 
-	err := cl.SetToObject(ctx, object, key, val, uniques)
+	opts.Server = nil
+
+	err := cl.SetToObject(ctx, object, key, val, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -141,7 +153,7 @@ func (c *Core) setToObject(ctx context.Context, server *int32, object, key, val 
 	return num, nil
 }
 
-func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (string, error) {
+func (c *Core) ObjectToJSON(ctx context.Context, userID uint, name string, opts models.ObjectToJSONOptions) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -154,12 +166,12 @@ func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (st
 		return "", constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return "", constants.ErrServerNotFound
 		}
 
-		objJSON, err := c.keeper.ObjectToJSON(name)
+		objJSON, err := c.storage.ObjectToJSON(name)
 		if err != nil {
 			return "", err
 		}
@@ -172,7 +184,7 @@ func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (st
 		return "", constants.ErrServerNotFound
 	}
 
-	res, err := cl.ObjectToJSON(ctx, name)
+	res, err := cl.ObjectToJSON(ctx, name, opts)
 	if err != nil {
 		return "", err
 	}
@@ -180,7 +192,7 @@ func (c *Core) ObjectToJSON(ctx context.Context, server *int32, name string) (st
 	return res.Object, nil
 }
 
-func (c *Core) IsObject(ctx context.Context, server *int32, name string) (bool, error) {
+func (c *Core) IsObject(ctx context.Context, userID uint, name string, opts models.IsObjectOptions) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
@@ -192,14 +204,14 @@ func (c *Core) IsObject(ctx context.Context, server *int32, name string) (bool, 
 	return ok, nil
 }
 
-func (c *Core) Size(ctx context.Context, server *int32, name string) (size uint64, err error) {
+func (c *Core) Size(ctx context.Context, userID uint, name string, opts models.SizeOptions) (size uint64, err error) {
 	return size, c.withContext(ctx, func() error {
-		size, err = c.size(ctx, server, name)
+		size, err = c.size(ctx, userID, name, opts)
 		return err
 	})
 }
 
-func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, error) {
+func (c *Core) size(ctx context.Context, userID uint, name string, opts models.SizeOptions) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -212,12 +224,12 @@ func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, er
 		return 0, constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return 0, constants.ErrServerNotFound
 		}
 
-		size, err := c.keeper.Size(name)
+		size, err := c.storage.Size(name)
 		if err != nil {
 			return 0, err
 		}
@@ -230,7 +242,7 @@ func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, er
 		return 0, constants.ErrServerNotFound
 	}
 
-	res, err := cl.Size(ctx, name)
+	res, err := cl.Size(ctx, name, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -238,13 +250,13 @@ func (c *Core) size(ctx context.Context, server *int32, name string) (uint64, er
 	return res.Size, nil
 }
 
-func (c *Core) DeleteObject(ctx context.Context, server *int32, name string) error {
+func (c *Core) DeleteObject(ctx context.Context, userID uint, name string, opts models.DeleteObjectOptions) error {
 	return c.withContext(ctx, func() error {
-		return c.deleteObject(ctx, server, name)
+		return c.deleteObject(ctx, userID, name, opts)
 	})
 }
 
-func (c *Core) deleteObject(ctx context.Context, server *int32, name string) error {
+func (c *Core) deleteObject(ctx context.Context, userID uint, name string, opts models.DeleteObjectOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -257,14 +269,18 @@ func (c *Core) deleteObject(ctx context.Context, server *int32, name string) err
 		return constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.keeper.DeleteObject(name)
+		err := c.storage.DeleteObject(name)
 		if err != nil {
 			return err
+		}
+
+		if c.cfg.TransactionLoggerConfig.On {
+			c.tlogger.WriteDeleteObject(name)
 		}
 
 		c.mu.Lock()
@@ -279,7 +295,7 @@ func (c *Core) deleteObject(ctx context.Context, server *int32, name string) err
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.DeleteObject(ctx, name)
+	err := cl.DeleteObject(ctx, name, opts)
 	if err != nil {
 		return err
 	}
@@ -291,13 +307,13 @@ func (c *Core) deleteObject(ctx context.Context, server *int32, name string) err
 	return nil
 }
 
-func (c *Core) AttachToObject(ctx context.Context, server *int32, dst string, src string) error {
+func (c *Core) AttachToObject(ctx context.Context, userID uint, dst, src string, opts models.AttachToObjectOptions) error {
 	return c.withContext(ctx, func() error {
-		return c.attachToObject(ctx, server, dst, src)
+		return c.attachToObject(ctx, userID, dst, src, opts)
 	})
 }
 
-func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, src string) error {
+func (c *Core) attachToObject(ctx context.Context, userID uint, dst, src string, opts models.AttachToObjectOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -309,14 +325,18 @@ func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, sr
 		return constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.keeper.AttachToObject(dst, src)
+		err := c.storage.AttachToObject(dst, src)
 		if err != nil {
 			return err
+		}
+
+		if c.cfg.TransactionLoggerConfig.On {
+			c.tlogger.WriteAttach(dst, src)
 		}
 
 		return nil
@@ -327,20 +347,20 @@ func (c *Core) attachToObject(ctx context.Context, server *int32, dst string, sr
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.AttachToObject(ctx, dst, src)
+	err := cl.AttachToObject(ctx, dst, src, opts)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Core) DeleteAttr(ctx context.Context, server *int32, attr string, object string) error {
+func (c *Core) DeleteAttr(ctx context.Context, userID uint, key string, object string, opts models.DeleteAttrOptions) error {
 	return c.withContext(ctx, func() error {
-		return c.deleteAttr(ctx, server, attr, object)
+		return c.deleteAttr(ctx, userID, key, object, opts)
 	})
 }
 
-func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, object string) error {
+func (c *Core) deleteAttr(ctx context.Context, userID uint, key, object string, opts models.DeleteAttrOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -353,14 +373,18 @@ func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, objec
 		return constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(server) {
+	if c.useMainStorage(opts.Server) {
 		if num != mainStorage {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.keeper.DeleteAttr(object, attr)
+		err := c.storage.DeleteAttr(object, key)
 		if err != nil {
 			return err
+		}
+
+		if c.cfg.TransactionLoggerConfig.On {
+			c.tlogger.WriteDeleteAttr(object, key)
 		}
 
 		return nil
@@ -371,7 +395,7 @@ func (c *Core) deleteAttr(ctx context.Context, server *int32, attr string, objec
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.DeleteAttr(ctx, attr, object)
+	err := cl.DeleteAttr(ctx, key, object, opts)
 	if err != nil {
 		return err
 	}

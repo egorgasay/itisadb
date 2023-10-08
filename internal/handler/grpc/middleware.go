@@ -15,5 +15,7 @@ func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grp
 		return nil, err
 	}
 
+	// TODO: check token
+
 	return handler(ctx, req)
 }

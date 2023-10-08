@@ -20,6 +20,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Level int32
+
+const (
+	Level_DEFAULT    Level = 0
+	Level_RESTRICTED Level = 1
+	Level_SECRET     Level = 2
+)
+
+// Enum value maps for Level.
+var (
+	Level_name = map[int32]string{
+		0: "DEFAULT",
+		1: "RESTRICTED",
+		2: "SECRET",
+	}
+	Level_value = map[string]int32{
+		"DEFAULT":    0,
+		"RESTRICTED": 1,
+		"SECRET":     2,
+	}
+)
+
+func (x Level) Enum() *Level {
+	p := new(Level)
+	*p = x
+	return p
+}
+
+func (x Level) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Level) Descriptor() protoreflect.EnumDescriptor {
+	return file_itisadb_proto_enumTypes[0].Descriptor()
+}
+
+func (Level) Type() protoreflect.EnumType {
+	return &file_itisadb_proto_enumTypes[0]
+}
+
+func (x Level) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Level.Descriptor instead.
+func (Level) EnumDescriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{0}
+}
+
 type Ram struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -75,21 +124,83 @@ func (x *Ram) GetAvailable() uint64 {
 	return 0
 }
 
+type User struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Login    string `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Level    uint32 `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`
+}
+
+func (x *User) Reset() {
+	*x = User{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *User) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*User) ProtoMessage() {}
+
+func (x *User) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use User.ProtoReflect.Descriptor instead.
+func (*User) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *User) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *User) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *User) GetLevel() uint32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
 type SetRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server  *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key     string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Value   string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	Uniques bool   `protobuf:"varint,4,opt,name=uniques,proto3" json:"uniques,omitempty"`
+	Key     string              `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value   string              `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Options *SetRequest_Options `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *SetRequest) Reset() {
 	*x = SetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[1]
+		mi := &file_itisadb_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -102,7 +213,7 @@ func (x *SetRequest) String() string {
 func (*SetRequest) ProtoMessage() {}
 
 func (x *SetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[1]
+	mi := &file_itisadb_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,14 +226,7 @@ func (x *SetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetRequest.ProtoReflect.Descriptor instead.
 func (*SetRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *SetRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SetRequest) GetKey() string {
@@ -139,11 +243,11 @@ func (x *SetRequest) GetValue() string {
 	return ""
 }
 
-func (x *SetRequest) GetUniques() bool {
+func (x *SetRequest) GetOptions() *SetRequest_Options {
 	if x != nil {
-		return x.Uniques
+		return x.Options
 	}
-	return false
+	return nil
 }
 
 type NewObjectRequest struct {
@@ -151,14 +255,14 @@ type NewObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name    string                    `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Options *NewObjectRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *NewObjectRequest) Reset() {
 	*x = NewObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[2]
+		mi := &file_itisadb_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -171,7 +275,7 @@ func (x *NewObjectRequest) String() string {
 func (*NewObjectRequest) ProtoMessage() {}
 
 func (x *NewObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[2]
+	mi := &file_itisadb_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,14 +288,7 @@ func (x *NewObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NewObjectRequest.ProtoReflect.Descriptor instead.
 func (*NewObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *NewObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *NewObjectRequest) GetName() string {
@@ -201,19 +298,26 @@ func (x *NewObjectRequest) GetName() string {
 	return ""
 }
 
+func (x *NewObjectRequest) GetOptions() *NewObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type ObjectSizeRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name    string                     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Options *ObjectSizeRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *ObjectSizeRequest) Reset() {
 	*x = ObjectSizeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[3]
+		mi := &file_itisadb_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -226,7 +330,7 @@ func (x *ObjectSizeRequest) String() string {
 func (*ObjectSizeRequest) ProtoMessage() {}
 
 func (x *ObjectSizeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[3]
+	mi := &file_itisadb_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,14 +343,7 @@ func (x *ObjectSizeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectSizeRequest.ProtoReflect.Descriptor instead.
 func (*ObjectSizeRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ObjectSizeRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ObjectSizeRequest) GetName() string {
@@ -256,19 +353,26 @@ func (x *ObjectSizeRequest) GetName() string {
 	return ""
 }
 
+func (x *ObjectSizeRequest) GetOptions() *ObjectSizeRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type ObjectToJSONRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name    string                       `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Options *ObjectToJSONRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *ObjectToJSONRequest) Reset() {
 	*x = ObjectToJSONRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[4]
+		mi := &file_itisadb_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -281,7 +385,7 @@ func (x *ObjectToJSONRequest) String() string {
 func (*ObjectToJSONRequest) ProtoMessage() {}
 
 func (x *ObjectToJSONRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[4]
+	mi := &file_itisadb_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -294,14 +398,7 @@ func (x *ObjectToJSONRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectToJSONRequest.ProtoReflect.Descriptor instead.
 func (*ObjectToJSONRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *ObjectToJSONRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ObjectToJSONRequest) GetName() string {
@@ -311,19 +408,26 @@ func (x *ObjectToJSONRequest) GetName() string {
 	return ""
 }
 
+func (x *ObjectToJSONRequest) GetOptions() *ObjectToJSONRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type DeleteRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Key     string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Options *DeleteRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[5]
+		mi := &file_itisadb_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -336,7 +440,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[5]
+	mi := &file_itisadb_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -349,14 +453,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *DeleteRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteRequest) GetKey() string {
@@ -366,19 +463,26 @@ func (x *DeleteRequest) GetKey() string {
 	return ""
 }
 
+func (x *DeleteRequest) GetOptions() *DeleteRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type DeleteObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Object string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	Object  string                       `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
+	Options *DeleteObjectRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *DeleteObjectRequest) Reset() {
 	*x = DeleteObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[6]
+		mi := &file_itisadb_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -391,7 +495,7 @@ func (x *DeleteObjectRequest) String() string {
 func (*DeleteObjectRequest) ProtoMessage() {}
 
 func (x *DeleteObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[6]
+	mi := &file_itisadb_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -404,14 +508,7 @@ func (x *DeleteObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteObjectRequest.ProtoReflect.Descriptor instead.
 func (*DeleteObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *DeleteObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteObjectRequest) GetObject() string {
@@ -421,20 +518,27 @@ func (x *DeleteObjectRequest) GetObject() string {
 	return ""
 }
 
+func (x *DeleteObjectRequest) GetOptions() *DeleteObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type GetToObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Name   string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Key     string                      `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name    string                      `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Options *GetToObjectRequest_Options `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *GetToObjectRequest) Reset() {
 	*x = GetToObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[7]
+		mi := &file_itisadb_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -447,7 +551,7 @@ func (x *GetToObjectRequest) String() string {
 func (*GetToObjectRequest) ProtoMessage() {}
 
 func (x *GetToObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[7]
+	mi := &file_itisadb_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -460,14 +564,7 @@ func (x *GetToObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetToObjectRequest.ProtoReflect.Descriptor instead.
 func (*GetToObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *GetToObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetToObjectRequest) GetKey() string {
@@ -484,22 +581,28 @@ func (x *GetToObjectRequest) GetName() string {
 	return ""
 }
 
+func (x *GetToObjectRequest) GetOptions() *GetToObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type SetToObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server  *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key     string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Value   string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	Uniques bool   `protobuf:"varint,4,opt,name=uniques,proto3" json:"uniques,omitempty"`
-	Object  string `protobuf:"bytes,5,opt,name=object,proto3" json:"object,omitempty"`
+	Key     string                      `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value   string                      `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Object  string                      `protobuf:"bytes,3,opt,name=object,proto3" json:"object,omitempty"`
+	Options *SetToObjectRequest_Options `protobuf:"bytes,4,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *SetToObjectRequest) Reset() {
 	*x = SetToObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[8]
+		mi := &file_itisadb_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -512,7 +615,7 @@ func (x *SetToObjectRequest) String() string {
 func (*SetToObjectRequest) ProtoMessage() {}
 
 func (x *SetToObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[8]
+	mi := &file_itisadb_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,14 +628,7 @@ func (x *SetToObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetToObjectRequest.ProtoReflect.Descriptor instead.
 func (*SetToObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *SetToObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SetToObjectRequest) GetKey() string {
@@ -549,13 +645,6 @@ func (x *SetToObjectRequest) GetValue() string {
 	return ""
 }
 
-func (x *SetToObjectRequest) GetUniques() bool {
-	if x != nil {
-		return x.Uniques
-	}
-	return false
-}
-
 func (x *SetToObjectRequest) GetObject() string {
 	if x != nil {
 		return x.Object
@@ -563,20 +652,27 @@ func (x *SetToObjectRequest) GetObject() string {
 	return ""
 }
 
+func (x *SetToObjectRequest) GetOptions() *SetToObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type AttachToObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Dst    string `protobuf:"bytes,2,opt,name=dst,proto3" json:"dst,omitempty"`
-	Src    string `protobuf:"bytes,3,opt,name=src,proto3" json:"src,omitempty"`
+	Dst     string                         `protobuf:"bytes,1,opt,name=dst,proto3" json:"dst,omitempty"`
+	Src     string                         `protobuf:"bytes,2,opt,name=src,proto3" json:"src,omitempty"`
+	Options *AttachToObjectRequest_Options `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *AttachToObjectRequest) Reset() {
 	*x = AttachToObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[9]
+		mi := &file_itisadb_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -589,7 +685,7 @@ func (x *AttachToObjectRequest) String() string {
 func (*AttachToObjectRequest) ProtoMessage() {}
 
 func (x *AttachToObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[9]
+	mi := &file_itisadb_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -602,14 +698,7 @@ func (x *AttachToObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachToObjectRequest.ProtoReflect.Descriptor instead.
 func (*AttachToObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *AttachToObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *AttachToObjectRequest) GetDst() string {
@@ -626,19 +715,26 @@ func (x *AttachToObjectRequest) GetSrc() string {
 	return ""
 }
 
+func (x *AttachToObjectRequest) GetOptions() *AttachToObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type GetRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Key     string              `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Options *GetRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[10]
+		mi := &file_itisadb_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -651,7 +747,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[10]
+	mi := &file_itisadb_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,14 +760,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *GetRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetRequest) GetKey() string {
@@ -681,20 +770,27 @@ func (x *GetRequest) GetKey() string {
 	return ""
 }
 
+func (x *GetRequest) GetOptions() *GetRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type DeleteAttrRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Object string `protobuf:"bytes,3,opt,name=object,proto3" json:"object,omitempty"`
+	Key     string                     `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Object  string                     `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	Options *DeleteAttrRequest_Options `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *DeleteAttrRequest) Reset() {
 	*x = DeleteAttrRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[11]
+		mi := &file_itisadb_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -707,7 +803,7 @@ func (x *DeleteAttrRequest) String() string {
 func (*DeleteAttrRequest) ProtoMessage() {}
 
 func (x *DeleteAttrRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[11]
+	mi := &file_itisadb_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,14 +816,7 @@ func (x *DeleteAttrRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAttrRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAttrRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *DeleteAttrRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteAttrRequest) GetKey() string {
@@ -744,20 +833,27 @@ func (x *DeleteAttrRequest) GetObject() string {
 	return ""
 }
 
+func (x *DeleteAttrRequest) GetOptions() *DeleteAttrRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type GetFromObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Object string `protobuf:"bytes,3,opt,name=object,proto3" json:"object,omitempty"`
+	Key     string                        `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Object  string                        `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	Options *GetFromObjectRequest_Options `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *GetFromObjectRequest) Reset() {
 	*x = GetFromObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[12]
+		mi := &file_itisadb_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -770,7 +866,7 @@ func (x *GetFromObjectRequest) String() string {
 func (*GetFromObjectRequest) ProtoMessage() {}
 
 func (x *GetFromObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[12]
+	mi := &file_itisadb_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -783,14 +879,7 @@ func (x *GetFromObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFromObjectRequest.ProtoReflect.Descriptor instead.
 func (*GetFromObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *GetFromObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetFromObjectRequest) GetKey() string {
@@ -807,21 +896,28 @@ func (x *GetFromObjectRequest) GetObject() string {
 	return ""
 }
 
+func (x *GetFromObjectRequest) GetOptions() *GetFromObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type ConnectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server    *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Address   string `protobuf:"bytes,2,opt,name=Address,proto3" json:"Address,omitempty"`
-	Total     uint64 `protobuf:"varint,3,opt,name=Total,proto3" json:"Total,omitempty"`
-	Available uint64 `protobuf:"varint,4,opt,name=Available,proto3" json:"Available,omitempty"`
+	Address   string                  `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
+	Total     uint64                  `protobuf:"varint,2,opt,name=Total,proto3" json:"Total,omitempty"`
+	Available uint64                  `protobuf:"varint,3,opt,name=Available,proto3" json:"Available,omitempty"`
+	Options   *ConnectRequest_Options `protobuf:"bytes,4,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *ConnectRequest) Reset() {
 	*x = ConnectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[13]
+		mi := &file_itisadb_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -834,7 +930,7 @@ func (x *ConnectRequest) String() string {
 func (*ConnectRequest) ProtoMessage() {}
 
 func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[13]
+	mi := &file_itisadb_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,14 +943,7 @@ func (x *ConnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectRequest.ProtoReflect.Descriptor instead.
 func (*ConnectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *ConnectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ConnectRequest) GetAddress() string {
@@ -878,19 +967,26 @@ func (x *ConnectRequest) GetAvailable() uint64 {
 	return 0
 }
 
+func (x *ConnectRequest) GetOptions() *ConnectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type ObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"` //  string defaultAttributes = 2;
+	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Options *ObjectRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *ObjectRequest) Reset() {
 	*x = ObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[14]
+		mi := &file_itisadb_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -903,7 +999,7 @@ func (x *ObjectRequest) String() string {
 func (*ObjectRequest) ProtoMessage() {}
 
 func (x *ObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[14]
+	mi := &file_itisadb_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -916,14 +1012,7 @@ func (x *ObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectRequest.ProtoReflect.Descriptor instead.
 func (*ObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ObjectRequest) GetName() string {
@@ -933,19 +1022,26 @@ func (x *ObjectRequest) GetName() string {
 	return ""
 }
 
+func (x *ObjectRequest) GetOptions() *ObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 type IsObjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
-	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name    string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Options *IsObjectRequest_Options `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
 }
 
 func (x *IsObjectRequest) Reset() {
 	*x = IsObjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[15]
+		mi := &file_itisadb_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -958,7 +1054,7 @@ func (x *IsObjectRequest) String() string {
 func (*IsObjectRequest) ProtoMessage() {}
 
 func (x *IsObjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[15]
+	mi := &file_itisadb_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -971,14 +1067,7 @@ func (x *IsObjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IsObjectRequest.ProtoReflect.Descriptor instead.
 func (*IsObjectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *IsObjectRequest) GetServer() int32 {
-	if x != nil && x.Server != nil {
-		return *x.Server
-	}
-	return 0
+	return file_itisadb_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *IsObjectRequest) GetName() string {
@@ -986,6 +1075,13 @@ func (x *IsObjectRequest) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *IsObjectRequest) GetOptions() *IsObjectRequest_Options {
+	if x != nil {
+		return x.Options
+	}
+	return nil
 }
 
 type DisconnectRequest struct {
@@ -999,7 +1095,7 @@ type DisconnectRequest struct {
 func (x *DisconnectRequest) Reset() {
 	*x = DisconnectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[16]
+		mi := &file_itisadb_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1012,7 +1108,7 @@ func (x *DisconnectRequest) String() string {
 func (*DisconnectRequest) ProtoMessage() {}
 
 func (x *DisconnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[16]
+	mi := &file_itisadb_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1025,7 +1121,7 @@ func (x *DisconnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectRequest.ProtoReflect.Descriptor instead.
 func (*DisconnectRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{16}
+	return file_itisadb_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DisconnectRequest) GetServer() int32 {
@@ -1044,7 +1140,7 @@ type ServersRequest struct {
 func (x *ServersRequest) Reset() {
 	*x = ServersRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[17]
+		mi := &file_itisadb_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1057,7 +1153,7 @@ func (x *ServersRequest) String() string {
 func (*ServersRequest) ProtoMessage() {}
 
 func (x *ServersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[17]
+	mi := &file_itisadb_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1070,7 +1166,7 @@ func (x *ServersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersRequest.ProtoReflect.Descriptor instead.
 func (*ServersRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{17}
+	return file_itisadb_proto_rawDescGZIP(), []int{18}
 }
 
 type AuthRequest struct {
@@ -1085,7 +1181,7 @@ type AuthRequest struct {
 func (x *AuthRequest) Reset() {
 	*x = AuthRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[18]
+		mi := &file_itisadb_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1098,7 +1194,7 @@ func (x *AuthRequest) String() string {
 func (*AuthRequest) ProtoMessage() {}
 
 func (x *AuthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[18]
+	mi := &file_itisadb_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1111,7 +1207,7 @@ func (x *AuthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthRequest.ProtoReflect.Descriptor instead.
 func (*AuthRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{18}
+	return file_itisadb_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AuthRequest) GetLogin() string {
@@ -1137,7 +1233,7 @@ type GetRamRequest struct {
 func (x *GetRamRequest) Reset() {
 	*x = GetRamRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[19]
+		mi := &file_itisadb_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1150,7 +1246,7 @@ func (x *GetRamRequest) String() string {
 func (*GetRamRequest) ProtoMessage() {}
 
 func (x *GetRamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[19]
+	mi := &file_itisadb_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1163,7 +1259,211 @@ func (x *GetRamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRamRequest.ProtoReflect.Descriptor instead.
 func (*GetRamRequest) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{19}
+	return file_itisadb_proto_rawDescGZIP(), []int{20}
+}
+
+type CreateUserRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	User *User `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+}
+
+func (x *CreateUserRequest) Reset() {
+	*x = CreateUserRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserRequest) ProtoMessage() {}
+
+func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserRequest.ProtoReflect.Descriptor instead.
+func (*CreateUserRequest) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *CreateUserRequest) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type DeleteUserRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Login string `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+}
+
+func (x *DeleteUserRequest) Reset() {
+	*x = DeleteUserRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserRequest) ProtoMessage() {}
+
+func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
+func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *DeleteUserRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+type ChangePasswordRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Login       string `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	NewPassword string `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+}
+
+func (x *ChangePasswordRequest) Reset() {
+	*x = ChangePasswordRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangePasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordRequest) ProtoMessage() {}
+
+func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordRequest.ProtoReflect.Descriptor instead.
+func (*ChangePasswordRequest) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ChangePasswordRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *ChangePasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ChangeLevelRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Login string `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	Level int32  `protobuf:"varint,2,opt,name=level,proto3" json:"level,omitempty"`
+}
+
+func (x *ChangeLevelRequest) Reset() {
+	*x = ChangeLevelRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeLevelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeLevelRequest) ProtoMessage() {}
+
+func (x *ChangeLevelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeLevelRequest.ProtoReflect.Descriptor instead.
+func (*ChangeLevelRequest) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ChangeLevelRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *ChangeLevelRequest) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
 }
 
 type GetResponse struct {
@@ -1177,7 +1477,7 @@ type GetResponse struct {
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[20]
+		mi := &file_itisadb_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1190,7 +1490,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[20]
+	mi := &file_itisadb_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1203,7 +1503,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{20}
+	return file_itisadb_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetResponse) GetValue() string {
@@ -1224,7 +1524,7 @@ type NewObjectResponse struct {
 func (x *NewObjectResponse) Reset() {
 	*x = NewObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[21]
+		mi := &file_itisadb_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1237,7 +1537,7 @@ func (x *NewObjectResponse) String() string {
 func (*NewObjectResponse) ProtoMessage() {}
 
 func (x *NewObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[21]
+	mi := &file_itisadb_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1250,7 +1550,7 @@ func (x *NewObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NewObjectResponse.ProtoReflect.Descriptor instead.
 func (*NewObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{21}
+	return file_itisadb_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *NewObjectResponse) GetName() string {
@@ -1271,7 +1571,7 @@ type IsObjectResponse struct {
 func (x *IsObjectResponse) Reset() {
 	*x = IsObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[22]
+		mi := &file_itisadb_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1284,7 +1584,7 @@ func (x *IsObjectResponse) String() string {
 func (*IsObjectResponse) ProtoMessage() {}
 
 func (x *IsObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[22]
+	mi := &file_itisadb_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1297,7 +1597,7 @@ func (x *IsObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IsObjectResponse.ProtoReflect.Descriptor instead.
 func (*IsObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{22}
+	return file_itisadb_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *IsObjectResponse) GetOk() bool {
@@ -1318,7 +1618,7 @@ type ObjectToJSONResponse struct {
 func (x *ObjectToJSONResponse) Reset() {
 	*x = ObjectToJSONResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[23]
+		mi := &file_itisadb_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1331,7 +1631,7 @@ func (x *ObjectToJSONResponse) String() string {
 func (*ObjectToJSONResponse) ProtoMessage() {}
 
 func (x *ObjectToJSONResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[23]
+	mi := &file_itisadb_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1344,7 +1644,7 @@ func (x *ObjectToJSONResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectToJSONResponse.ProtoReflect.Descriptor instead.
 func (*ObjectToJSONResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{23}
+	return file_itisadb_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ObjectToJSONResponse) GetObject() string {
@@ -1365,7 +1665,7 @@ type SetResponse struct {
 func (x *SetResponse) Reset() {
 	*x = SetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[24]
+		mi := &file_itisadb_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1378,7 +1678,7 @@ func (x *SetResponse) String() string {
 func (*SetResponse) ProtoMessage() {}
 
 func (x *SetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[24]
+	mi := &file_itisadb_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1391,7 +1691,7 @@ func (x *SetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetResponse.ProtoReflect.Descriptor instead.
 func (*SetResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{24}
+	return file_itisadb_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *SetResponse) GetSavedTo() int32 {
@@ -1413,7 +1713,7 @@ type ConnectResponse struct {
 func (x *ConnectResponse) Reset() {
 	*x = ConnectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[25]
+		mi := &file_itisadb_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1426,7 +1726,7 @@ func (x *ConnectResponse) String() string {
 func (*ConnectResponse) ProtoMessage() {}
 
 func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[25]
+	mi := &file_itisadb_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1739,7 @@ func (x *ConnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectResponse.ProtoReflect.Descriptor instead.
 func (*ConnectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{25}
+	return file_itisadb_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ConnectResponse) GetStatus() string {
@@ -1465,7 +1765,7 @@ type AttachToObjectResponse struct {
 func (x *AttachToObjectResponse) Reset() {
 	*x = AttachToObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[26]
+		mi := &file_itisadb_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1478,7 +1778,7 @@ func (x *AttachToObjectResponse) String() string {
 func (*AttachToObjectResponse) ProtoMessage() {}
 
 func (x *AttachToObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[26]
+	mi := &file_itisadb_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1491,7 +1791,7 @@ func (x *AttachToObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachToObjectResponse.ProtoReflect.Descriptor instead.
 func (*AttachToObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{26}
+	return file_itisadb_proto_rawDescGZIP(), []int{31}
 }
 
 type DeleteResponse struct {
@@ -1503,7 +1803,7 @@ type DeleteResponse struct {
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[27]
+		mi := &file_itisadb_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1516,7 +1816,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[27]
+	mi := &file_itisadb_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1529,7 +1829,7 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{27}
+	return file_itisadb_proto_rawDescGZIP(), []int{32}
 }
 
 type DeleteAttrResponse struct {
@@ -1541,7 +1841,7 @@ type DeleteAttrResponse struct {
 func (x *DeleteAttrResponse) Reset() {
 	*x = DeleteAttrResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[28]
+		mi := &file_itisadb_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1554,7 +1854,7 @@ func (x *DeleteAttrResponse) String() string {
 func (*DeleteAttrResponse) ProtoMessage() {}
 
 func (x *DeleteAttrResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[28]
+	mi := &file_itisadb_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1567,7 +1867,7 @@ func (x *DeleteAttrResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAttrResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAttrResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{28}
+	return file_itisadb_proto_rawDescGZIP(), []int{33}
 }
 
 type DisconnectResponse struct {
@@ -1579,7 +1879,7 @@ type DisconnectResponse struct {
 func (x *DisconnectResponse) Reset() {
 	*x = DisconnectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[29]
+		mi := &file_itisadb_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1592,7 +1892,7 @@ func (x *DisconnectResponse) String() string {
 func (*DisconnectResponse) ProtoMessage() {}
 
 func (x *DisconnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[29]
+	mi := &file_itisadb_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1605,7 +1905,7 @@ func (x *DisconnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectResponse.ProtoReflect.Descriptor instead.
 func (*DisconnectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{29}
+	return file_itisadb_proto_rawDescGZIP(), []int{34}
 }
 
 type SetToObjectResponse struct {
@@ -1619,7 +1919,7 @@ type SetToObjectResponse struct {
 func (x *SetToObjectResponse) Reset() {
 	*x = SetToObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[30]
+		mi := &file_itisadb_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1632,7 +1932,7 @@ func (x *SetToObjectResponse) String() string {
 func (*SetToObjectResponse) ProtoMessage() {}
 
 func (x *SetToObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[30]
+	mi := &file_itisadb_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1645,7 +1945,7 @@ func (x *SetToObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetToObjectResponse.ProtoReflect.Descriptor instead.
 func (*SetToObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{30}
+	return file_itisadb_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *SetToObjectResponse) GetSavedTo() int32 {
@@ -1666,7 +1966,7 @@ type ObjectSizeResponse struct {
 func (x *ObjectSizeResponse) Reset() {
 	*x = ObjectSizeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[31]
+		mi := &file_itisadb_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1679,7 +1979,7 @@ func (x *ObjectSizeResponse) String() string {
 func (*ObjectSizeResponse) ProtoMessage() {}
 
 func (x *ObjectSizeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[31]
+	mi := &file_itisadb_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1692,7 +1992,7 @@ func (x *ObjectSizeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectSizeResponse.ProtoReflect.Descriptor instead.
 func (*ObjectSizeResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{31}
+	return file_itisadb_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ObjectSizeResponse) GetSize() uint64 {
@@ -1713,7 +2013,7 @@ type GetFromObjectResponse struct {
 func (x *GetFromObjectResponse) Reset() {
 	*x = GetFromObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[32]
+		mi := &file_itisadb_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1726,7 +2026,7 @@ func (x *GetFromObjectResponse) String() string {
 func (*GetFromObjectResponse) ProtoMessage() {}
 
 func (x *GetFromObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[32]
+	mi := &file_itisadb_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1739,7 +2039,7 @@ func (x *GetFromObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFromObjectResponse.ProtoReflect.Descriptor instead.
 func (*GetFromObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{32}
+	return file_itisadb_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *GetFromObjectResponse) GetValue() string {
@@ -1758,7 +2058,7 @@ type ObjectResponse struct {
 func (x *ObjectResponse) Reset() {
 	*x = ObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[33]
+		mi := &file_itisadb_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1771,7 +2071,7 @@ func (x *ObjectResponse) String() string {
 func (*ObjectResponse) ProtoMessage() {}
 
 func (x *ObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[33]
+	mi := &file_itisadb_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1784,7 +2084,7 @@ func (x *ObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectResponse.ProtoReflect.Descriptor instead.
 func (*ObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{33}
+	return file_itisadb_proto_rawDescGZIP(), []int{38}
 }
 
 type DeleteObjectResponse struct {
@@ -1796,7 +2096,7 @@ type DeleteObjectResponse struct {
 func (x *DeleteObjectResponse) Reset() {
 	*x = DeleteObjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[34]
+		mi := &file_itisadb_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1809,7 +2109,7 @@ func (x *DeleteObjectResponse) String() string {
 func (*DeleteObjectResponse) ProtoMessage() {}
 
 func (x *DeleteObjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[34]
+	mi := &file_itisadb_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1822,7 +2122,7 @@ func (x *DeleteObjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteObjectResponse.ProtoReflect.Descriptor instead.
 func (*DeleteObjectResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{34}
+	return file_itisadb_proto_rawDescGZIP(), []int{39}
 }
 
 type ServersResponse struct {
@@ -1836,7 +2136,7 @@ type ServersResponse struct {
 func (x *ServersResponse) Reset() {
 	*x = ServersResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[35]
+		mi := &file_itisadb_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1849,7 +2149,7 @@ func (x *ServersResponse) String() string {
 func (*ServersResponse) ProtoMessage() {}
 
 func (x *ServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[35]
+	mi := &file_itisadb_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1862,7 +2162,7 @@ func (x *ServersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServersResponse.ProtoReflect.Descriptor instead.
 func (*ServersResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{35}
+	return file_itisadb_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ServersResponse) GetServersInfo() string {
@@ -1883,7 +2183,7 @@ type AuthResponse struct {
 func (x *AuthResponse) Reset() {
 	*x = AuthResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[36]
+		mi := &file_itisadb_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1896,7 +2196,7 @@ func (x *AuthResponse) String() string {
 func (*AuthResponse) ProtoMessage() {}
 
 func (x *AuthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[36]
+	mi := &file_itisadb_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1909,7 +2209,7 @@ func (x *AuthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthResponse.ProtoReflect.Descriptor instead.
 func (*AuthResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{36}
+	return file_itisadb_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *AuthResponse) GetToken() string {
@@ -1930,7 +2230,7 @@ type GetRamResponse struct {
 func (x *GetRamResponse) Reset() {
 	*x = GetRamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_itisadb_proto_msgTypes[37]
+		mi := &file_itisadb_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1943,7 +2243,7 @@ func (x *GetRamResponse) String() string {
 func (*GetRamResponse) ProtoMessage() {}
 
 func (x *GetRamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_itisadb_proto_msgTypes[37]
+	mi := &file_itisadb_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1956,7 +2256,7 @@ func (x *GetRamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRamResponse.ProtoReflect.Descriptor instead.
 func (*GetRamResponse) Descriptor() ([]byte, []int) {
-	return file_itisadb_proto_rawDescGZIP(), []int{37}
+	return file_itisadb_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *GetRamResponse) GetRam() *Ram {
@@ -1964,6 +2264,911 @@ func (x *GetRamResponse) GetRam() *Ram {
 		return x.Ram
 	}
 	return nil
+}
+
+type CreateUserResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *CreateUserResponse) Reset() {
+	*x = CreateUserResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[43]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserResponse) ProtoMessage() {}
+
+func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[43]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
+func (*CreateUserResponse) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{43}
+}
+
+type DeleteUserResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteUserResponse) Reset() {
+	*x = DeleteUserResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[44]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserResponse) ProtoMessage() {}
+
+func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[44]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
+func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{44}
+}
+
+type ChangePasswordResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ChangePasswordResponse) Reset() {
+	*x = ChangePasswordResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[45]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangePasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordResponse) ProtoMessage() {}
+
+func (x *ChangePasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[45]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordResponse.ProtoReflect.Descriptor instead.
+func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{45}
+}
+
+type ChangeLevelResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ChangeLevelResponse) Reset() {
+	*x = ChangeLevelResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[46]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeLevelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeLevelResponse) ProtoMessage() {}
+
+func (x *ChangeLevelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[46]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeLevelResponse.ProtoReflect.Descriptor instead.
+func (*ChangeLevelResponse) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{46}
+}
+
+type SetRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server   *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+	Uniques  bool   `protobuf:"varint,2,opt,name=uniques,proto3" json:"uniques,omitempty"`
+	ReadOnly bool   `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+}
+
+func (x *SetRequest_Options) Reset() {
+	*x = SetRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[47]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetRequest_Options) ProtoMessage() {}
+
+func (x *SetRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[47]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetRequest_Options.ProtoReflect.Descriptor instead.
+func (*SetRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{2, 0}
+}
+
+func (x *SetRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+func (x *SetRequest_Options) GetUniques() bool {
+	if x != nil {
+		return x.Uniques
+	}
+	return false
+}
+
+func (x *SetRequest_Options) GetReadOnly() bool {
+	if x != nil {
+		return x.ReadOnly
+	}
+	return false
+}
+
+type NewObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+	Level  Level  `protobuf:"varint,2,opt,name=level,proto3,enum=api.Level" json:"level,omitempty"`
+}
+
+func (x *NewObjectRequest_Options) Reset() {
+	*x = NewObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[48]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NewObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewObjectRequest_Options) ProtoMessage() {}
+
+func (x *NewObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[48]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*NewObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{3, 0}
+}
+
+func (x *NewObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+func (x *NewObjectRequest_Options) GetLevel() Level {
+	if x != nil {
+		return x.Level
+	}
+	return Level_DEFAULT
+}
+
+type ObjectSizeRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *ObjectSizeRequest_Options) Reset() {
+	*x = ObjectSizeRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[49]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ObjectSizeRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ObjectSizeRequest_Options) ProtoMessage() {}
+
+func (x *ObjectSizeRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[49]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ObjectSizeRequest_Options.ProtoReflect.Descriptor instead.
+func (*ObjectSizeRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{4, 0}
+}
+
+func (x *ObjectSizeRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type ObjectToJSONRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *ObjectToJSONRequest_Options) Reset() {
+	*x = ObjectToJSONRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[50]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ObjectToJSONRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ObjectToJSONRequest_Options) ProtoMessage() {}
+
+func (x *ObjectToJSONRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[50]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ObjectToJSONRequest_Options.ProtoReflect.Descriptor instead.
+func (*ObjectToJSONRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{5, 0}
+}
+
+func (x *ObjectToJSONRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type DeleteRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *DeleteRequest_Options) Reset() {
+	*x = DeleteRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[51]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRequest_Options) ProtoMessage() {}
+
+func (x *DeleteRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[51]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRequest_Options.ProtoReflect.Descriptor instead.
+func (*DeleteRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{6, 0}
+}
+
+func (x *DeleteRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type DeleteObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *DeleteObjectRequest_Options) Reset() {
+	*x = DeleteObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[52]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteObjectRequest_Options) ProtoMessage() {}
+
+func (x *DeleteObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[52]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*DeleteObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{7, 0}
+}
+
+func (x *DeleteObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type GetToObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *GetToObjectRequest_Options) Reset() {
+	*x = GetToObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[53]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetToObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetToObjectRequest_Options) ProtoMessage() {}
+
+func (x *GetToObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[53]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetToObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*GetToObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{8, 0}
+}
+
+func (x *GetToObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type SetToObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server   *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+	Uniques  bool   `protobuf:"varint,2,opt,name=uniques,proto3" json:"uniques,omitempty"`
+	ReadOnly bool   `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+}
+
+func (x *SetToObjectRequest_Options) Reset() {
+	*x = SetToObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[54]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetToObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetToObjectRequest_Options) ProtoMessage() {}
+
+func (x *SetToObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[54]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetToObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*SetToObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{9, 0}
+}
+
+func (x *SetToObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+func (x *SetToObjectRequest_Options) GetUniques() bool {
+	if x != nil {
+		return x.Uniques
+	}
+	return false
+}
+
+func (x *SetToObjectRequest_Options) GetReadOnly() bool {
+	if x != nil {
+		return x.ReadOnly
+	}
+	return false
+}
+
+type AttachToObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *AttachToObjectRequest_Options) Reset() {
+	*x = AttachToObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[55]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AttachToObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AttachToObjectRequest_Options) ProtoMessage() {}
+
+func (x *AttachToObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[55]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AttachToObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*AttachToObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{10, 0}
+}
+
+func (x *AttachToObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type GetRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *GetRequest_Options) Reset() {
+	*x = GetRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[56]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRequest_Options) ProtoMessage() {}
+
+func (x *GetRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[56]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRequest_Options.ProtoReflect.Descriptor instead.
+func (*GetRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{11, 0}
+}
+
+func (x *GetRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type DeleteAttrRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *DeleteAttrRequest_Options) Reset() {
+	*x = DeleteAttrRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[57]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteAttrRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAttrRequest_Options) ProtoMessage() {}
+
+func (x *DeleteAttrRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[57]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAttrRequest_Options.ProtoReflect.Descriptor instead.
+func (*DeleteAttrRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{12, 0}
+}
+
+func (x *DeleteAttrRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type GetFromObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *GetFromObjectRequest_Options) Reset() {
+	*x = GetFromObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[58]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetFromObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFromObjectRequest_Options) ProtoMessage() {}
+
+func (x *GetFromObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[58]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFromObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*GetFromObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{13, 0}
+}
+
+func (x *GetFromObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type ConnectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *ConnectRequest_Options) Reset() {
+	*x = ConnectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[59]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ConnectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectRequest_Options) ProtoMessage() {}
+
+func (x *ConnectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[59]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectRequest_Options.ProtoReflect.Descriptor instead.
+func (*ConnectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{14, 0}
+}
+
+func (x *ConnectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+type ObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+	Level  Level  `protobuf:"varint,2,opt,name=level,proto3,enum=api.Level" json:"level,omitempty"`
+}
+
+func (x *ObjectRequest_Options) Reset() {
+	*x = ObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[60]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ObjectRequest_Options) ProtoMessage() {}
+
+func (x *ObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[60]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*ObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{15, 0}
+}
+
+func (x *ObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
+}
+
+func (x *ObjectRequest_Options) GetLevel() Level {
+	if x != nil {
+		return x.Level
+	}
+	return Level_DEFAULT
+}
+
+type IsObjectRequest_Options struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *int32 `protobuf:"varint,1,opt,name=server,proto3,oneof" json:"server,omitempty"`
+}
+
+func (x *IsObjectRequest_Options) Reset() {
+	*x = IsObjectRequest_Options{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_itisadb_proto_msgTypes[61]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IsObjectRequest_Options) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IsObjectRequest_Options) ProtoMessage() {}
+
+func (x *IsObjectRequest_Options) ProtoReflect() protoreflect.Message {
+	mi := &file_itisadb_proto_msgTypes[61]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IsObjectRequest_Options.ProtoReflect.Descriptor instead.
+func (*IsObjectRequest_Options) Descriptor() ([]byte, []int) {
+	return file_itisadb_proto_rawDescGZIP(), []int{16, 0}
+}
+
+func (x *IsObjectRequest_Options) GetServer() int32 {
+	if x != nil && x.Server != nil {
+		return *x.Server
+	}
+	return 0
 }
 
 var File_itisadb_proto protoreflect.FileDescriptor
@@ -1974,222 +3179,341 @@ var file_itisadb_proto_rawDesc = []byte{
 	0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x54, 0x6f, 0x74, 0x61,
 	0x6c, 0x12, 0x1c, 0x0a, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x22,
-	0x76, 0x0a, 0x0a, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
-	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
-	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x42, 0x09, 0x0a, 0x07,
-	0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x4e, 0x0a, 0x10, 0x4e, 0x65, 0x77, 0x4f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73,
+	0x4e, 0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x1a, 0x0a,
+	0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x65, 0x76,
+	0x65, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x22,
+	0xd1, 0x01, 0x0a, 0x0a, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x31, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65,
+	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x68, 0x0a, 0x07, 0x4f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01,
+	0x01, 0x12, 0x18, 0x0a, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x72,
+	0x65, 0x61, 0x64, 0x5f, 0x6f, 0x6e, 0x6c, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08,
+	0x72, 0x65, 0x61, 0x64, 0x4f, 0x6e, 0x6c, 0x79, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x22, 0xb4, 0x01, 0x0a, 0x10, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63,
+	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x37, 0x0a, 0x07,
+	0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x53, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
+	0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x20, 0x0a,
+	0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0a, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x42,
+	0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x94, 0x01, 0x0a, 0x11, 0x4f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x12, 0x38, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31,
+	0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x22, 0x98, 0x01, 0x0a, 0x13, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53,
+	0x4f, 0x4e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x3a, 0x0a,
+	0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f,
+	0x4e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01,
+	0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x8a, 0x01, 0x0a,
+	0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x34, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09,
+	0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x9c, 0x01, 0x0a, 0x13, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x3a, 0x0a, 0x07, 0x6f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
+	0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a,
+	0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0xa8, 0x01, 0x0a, 0x12, 0x47, 0x65, 0x74,
+	0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x39, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74,
+	0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e,
+	0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73,
 	0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x09, 0x0a, 0x07,
-	0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x4f, 0x0a, 0x11, 0x4f, 0x62, 0x6a, 0x65, 0x63,
-	0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x09, 0x0a,
-	0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x51, 0x0a, 0x13, 0x4f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48,
-	0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x12, 0x0a, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x49, 0x0a, 0x0d, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x42, 0x09, 0x0a, 0x07, 0x5f,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x55, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x62, 0x0a,
-	0x12, 0x47, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01,
-	0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b,
-	0x65, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x72, 0x22, 0x96, 0x01, 0x0a, 0x12, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63,
-	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x18, 0x0a,
-	0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07,
-	0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63,
-	0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x42,
-	0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x63, 0x0a, 0x15, 0x41, 0x74,
-	0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01,
-	0x12, 0x10, 0x0a, 0x03, 0x64, 0x73, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x64,
-	0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x72, 0x63, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x03, 0x73, 0x72, 0x63, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22,
-	0x46, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
-	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x42, 0x09, 0x0a, 0x07,
-	0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x65, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x6f,
-	0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a,
-	0x65, 0x63, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x68,
-	0x0a, 0x14, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x22, 0xf9, 0x01, 0x0a, 0x12, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a,
+	0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x39, 0x0a, 0x07, 0x6f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x68, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
+	0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x18, 0x0a,
+	0x07, 0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07,
+	0x75, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x65, 0x61, 0x64, 0x5f,
+	0x6f, 0x6e, 0x6c, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x72, 0x65, 0x61, 0x64,
+	0x4f, 0x6e, 0x6c, 0x79, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22,
+	0xac, 0x01, 0x0a, 0x15, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x64, 0x73, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x64, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x73,
+	0x72, 0x63, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x72, 0x63, 0x12, 0x3c, 0x0a,
+	0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a,
+	0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x88, 0x01, 0x01, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x42, 0x09, 0x0a,
-	0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x86, 0x01, 0x0a, 0x0e, 0x43, 0x6f, 0x6e,
-	0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x18, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x72,
-	0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x84,
+	0x01, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a,
+	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
+	0x31, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a,
+	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
+	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0xaa, 0x01, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16, 0x0a,
+	0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x38, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a,
+	0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x22, 0xb0, 0x01, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x16, 0x0a,
+	0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x3b, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74,
+	0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a,
+	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
+	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0xc8, 0x01, 0x0a, 0x0e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63,
+	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x04, 0x52, 0x05, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x12, 0x1c, 0x0a, 0x09, 0x41, 0x76, 0x61, 0x69,
-	0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x41, 0x76, 0x61,
-	0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x72, 0x22, 0x4b, 0x0a, 0x0d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12,
-	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x4d,
-	0x0a, 0x0f, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x12, 0x12,
-	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x2b, 0x0a,
-	0x11, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x10, 0x0a, 0x0e, 0x53, 0x65,
-	0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x3f, 0x0a, 0x0b,
-	0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c,
-	0x6f, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67, 0x69,
-	0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x22, 0x0f, 0x0a,
-	0x0d, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x23,
-	0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x22, 0x27, 0x0a, 0x11, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x22, 0x0a, 0x10,
-	0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02, 0x6f, 0x6b,
-	0x22, 0x2e, 0x0a, 0x14, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x22, 0x27, 0x0a, 0x0b, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x22, 0x41, 0x0a, 0x0f, 0x43, 0x6f, 0x6e,
-	0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06,
-	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x18, 0x0a, 0x16,
-	0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x14,
-	0x0a, 0x12, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2f, 0x0a, 0x13, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a,
-	0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73,
-	0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x73, 0x61,
-	0x76, 0x65, 0x64, 0x54, 0x6f, 0x22, 0x28, 0x0a, 0x12, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x53,
-	0x69, 0x7a, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x73,
-	0x69, 0x7a, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x22,
-	0x2d, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x10,
-	0x0a, 0x0e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x16, 0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x0f, 0x53, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x24, 0x0a,
-	0x0c, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a,
-	0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f,
-	0x6b, 0x65, 0x6e, 0x22, 0x2c, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1a, 0x0a, 0x03, 0x72, 0x61, 0x6d, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x08, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x52, 0x61, 0x6d, 0x52, 0x03, 0x72, 0x61,
-	0x6d, 0x32, 0x83, 0x09, 0x0a, 0x07, 0x49, 0x74, 0x69, 0x73, 0x61, 0x44, 0x42, 0x12, 0x2a, 0x0a,
-	0x03, 0x53, 0x65, 0x74, 0x12, 0x0f, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2a, 0x0a, 0x03, 0x47, 0x65, 0x74,
-	0x12, 0x0f, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x10, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x33, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12,
-	0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x0e, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x49, 0x66, 0x45, 0x78, 0x69, 0x73, 0x74, 0x73, 0x12, 0x12, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3c, 0x0a, 0x09, 0x4e, 0x65, 0x77, 0x4f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x12, 0x15, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4e, 0x65, 0x77, 0x4f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x33, 0x0a, 0x06, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12,
-	0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x42, 0x0a, 0x0b, 0x53, 0x65,
-	0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x48,
-	0x0a, 0x0d, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12,
-	0x19, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a,
-	0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e, 0x41, 0x74, 0x74, 0x61,
-	0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x1a, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x74, 0x74,
-	0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0c, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54,
-	0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x12, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x19, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53,
-	0x4f, 0x4e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x08,
-	0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x49,
-	0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12,
-	0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62,
-	0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x45, 0x0a, 0x0c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x12, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f,
-	0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x35, 0x0a, 0x0c, 0x41, 0x75,
-	0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x12, 0x10, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x00, 0x12, 0x36, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x13, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x69, 0x73,
-	0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x69,
-	0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x36, 0x0a, 0x07, 0x53, 0x65,
-	0x72, 0x76, 0x65, 0x72, 0x73, 0x12, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70, 0x69,
-	0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x33, 0x0a, 0x06, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x12, 0x12, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2e, 0x2f, 0x61, 0x70,
-	0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x41, 0x76, 0x61,
+	0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x35, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f,
+	0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x31, 0x0a,
+	0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x22, 0xae, 0x01, 0x0a, 0x0d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x34, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x4f, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x53, 0x0a, 0x07,
+	0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x88, 0x01, 0x01, 0x12, 0x20, 0x0a, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0e, 0x32, 0x0a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52,
+	0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x22, 0x90, 0x01, 0x0a, 0x0f, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x36, 0x0a, 0x07, 0x6f, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x2e, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x1a, 0x31, 0x0a, 0x07, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1b, 0x0a, 0x06,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x22, 0x2b, 0x0a, 0x11, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x22, 0x10, 0x0a, 0x0e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x22, 0x3f, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73,
+	0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73,
+	0x77, 0x6f, 0x72, 0x64, 0x22, 0x0f, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x32, 0x0a, 0x11, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55,
+	0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x04, 0x75, 0x73,
+	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x09, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x55,
+	0x73, 0x65, 0x72, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x22, 0x29, 0x0a, 0x11, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c,
+	0x6f, 0x67, 0x69, 0x6e, 0x22, 0x50, 0x0a, 0x15, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a,
+	0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f,
+	0x67, 0x69, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x6e, 0x65, 0x77, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x77,
+	0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6e, 0x65, 0x77, 0x50, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x22, 0x40, 0x0a, 0x12, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05,
+	0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67,
+	0x69, 0x6e, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x23, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x27, 0x0a,
+	0x11, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x22, 0x0a, 0x10, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x6b,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02, 0x6f, 0x6b, 0x22, 0x2e, 0x0a, 0x14, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x22, 0x27, 0x0a, 0x0b, 0x53, 0x65,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x61, 0x76,
+	0x65, 0x64, 0x54, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x73, 0x61, 0x76, 0x65,
+	0x64, 0x54, 0x6f, 0x22, 0x41, 0x0a, 0x0f, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x18, 0x0a, 0x16, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68,
+	0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x69, 0x73, 0x63,
+	0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2f,
+	0x0a, 0x13, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x73, 0x61, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x22,
+	0x28, 0x0a, 0x12, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x04, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x22, 0x2d, 0x0a, 0x15, 0x47, 0x65, 0x74,
+	0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x10, 0x0a, 0x0e, 0x4f, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x16, 0x0a, 0x14, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x33, 0x0a, 0x0f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73,
+	0x49, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x24, 0x0a, 0x0c, 0x41, 0x75, 0x74, 0x68, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x2c, 0x0a,
+	0x0e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x1a, 0x0a, 0x03, 0x72, 0x61, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x52, 0x61, 0x6d, 0x52, 0x03, 0x72, 0x61, 0x6d, 0x22, 0x14, 0x0a, 0x12, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x18, 0x0a, 0x16, 0x43, 0x68, 0x61, 0x6e, 0x67,
+	0x65, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x15, 0x0a, 0x13, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2a, 0x30, 0x0a, 0x05, 0x4c, 0x65, 0x76, 0x65,
+	0x6c, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x46, 0x41, 0x55, 0x4c, 0x54, 0x10, 0x00, 0x12, 0x0e,
+	0x0a, 0x0a, 0x52, 0x45, 0x53, 0x54, 0x52, 0x49, 0x43, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x0a,
+	0x0a, 0x06, 0x53, 0x45, 0x43, 0x52, 0x45, 0x54, 0x10, 0x02, 0x32, 0x96, 0x0b, 0x0a, 0x07, 0x49,
+	0x74, 0x69, 0x73, 0x61, 0x44, 0x42, 0x12, 0x2a, 0x0a, 0x03, 0x53, 0x65, 0x74, 0x12, 0x0f, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x2a, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x0f, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x33,
+	0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x3b, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x49, 0x66, 0x45,
+	0x78, 0x69, 0x73, 0x74, 0x73, 0x12, 0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x3c, 0x0a, 0x09, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x15, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x4e, 0x65, 0x77, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4e, 0x65, 0x77, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x33,
+	0x0a, 0x06, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x42, 0x0a, 0x0b, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x53, 0x65, 0x74, 0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x48, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x46, 0x72,
+	0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x19, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47,
+	0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f,
+	0x6d, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x4b, 0x0a, 0x0e, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62, 0x6a,
+	0x65, 0x63, 0x74, 0x12, 0x1a, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68,
+	0x54, 0x6f, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x1b, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x54, 0x6f, 0x4f, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x45,
+	0x0a, 0x0c, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x12, 0x18,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f,
+	0x4e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x54, 0x6f, 0x4a, 0x53, 0x4f, 0x4e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x39, 0x0a, 0x08, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63,
+	0x74, 0x12, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x49, 0x73, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x49, 0x73,
+	0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x39, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x69, 0x7a,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0c, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x18, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72,
+	0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74,
+	0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x74, 0x74, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x35, 0x0a, 0x0c, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63,
+	0x61, 0x74, 0x65, 0x12, 0x10, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x41, 0x75, 0x74, 0x68,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73,
+	0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e,
+	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x1a,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x61, 0x73, 0x73, 0x77,
+	0x6f, 0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x42, 0x0a, 0x0b, 0x43, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x17, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x18, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c, 0x65,
+	0x76, 0x65, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x36, 0x0a,
+	0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x43,
+	0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x0a, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e,
+	0x65, 0x63, 0x74, 0x12, 0x16, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x36, 0x0a, 0x07, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x73, 0x12, 0x13, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x33,
+	0x0a, 0x06, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x12, 0x12, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x47,
+	0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2e, 0x2f, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2204,92 +3528,144 @@ func file_itisadb_proto_rawDescGZIP() []byte {
 	return file_itisadb_proto_rawDescData
 }
 
-var file_itisadb_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_itisadb_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_itisadb_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
 var file_itisadb_proto_goTypes = []interface{}{
-	(*Ram)(nil),                    // 0: api.Ram
-	(*SetRequest)(nil),             // 1: api.SetRequest
-	(*NewObjectRequest)(nil),       // 2: api.NewObjectRequest
-	(*ObjectSizeRequest)(nil),      // 3: api.ObjectSizeRequest
-	(*ObjectToJSONRequest)(nil),    // 4: api.ObjectToJSONRequest
-	(*DeleteRequest)(nil),          // 5: api.DeleteRequest
-	(*DeleteObjectRequest)(nil),    // 6: api.DeleteObjectRequest
-	(*GetToObjectRequest)(nil),     // 7: api.GetToObjectRequest
-	(*SetToObjectRequest)(nil),     // 8: api.SetToObjectRequest
-	(*AttachToObjectRequest)(nil),  // 9: api.AttachToObjectRequest
-	(*GetRequest)(nil),             // 10: api.GetRequest
-	(*DeleteAttrRequest)(nil),      // 11: api.DeleteAttrRequest
-	(*GetFromObjectRequest)(nil),   // 12: api.GetFromObjectRequest
-	(*ConnectRequest)(nil),         // 13: api.ConnectRequest
-	(*ObjectRequest)(nil),          // 14: api.ObjectRequest
-	(*IsObjectRequest)(nil),        // 15: api.IsObjectRequest
-	(*DisconnectRequest)(nil),      // 16: api.DisconnectRequest
-	(*ServersRequest)(nil),         // 17: api.ServersRequest
-	(*AuthRequest)(nil),            // 18: api.AuthRequest
-	(*GetRamRequest)(nil),          // 19: api.GetRamRequest
-	(*GetResponse)(nil),            // 20: api.GetResponse
-	(*NewObjectResponse)(nil),      // 21: api.NewObjectResponse
-	(*IsObjectResponse)(nil),       // 22: api.IsObjectResponse
-	(*ObjectToJSONResponse)(nil),   // 23: api.ObjectToJSONResponse
-	(*SetResponse)(nil),            // 24: api.SetResponse
-	(*ConnectResponse)(nil),        // 25: api.ConnectResponse
-	(*AttachToObjectResponse)(nil), // 26: api.AttachToObjectResponse
-	(*DeleteResponse)(nil),         // 27: api.DeleteResponse
-	(*DeleteAttrResponse)(nil),     // 28: api.DeleteAttrResponse
-	(*DisconnectResponse)(nil),     // 29: api.DisconnectResponse
-	(*SetToObjectResponse)(nil),    // 30: api.SetToObjectResponse
-	(*ObjectSizeResponse)(nil),     // 31: api.ObjectSizeResponse
-	(*GetFromObjectResponse)(nil),  // 32: api.GetFromObjectResponse
-	(*ObjectResponse)(nil),         // 33: api.ObjectResponse
-	(*DeleteObjectResponse)(nil),   // 34: api.DeleteObjectResponse
-	(*ServersResponse)(nil),        // 35: api.ServersResponse
-	(*AuthResponse)(nil),           // 36: api.AuthResponse
-	(*GetRamResponse)(nil),         // 37: api.GetRamResponse
+	(Level)(0),                            // 0: api.Level
+	(*Ram)(nil),                           // 1: api.Ram
+	(*User)(nil),                          // 2: api.User
+	(*SetRequest)(nil),                    // 3: api.SetRequest
+	(*NewObjectRequest)(nil),              // 4: api.NewObjectRequest
+	(*ObjectSizeRequest)(nil),             // 5: api.ObjectSizeRequest
+	(*ObjectToJSONRequest)(nil),           // 6: api.ObjectToJSONRequest
+	(*DeleteRequest)(nil),                 // 7: api.DeleteRequest
+	(*DeleteObjectRequest)(nil),           // 8: api.DeleteObjectRequest
+	(*GetToObjectRequest)(nil),            // 9: api.GetToObjectRequest
+	(*SetToObjectRequest)(nil),            // 10: api.SetToObjectRequest
+	(*AttachToObjectRequest)(nil),         // 11: api.AttachToObjectRequest
+	(*GetRequest)(nil),                    // 12: api.GetRequest
+	(*DeleteAttrRequest)(nil),             // 13: api.DeleteAttrRequest
+	(*GetFromObjectRequest)(nil),          // 14: api.GetFromObjectRequest
+	(*ConnectRequest)(nil),                // 15: api.ConnectRequest
+	(*ObjectRequest)(nil),                 // 16: api.ObjectRequest
+	(*IsObjectRequest)(nil),               // 17: api.IsObjectRequest
+	(*DisconnectRequest)(nil),             // 18: api.DisconnectRequest
+	(*ServersRequest)(nil),                // 19: api.ServersRequest
+	(*AuthRequest)(nil),                   // 20: api.AuthRequest
+	(*GetRamRequest)(nil),                 // 21: api.GetRamRequest
+	(*CreateUserRequest)(nil),             // 22: api.CreateUserRequest
+	(*DeleteUserRequest)(nil),             // 23: api.DeleteUserRequest
+	(*ChangePasswordRequest)(nil),         // 24: api.ChangePasswordRequest
+	(*ChangeLevelRequest)(nil),            // 25: api.ChangeLevelRequest
+	(*GetResponse)(nil),                   // 26: api.GetResponse
+	(*NewObjectResponse)(nil),             // 27: api.NewObjectResponse
+	(*IsObjectResponse)(nil),              // 28: api.IsObjectResponse
+	(*ObjectToJSONResponse)(nil),          // 29: api.ObjectToJSONResponse
+	(*SetResponse)(nil),                   // 30: api.SetResponse
+	(*ConnectResponse)(nil),               // 31: api.ConnectResponse
+	(*AttachToObjectResponse)(nil),        // 32: api.AttachToObjectResponse
+	(*DeleteResponse)(nil),                // 33: api.DeleteResponse
+	(*DeleteAttrResponse)(nil),            // 34: api.DeleteAttrResponse
+	(*DisconnectResponse)(nil),            // 35: api.DisconnectResponse
+	(*SetToObjectResponse)(nil),           // 36: api.SetToObjectResponse
+	(*ObjectSizeResponse)(nil),            // 37: api.ObjectSizeResponse
+	(*GetFromObjectResponse)(nil),         // 38: api.GetFromObjectResponse
+	(*ObjectResponse)(nil),                // 39: api.ObjectResponse
+	(*DeleteObjectResponse)(nil),          // 40: api.DeleteObjectResponse
+	(*ServersResponse)(nil),               // 41: api.ServersResponse
+	(*AuthResponse)(nil),                  // 42: api.AuthResponse
+	(*GetRamResponse)(nil),                // 43: api.GetRamResponse
+	(*CreateUserResponse)(nil),            // 44: api.CreateUserResponse
+	(*DeleteUserResponse)(nil),            // 45: api.DeleteUserResponse
+	(*ChangePasswordResponse)(nil),        // 46: api.ChangePasswordResponse
+	(*ChangeLevelResponse)(nil),           // 47: api.ChangeLevelResponse
+	(*SetRequest_Options)(nil),            // 48: api.SetRequest.Options
+	(*NewObjectRequest_Options)(nil),      // 49: api.NewObjectRequest.Options
+	(*ObjectSizeRequest_Options)(nil),     // 50: api.ObjectSizeRequest.Options
+	(*ObjectToJSONRequest_Options)(nil),   // 51: api.ObjectToJSONRequest.Options
+	(*DeleteRequest_Options)(nil),         // 52: api.DeleteRequest.Options
+	(*DeleteObjectRequest_Options)(nil),   // 53: api.DeleteObjectRequest.Options
+	(*GetToObjectRequest_Options)(nil),    // 54: api.GetToObjectRequest.Options
+	(*SetToObjectRequest_Options)(nil),    // 55: api.SetToObjectRequest.Options
+	(*AttachToObjectRequest_Options)(nil), // 56: api.AttachToObjectRequest.Options
+	(*GetRequest_Options)(nil),            // 57: api.GetRequest.Options
+	(*DeleteAttrRequest_Options)(nil),     // 58: api.DeleteAttrRequest.Options
+	(*GetFromObjectRequest_Options)(nil),  // 59: api.GetFromObjectRequest.Options
+	(*ConnectRequest_Options)(nil),        // 60: api.ConnectRequest.Options
+	(*ObjectRequest_Options)(nil),         // 61: api.ObjectRequest.Options
+	(*IsObjectRequest_Options)(nil),       // 62: api.IsObjectRequest.Options
 }
 var file_itisadb_proto_depIdxs = []int32{
-	0,  // 0: api.GetRamResponse.ram:type_name -> api.Ram
-	1,  // 1: api.ItisaDB.Set:input_type -> api.SetRequest
-	10, // 2: api.ItisaDB.Get:input_type -> api.GetRequest
-	5,  // 3: api.ItisaDB.Delete:input_type -> api.DeleteRequest
-	5,  // 4: api.ItisaDB.DeleteIfExists:input_type -> api.DeleteRequest
-	2,  // 5: api.ItisaDB.NewObject:input_type -> api.NewObjectRequest
-	14, // 6: api.ItisaDB.Object:input_type -> api.ObjectRequest
-	8,  // 7: api.ItisaDB.SetToObject:input_type -> api.SetToObjectRequest
-	12, // 8: api.ItisaDB.GetFromObject:input_type -> api.GetFromObjectRequest
-	9,  // 9: api.ItisaDB.AttachToObject:input_type -> api.AttachToObjectRequest
-	4,  // 10: api.ItisaDB.ObjectToJSON:input_type -> api.ObjectToJSONRequest
-	15, // 11: api.ItisaDB.IsObject:input_type -> api.IsObjectRequest
-	3,  // 12: api.ItisaDB.Size:input_type -> api.ObjectSizeRequest
-	6,  // 13: api.ItisaDB.DeleteObject:input_type -> api.DeleteObjectRequest
-	11, // 14: api.ItisaDB.DeleteAttr:input_type -> api.DeleteAttrRequest
-	18, // 15: api.ItisaDB.Authenticate:input_type -> api.AuthRequest
-	13, // 16: api.ItisaDB.Connect:input_type -> api.ConnectRequest
-	16, // 17: api.ItisaDB.Disconnect:input_type -> api.DisconnectRequest
-	17, // 18: api.ItisaDB.Servers:input_type -> api.ServersRequest
-	19, // 19: api.ItisaDB.GetRam:input_type -> api.GetRamRequest
-	24, // 20: api.ItisaDB.Set:output_type -> api.SetResponse
-	20, // 21: api.ItisaDB.Get:output_type -> api.GetResponse
-	27, // 22: api.ItisaDB.Delete:output_type -> api.DeleteResponse
-	27, // 23: api.ItisaDB.DeleteIfExists:output_type -> api.DeleteResponse
-	21, // 24: api.ItisaDB.NewObject:output_type -> api.NewObjectResponse
-	33, // 25: api.ItisaDB.Object:output_type -> api.ObjectResponse
-	30, // 26: api.ItisaDB.SetToObject:output_type -> api.SetToObjectResponse
-	32, // 27: api.ItisaDB.GetFromObject:output_type -> api.GetFromObjectResponse
-	26, // 28: api.ItisaDB.AttachToObject:output_type -> api.AttachToObjectResponse
-	23, // 29: api.ItisaDB.ObjectToJSON:output_type -> api.ObjectToJSONResponse
-	22, // 30: api.ItisaDB.IsObject:output_type -> api.IsObjectResponse
-	31, // 31: api.ItisaDB.Size:output_type -> api.ObjectSizeResponse
-	34, // 32: api.ItisaDB.DeleteObject:output_type -> api.DeleteObjectResponse
-	28, // 33: api.ItisaDB.DeleteAttr:output_type -> api.DeleteAttrResponse
-	36, // 34: api.ItisaDB.Authenticate:output_type -> api.AuthResponse
-	25, // 35: api.ItisaDB.Connect:output_type -> api.ConnectResponse
-	29, // 36: api.ItisaDB.Disconnect:output_type -> api.DisconnectResponse
-	35, // 37: api.ItisaDB.Servers:output_type -> api.ServersResponse
-	37, // 38: api.ItisaDB.GetRam:output_type -> api.GetRamResponse
-	20, // [20:39] is the sub-list for method output_type
-	1,  // [1:20] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	48, // 0: api.SetRequest.options:type_name -> api.SetRequest.Options
+	49, // 1: api.NewObjectRequest.options:type_name -> api.NewObjectRequest.Options
+	50, // 2: api.ObjectSizeRequest.options:type_name -> api.ObjectSizeRequest.Options
+	51, // 3: api.ObjectToJSONRequest.options:type_name -> api.ObjectToJSONRequest.Options
+	52, // 4: api.DeleteRequest.options:type_name -> api.DeleteRequest.Options
+	53, // 5: api.DeleteObjectRequest.options:type_name -> api.DeleteObjectRequest.Options
+	54, // 6: api.GetToObjectRequest.options:type_name -> api.GetToObjectRequest.Options
+	55, // 7: api.SetToObjectRequest.options:type_name -> api.SetToObjectRequest.Options
+	56, // 8: api.AttachToObjectRequest.options:type_name -> api.AttachToObjectRequest.Options
+	57, // 9: api.GetRequest.options:type_name -> api.GetRequest.Options
+	58, // 10: api.DeleteAttrRequest.options:type_name -> api.DeleteAttrRequest.Options
+	59, // 11: api.GetFromObjectRequest.options:type_name -> api.GetFromObjectRequest.Options
+	60, // 12: api.ConnectRequest.options:type_name -> api.ConnectRequest.Options
+	61, // 13: api.ObjectRequest.options:type_name -> api.ObjectRequest.Options
+	62, // 14: api.IsObjectRequest.options:type_name -> api.IsObjectRequest.Options
+	2,  // 15: api.CreateUserRequest.user:type_name -> api.User
+	1,  // 16: api.GetRamResponse.ram:type_name -> api.Ram
+	0,  // 17: api.NewObjectRequest.Options.level:type_name -> api.Level
+	0,  // 18: api.ObjectRequest.Options.level:type_name -> api.Level
+	3,  // 19: api.ItisaDB.Set:input_type -> api.SetRequest
+	12, // 20: api.ItisaDB.Get:input_type -> api.GetRequest
+	7,  // 21: api.ItisaDB.Delete:input_type -> api.DeleteRequest
+	7,  // 22: api.ItisaDB.DeleteIfExists:input_type -> api.DeleteRequest
+	4,  // 23: api.ItisaDB.NewObject:input_type -> api.NewObjectRequest
+	16, // 24: api.ItisaDB.Object:input_type -> api.ObjectRequest
+	10, // 25: api.ItisaDB.SetToObject:input_type -> api.SetToObjectRequest
+	14, // 26: api.ItisaDB.GetFromObject:input_type -> api.GetFromObjectRequest
+	11, // 27: api.ItisaDB.AttachToObject:input_type -> api.AttachToObjectRequest
+	6,  // 28: api.ItisaDB.ObjectToJSON:input_type -> api.ObjectToJSONRequest
+	17, // 29: api.ItisaDB.IsObject:input_type -> api.IsObjectRequest
+	5,  // 30: api.ItisaDB.Size:input_type -> api.ObjectSizeRequest
+	8,  // 31: api.ItisaDB.DeleteObject:input_type -> api.DeleteObjectRequest
+	13, // 32: api.ItisaDB.DeleteAttr:input_type -> api.DeleteAttrRequest
+	20, // 33: api.ItisaDB.Authenticate:input_type -> api.AuthRequest
+	22, // 34: api.ItisaDB.CreateUser:input_type -> api.CreateUserRequest
+	23, // 35: api.ItisaDB.DeleteUser:input_type -> api.DeleteUserRequest
+	24, // 36: api.ItisaDB.ChangePassword:input_type -> api.ChangePasswordRequest
+	25, // 37: api.ItisaDB.ChangeLevel:input_type -> api.ChangeLevelRequest
+	15, // 38: api.ItisaDB.Connect:input_type -> api.ConnectRequest
+	18, // 39: api.ItisaDB.Disconnect:input_type -> api.DisconnectRequest
+	19, // 40: api.ItisaDB.Servers:input_type -> api.ServersRequest
+	21, // 41: api.ItisaDB.GetRam:input_type -> api.GetRamRequest
+	30, // 42: api.ItisaDB.Set:output_type -> api.SetResponse
+	26, // 43: api.ItisaDB.Get:output_type -> api.GetResponse
+	33, // 44: api.ItisaDB.Delete:output_type -> api.DeleteResponse
+	33, // 45: api.ItisaDB.DeleteIfExists:output_type -> api.DeleteResponse
+	27, // 46: api.ItisaDB.NewObject:output_type -> api.NewObjectResponse
+	39, // 47: api.ItisaDB.Object:output_type -> api.ObjectResponse
+	36, // 48: api.ItisaDB.SetToObject:output_type -> api.SetToObjectResponse
+	38, // 49: api.ItisaDB.GetFromObject:output_type -> api.GetFromObjectResponse
+	32, // 50: api.ItisaDB.AttachToObject:output_type -> api.AttachToObjectResponse
+	29, // 51: api.ItisaDB.ObjectToJSON:output_type -> api.ObjectToJSONResponse
+	28, // 52: api.ItisaDB.IsObject:output_type -> api.IsObjectResponse
+	37, // 53: api.ItisaDB.Size:output_type -> api.ObjectSizeResponse
+	40, // 54: api.ItisaDB.DeleteObject:output_type -> api.DeleteObjectResponse
+	34, // 55: api.ItisaDB.DeleteAttr:output_type -> api.DeleteAttrResponse
+	42, // 56: api.ItisaDB.Authenticate:output_type -> api.AuthResponse
+	44, // 57: api.ItisaDB.CreateUser:output_type -> api.CreateUserResponse
+	45, // 58: api.ItisaDB.DeleteUser:output_type -> api.DeleteUserResponse
+	46, // 59: api.ItisaDB.ChangePassword:output_type -> api.ChangePasswordResponse
+	47, // 60: api.ItisaDB.ChangeLevel:output_type -> api.ChangeLevelResponse
+	31, // 61: api.ItisaDB.Connect:output_type -> api.ConnectResponse
+	35, // 62: api.ItisaDB.Disconnect:output_type -> api.DisconnectResponse
+	41, // 63: api.ItisaDB.Servers:output_type -> api.ServersResponse
+	43, // 64: api.ItisaDB.GetRam:output_type -> api.GetRamResponse
+	42, // [42:65] is the sub-list for method output_type
+	19, // [19:42] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_itisadb_proto_init() }
@@ -2311,7 +3687,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetRequest); i {
+			switch v := v.(*User); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2323,7 +3699,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NewObjectRequest); i {
+			switch v := v.(*SetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2335,7 +3711,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectSizeRequest); i {
+			switch v := v.(*NewObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2347,7 +3723,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectToJSONRequest); i {
+			switch v := v.(*ObjectSizeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2359,7 +3735,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRequest); i {
+			switch v := v.(*ObjectToJSONRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2371,7 +3747,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteObjectRequest); i {
+			switch v := v.(*DeleteRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2383,7 +3759,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetToObjectRequest); i {
+			switch v := v.(*DeleteObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2395,7 +3771,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetToObjectRequest); i {
+			switch v := v.(*GetToObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2407,7 +3783,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AttachToObjectRequest); i {
+			switch v := v.(*SetToObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2419,7 +3795,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRequest); i {
+			switch v := v.(*AttachToObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2431,7 +3807,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAttrRequest); i {
+			switch v := v.(*GetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2443,7 +3819,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetFromObjectRequest); i {
+			switch v := v.(*DeleteAttrRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2455,7 +3831,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ConnectRequest); i {
+			switch v := v.(*GetFromObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2467,7 +3843,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectRequest); i {
+			switch v := v.(*ConnectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2479,7 +3855,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IsObjectRequest); i {
+			switch v := v.(*ObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2491,7 +3867,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisconnectRequest); i {
+			switch v := v.(*IsObjectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2503,7 +3879,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServersRequest); i {
+			switch v := v.(*DisconnectRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2515,7 +3891,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthRequest); i {
+			switch v := v.(*ServersRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2527,7 +3903,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRamRequest); i {
+			switch v := v.(*AuthRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2539,7 +3915,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetResponse); i {
+			switch v := v.(*GetRamRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2551,7 +3927,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NewObjectResponse); i {
+			switch v := v.(*CreateUserRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2563,7 +3939,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IsObjectResponse); i {
+			switch v := v.(*DeleteUserRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2575,7 +3951,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectToJSONResponse); i {
+			switch v := v.(*ChangePasswordRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2587,7 +3963,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetResponse); i {
+			switch v := v.(*ChangeLevelRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2599,7 +3975,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ConnectResponse); i {
+			switch v := v.(*GetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2611,7 +3987,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AttachToObjectResponse); i {
+			switch v := v.(*NewObjectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2623,7 +3999,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteResponse); i {
+			switch v := v.(*IsObjectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2635,7 +4011,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAttrResponse); i {
+			switch v := v.(*ObjectToJSONResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2647,7 +4023,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisconnectResponse); i {
+			switch v := v.(*SetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2659,7 +4035,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetToObjectResponse); i {
+			switch v := v.(*ConnectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2671,7 +4047,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectSizeResponse); i {
+			switch v := v.(*AttachToObjectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2683,7 +4059,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetFromObjectResponse); i {
+			switch v := v.(*DeleteResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2695,7 +4071,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ObjectResponse); i {
+			switch v := v.(*DeleteAttrResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2707,7 +4083,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteObjectResponse); i {
+			switch v := v.(*DisconnectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2719,7 +4095,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServersResponse); i {
+			switch v := v.(*SetToObjectResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2731,7 +4107,7 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthResponse); i {
+			switch v := v.(*ObjectSizeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2743,6 +4119,66 @@ func file_itisadb_proto_init() {
 			}
 		}
 		file_itisadb_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetFromObjectResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ObjectResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteObjectResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AuthResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRamResponse); i {
 			case 0:
 				return &v.state
@@ -2754,34 +4190,263 @@ func file_itisadb_proto_init() {
 				return nil
 			}
 		}
+		file_itisadb_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateUserResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteUserResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ChangePasswordResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ChangeLevelResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NewObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ObjectSizeRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ObjectToJSONRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetToObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetToObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AttachToObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteAttrRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetFromObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ConnectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_itisadb_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IsObjectRequest_Options); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
-	file_itisadb_proto_msgTypes[1].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[2].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[3].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[4].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[5].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[6].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[7].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[8].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[9].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[10].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[11].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[12].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[13].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[14].OneofWrappers = []interface{}{}
-	file_itisadb_proto_msgTypes[15].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[47].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[48].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[49].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[50].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[51].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[52].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[53].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[54].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[55].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[56].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[57].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[58].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[59].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[60].OneofWrappers = []interface{}{}
+	file_itisadb_proto_msgTypes[61].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_itisadb_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   38,
+			NumEnums:      1,
+			NumMessages:   62,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_itisadb_proto_goTypes,
 		DependencyIndexes: file_itisadb_proto_depIdxs,
+		EnumInfos:         file_itisadb_proto_enumTypes,
 		MessageInfos:      file_itisadb_proto_msgTypes,
 	}.Build()
 	File_itisadb_proto = out.File

@@ -38,4 +38,6 @@ var (
 	*/
 
 	ErrInvalidPassword = errors.New("invalid password")
+
+	ErrForbidden = errors.New("forbidden")
 )

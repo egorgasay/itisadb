@@ -155,7 +155,7 @@ func (s *Servers) GetServers() []string {
 	return servers
 }
 
-func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
+func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOptions) (string, error) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -173,7 +173,7 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 		c := cl
 		s.poolCh <- struct{}{}
 		go func() {
-			c.find(ctxCancel, key, out, &once)
+			c.find(ctxCancel, key, out, &once, opts)
 			<-s.poolCh
 			wg.Done()
 		}()
@@ -195,8 +195,8 @@ func (s *Servers) DeepSearch(ctx context.Context, key string) (string, error) {
 	}
 }
 
-func (s *Server) find(ctx context.Context, key string, out chan<- string, once *sync.Once) {
-	get, err := s.Get(ctx, key)
+func (s *Server) find(ctx context.Context, key string, out chan<- string, once *sync.Once, opts models.GetOptions) {
+	get, err := s.Get(ctx, key, opts)
 	if err != nil {
 		return
 	}
@@ -220,7 +220,7 @@ func (s *Servers) Exists(number int32) bool {
 	return ok
 }
 
-func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) []int32 {
+func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.SetOptions) []int32 {
 	var failedServers = make([]int32, 0)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -232,7 +232,7 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 
 	set := func(server *Server, number int32) {
 		defer wg.Done()
-		err := server.Set(ctx, key, val, uniques)
+		err := server.Set(ctx, key, val, opts)
 		if err != nil {
 			if server.GetTries() > 2 {
 				delete(s.servers, number)
@@ -259,7 +259,7 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, uniques bool) [
 	return failedServers
 }
 
-func (s *Servers) DelFromAll(ctx context.Context, key string) (atLeastOnce bool) {
+func (s *Servers) DelFromAll(ctx context.Context, key string, opts models.DeleteOptions) (atLeastOnce bool) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -270,7 +270,7 @@ func (s *Servers) DelFromAll(ctx context.Context, key string) (atLeastOnce bool)
 
 	del := func(server *Server, number int32) {
 		defer wg.Done()
-		err := server.Delete(ctx, key)
+		err := server.Delete(ctx, key, opts)
 		if err != nil {
 			if server.GetTries() > 2 {
 				delete(s.servers, number)

@@ -60,3 +60,29 @@ func (s *Storage) GetUserByName(username string) (id int, u models.User, err err
 
 	return id, u, nil
 }
+
+func (s *Storage) DeleteUser(id int) error {
+	s.users.Lock()
+	defer s.users.Unlock()
+
+	if !s.users.Has(id) {
+		return constants.ErrNotFound
+	}
+
+	s.users.Delete(id)
+
+	return nil
+}
+
+func (s *Storage) SaveUser(id int, user models.User) error {
+	s.users.Lock()
+	defer s.users.Unlock()
+
+	if !s.users.Has(id) {
+		return constants.ErrNotFound
+	}
+
+	s.users.Put(id, user)
+
+	return nil
+}

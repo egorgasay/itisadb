@@ -33,3 +33,7 @@ func (t *TransactionLogger) WriteDeleteAttr(name string, key string) {
 func (t *TransactionLogger) WriteCreateUser(user models.User) {
 	t.events <- Event{EventType: CreateUser, Name: user.Username, Value: user.Password}
 }
+
+func (t *TransactionLogger) WriteDeleteUser(login string) {
+	t.events <- Event{EventType: DeleteUser, Name: login}
+}

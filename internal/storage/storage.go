@@ -44,10 +44,10 @@ func New() (*Storage, error) {
 	return st, nil
 }
 
-func (s *Storage) Set(key, val string, unique bool) error {
+func (s *Storage) Set(key, val string, opts models.SetOptions) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
-	if unique && s.ramStorage.Has(key) {
+	if opts.Uniques && s.ramStorage.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
@@ -76,13 +76,13 @@ func (s *Storage) GetFromObject(name, key string) (string, error) {
 	return v.Get(key)
 }
 
-func (s *Storage) SetToObject(name, key, value string, uniques bool) error {
+func (s *Storage) SetToObject(name, key, value string, opts models.SetToObjectOptions) error {
 	object, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
-	if uniques && object.Has(key) {
+	if opts.Uniques && object.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 
@@ -136,7 +136,7 @@ func (s *Storage) DeleteObject(name string) error {
 }
 
 // CreateObject ..
-func (s *Storage) CreateObject(name string) (err error) {
+func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err error) {
 	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
 		return constants.ErrEmptyObjectName

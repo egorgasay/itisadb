@@ -34,6 +34,10 @@ const (
 	ItisaDB_DeleteObject_FullMethodName   = "/api.ItisaDB/DeleteObject"
 	ItisaDB_DeleteAttr_FullMethodName     = "/api.ItisaDB/DeleteAttr"
 	ItisaDB_Authenticate_FullMethodName   = "/api.ItisaDB/Authenticate"
+	ItisaDB_CreateUser_FullMethodName     = "/api.ItisaDB/CreateUser"
+	ItisaDB_DeleteUser_FullMethodName     = "/api.ItisaDB/DeleteUser"
+	ItisaDB_ChangePassword_FullMethodName = "/api.ItisaDB/ChangePassword"
+	ItisaDB_ChangeLevel_FullMethodName    = "/api.ItisaDB/ChangeLevel"
 	ItisaDB_Connect_FullMethodName        = "/api.ItisaDB/Connect"
 	ItisaDB_Disconnect_FullMethodName     = "/api.ItisaDB/Disconnect"
 	ItisaDB_Servers_FullMethodName        = "/api.ItisaDB/Servers"
@@ -59,6 +63,10 @@ type ItisaDBClient interface {
 	DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	DeleteAttr(ctx context.Context, in *DeleteAttrRequest, opts ...grpc.CallOption) (*DeleteAttrResponse, error)
 	Authenticate(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
+	ChangeLevel(ctx context.Context, in *ChangeLevelRequest, opts ...grpc.CallOption) (*ChangeLevelResponse, error)
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
 	Servers(ctx context.Context, in *ServersRequest, opts ...grpc.CallOption) (*ServersResponse, error)
@@ -208,6 +216,42 @@ func (c *itisaDBClient) Authenticate(ctx context.Context, in *AuthRequest, opts 
 	return out, nil
 }
 
+func (c *itisaDBClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
+	out := new(CreateUserResponse)
+	err := c.cc.Invoke(ctx, ItisaDB_CreateUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *itisaDBClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+	out := new(DeleteUserResponse)
+	err := c.cc.Invoke(ctx, ItisaDB_DeleteUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *itisaDBClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
+	out := new(ChangePasswordResponse)
+	err := c.cc.Invoke(ctx, ItisaDB_ChangePassword_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *itisaDBClient) ChangeLevel(ctx context.Context, in *ChangeLevelRequest, opts ...grpc.CallOption) (*ChangeLevelResponse, error) {
+	out := new(ChangeLevelResponse)
+	err := c.cc.Invoke(ctx, ItisaDB_ChangeLevel_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *itisaDBClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
 	out := new(ConnectResponse)
 	err := c.cc.Invoke(ctx, ItisaDB_Connect_FullMethodName, in, out, opts...)
@@ -263,6 +307,10 @@ type ItisaDBServer interface {
 	DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	DeleteAttr(context.Context, *DeleteAttrRequest) (*DeleteAttrResponse, error)
 	Authenticate(context.Context, *AuthRequest) (*AuthResponse, error)
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
+	ChangeLevel(context.Context, *ChangeLevelRequest) (*ChangeLevelResponse, error)
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
 	Servers(context.Context, *ServersRequest) (*ServersResponse, error)
@@ -318,6 +366,18 @@ func (UnimplementedItisaDBServer) DeleteAttr(context.Context, *DeleteAttrRequest
 }
 func (UnimplementedItisaDBServer) Authenticate(context.Context, *AuthRequest) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
+}
+func (UnimplementedItisaDBServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedItisaDBServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedItisaDBServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
+}
+func (UnimplementedItisaDBServer) ChangeLevel(context.Context, *ChangeLevelRequest) (*ChangeLevelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeLevel not implemented")
 }
 func (UnimplementedItisaDBServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
@@ -614,6 +674,78 @@ func _ItisaDB_Authenticate_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ItisaDB_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItisaDBServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ItisaDB_CreateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItisaDBServer).CreateUser(ctx, req.(*CreateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ItisaDB_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItisaDBServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ItisaDB_DeleteUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItisaDBServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ItisaDB_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItisaDBServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ItisaDB_ChangePassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItisaDBServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ItisaDB_ChangeLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeLevelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItisaDBServer).ChangeLevel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ItisaDB_ChangeLevel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItisaDBServer).ChangeLevel(ctx, req.(*ChangeLevelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ItisaDB_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ConnectRequest)
 	if err := dec(in); err != nil {
@@ -752,6 +884,22 @@ var ItisaDB_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authenticate",
 			Handler:    _ItisaDB_Authenticate_Handler,
+		},
+		{
+			MethodName: "CreateUser",
+			Handler:    _ItisaDB_CreateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _ItisaDB_DeleteUser_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _ItisaDB_ChangePassword_Handler,
+		},
+		{
+			MethodName: "ChangeLevel",
+			Handler:    _ItisaDB_ChangeLevel_Handler,
 		},
 		{
 			MethodName: "Connect",

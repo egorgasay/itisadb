@@ -20,14 +20,15 @@ type TransactionLogger interface {
 	WriteCreateUser(user models.User)
 	RestoreObjects(ctx context.Context) (map[string]int32, error)
 	SaveObjectLoc(ctx context.Context, object string, server int32) error
+	WriteDeleteUser(login string)
 }
 
 type Restorer interface {
-	Set(key, value string, uniques bool) error
+	Set(key, value string, opts models.SetOptions) error
 	Delete(key string) error
-	SetToObject(name, key, value string, uniques bool) error
+	SetToObject(name, key, value string, opts models.SetToObjectOptions) error
 	DeleteObject(name string) error
-	CreateObject(name string) error
+	CreateObject(name string, opts models.ObjectOptions) error
 	AttachToObject(dst, src string) error
 	CreateUser(user models.User) (int, error)
 }

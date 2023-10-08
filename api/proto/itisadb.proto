@@ -22,6 +22,11 @@ service ItisaDB {
   rpc DeleteAttr(DeleteAttrRequest) returns (DeleteAttrResponse) {}
 
   rpc Authenticate(AuthRequest) returns (AuthResponse) {}
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
+  rpc ChangeLevel(ChangeLevelRequest) returns (ChangeLevelResponse) {}
+
   rpc Connect(ConnectRequest) returns (ConnectResponse) {}
   rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc Servers(ServersRequest) returns (ServersResponse) {}
@@ -40,6 +45,19 @@ message Ram {
   uint64 Available = 3;
 }
 
+message User {
+  string login = 1;
+  string password = 2;
+  uint32  level = 3;
+}
+
+enum Level {
+  DEFAULT = 0;
+  RESTRICTED = 1;
+  SECRET = 2;
+}
+
+
 /*
 
    REQUESTS
@@ -47,92 +65,155 @@ message Ram {
  */
 
 message SetRequest {
-  optional int32 server = 1;
-  string key = 2;
-  string value = 3;
-  bool uniques = 4;
+  string key = 1;
+  string value = 2;
+
+  message Options {
+    optional int32 server = 1;
+    bool uniques = 2;
+    bool read_only = 3;
+  }
+  Options options = 3;
 }
 
 
 message NewObjectRequest {
-  optional int32 server = 1;
-  string name = 2;
+  string name = 1;
+
+  message Options {
+    optional int32 server = 1;
+    Level level = 2;
+  }
+  Options options = 2;
 }
 
 message ObjectSizeRequest {
-  optional int32 server = 1;
-  string name = 2;
+  string name = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message ObjectToJSONRequest {
-  optional int32 server = 1;
-  string name = 2;
+  string name = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message DeleteRequest {
-  optional int32 server = 1;
-  string key = 2;
+  string key = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message DeleteObjectRequest {
-  optional int32 server = 1;
-  string object = 2;
+  string object = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message GetToObjectRequest {
-  optional int32 server = 1;
-  string key = 2;
-  string name = 3;
+  string key = 1;
+  string name = 2;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 3;
 }
 
 message SetToObjectRequest {
-  optional int32 server = 1;
-  string key = 2;
-  string value = 3;
-  bool uniques = 4;
-  string object = 5;
+  string key = 1;
+  string value = 2;
+  string object = 3;
+
+  message Options {
+    optional int32 server = 1;
+    bool uniques = 2;
+    bool read_only = 3;
+  }
+  Options options = 4;
 }
 
 message AttachToObjectRequest {
-  optional int32 server = 1;
-  string dst = 2;
-  string src = 3;
+  string dst = 1;
+  string src = 2;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 3;
 }
 
 message GetRequest {
-  optional int32 server = 1;
-  string key = 2;
+  string key = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message DeleteAttrRequest {
-  optional int32 server = 1;
-  string key = 2;
-  string object = 3;
+  string key = 1;
+  string object = 2;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 3;
 }
 
 message GetFromObjectRequest {
-  optional int32 server = 1;
-  string key = 2;
-  string object = 3;
+  string key = 1;
+  string object = 2;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 3;
 }
 
 message ConnectRequest {
-  optional int32 server = 1;
-  string Address = 2;
-  uint64 Total = 3;
-  uint64 Available = 4;
+  string Address = 1;
+  uint64 Total = 2;
+  uint64 Available = 3;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 4;
 }
 
 message ObjectRequest {
-  optional int32 server = 1;
-  string name = 2;
-//  string defaultAttributes = 2;
+  string name = 1;
+
+  message Options {
+    optional int32 server = 1;
+    Level level = 2;
+  }
+  Options options = 2;
 }
 
 
 message IsObjectRequest {
-  optional int32 server = 1;
-  string name = 2;
+  string name = 1;
+
+  message Options {
+    optional int32 server = 1;
+  }
+  Options options = 2;
 }
 
 message DisconnectRequest{
@@ -149,6 +230,23 @@ message AuthRequest {
 message GetRamRequest {
 }
 
+message CreateUserRequest {
+  User user = 1;
+}
+
+message DeleteUserRequest {
+  string login = 1;
+}
+
+message ChangePasswordRequest {
+  string login = 1;
+  string new_password = 2;
+}
+
+message ChangeLevelRequest {
+  string login = 1;
+  int32  level = 2;
+}
 
 /*
 
@@ -221,4 +319,16 @@ message AuthResponse {
 
 message GetRamResponse {
   Ram ram = 1;
+}
+
+message CreateUserResponse {
+}
+
+message DeleteUserResponse {
+}
+
+message ChangePasswordResponse {
+}
+
+message ChangeLevelResponse {
 }

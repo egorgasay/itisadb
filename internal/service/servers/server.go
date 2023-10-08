@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"github.com/egorgasay/itisadb-go-sdk"
 	"itisadb/internal/models"
 	"itisadb/pkg/api"
 	client "itisadb/pkg/api"
@@ -14,7 +15,7 @@ import (
 func NewServer(client api.ItisaDBClient, number int32) *Server {
 	return &Server{
 		client: client,
-		number: 0,
+		number: number,
 		mu:     &sync.RWMutex{},
 		tries:  atomic.Uint32{},
 	}
@@ -26,6 +27,8 @@ type Server struct {
 	ram    models.RAM
 	number int32
 	mu     *sync.RWMutex
+
+	sdk *itisadb.Client
 }
 
 func (s *Server) GetRAM() models.RAM {
@@ -43,77 +46,75 @@ func (s *Server) setRAM(ram models.RAM) {
 	s.ram = models.RAM{Total: ram.Total, Available: ram.Available}
 }
 
-func (s *Server) Set(ctx context.Context, Key, Value string, unique bool) error {
+func (s *Server) Set(ctx context.Context, key, value string, opts models.SetOptions) error {
 	_, err := s.client.Set(ctx, &client.SetRequest{
-		Key:     Key,
-		Value:   Value,
-		Uniques: unique,
+		Key:   key,
+		Value: value,
 	})
 	return err
 }
 
-func (s *Server) Get(ctx context.Context, Key string) (*client.GetResponse, error) {
-	r, err := s.client.Get(ctx, &client.GetRequest{Key: Key})
+func (s *Server) Get(ctx context.Context, key string, opts models.GetOptions) (*client.GetResponse, error) {
+	r, err := s.client.Get(ctx, &client.GetRequest{Key: key})
 	return r, err
 
 }
 
-func (s *Server) ObjectToJSON(ctx context.Context, name string) (*client.ObjectToJSONResponse, error) {
+func (s *Server) ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (*client.ObjectToJSONResponse, error) {
 	r, err := s.client.ObjectToJSON(ctx, &client.ObjectToJSONRequest{
 		Name: name,
 	})
 	return r, err
 }
 
-func (s *Server) GetFromObject(ctx context.Context, name, Key string) (*client.GetFromObjectResponse, error) {
+func (s *Server) GetFromObject(ctx context.Context, name, key string, opts models.GetFromObjectOptions) (*client.GetFromObjectResponse, error) {
 	r, err := s.client.GetFromObject(ctx, &client.GetFromObjectRequest{
-		Key:    Key,
+		Key:    key,
 		Object: name,
 	})
 	return r, err
 
 }
 
-func (s *Server) SetToObject(ctx context.Context, name, Key, Value string, unique bool) error {
+func (s *Server) SetToObject(ctx context.Context, name, key, value string, opts models.SetToObjectOptions) error {
 	_, err := s.client.SetToObject(ctx, &client.SetToObjectRequest{
-		Key:     Key,
-		Value:   Value,
-		Object:  name,
-		Uniques: unique,
+		Key:    key,
+		Value:  value,
+		Object: name,
 	})
 	return err
 
 }
 
-func (s *Server) NewObject(ctx context.Context, name string) error {
+func (s *Server) NewObject(ctx context.Context, name string, opts models.ObjectOptions) error {
 	_, err := s.client.NewObject(ctx, &client.NewObjectRequest{
 		Name: name,
 	})
 	return err
 }
 
-func (s *Server) Size(ctx context.Context, name string) (*client.ObjectSizeResponse, error) {
+func (s *Server) Size(ctx context.Context, name string, opts models.SizeOptions) (*client.ObjectSizeResponse, error) {
 	r, err := s.client.Size(ctx, &client.ObjectSizeRequest{
 		Name: name,
 	})
 	return r, err
 }
 
-func (s *Server) DeleteObject(ctx context.Context, name string) error {
+func (s *Server) DeleteObject(ctx context.Context, name string, opts models.DeleteObjectOptions) error {
 	_, err := s.client.DeleteObject(ctx, &client.DeleteObjectRequest{
 		Object: name,
 	})
 	return err
 }
 
-func (s *Server) Delete(ctx context.Context, Key string) error {
+func (s *Server) Delete(ctx context.Context, Key string, opts models.DeleteOptions) error {
 	_, err := s.client.Delete(ctx, &client.DeleteRequest{
 		Key: Key,
 	})
 	return err
 }
 
-func (s *Server) AttachToObject(ctx context.Context, dst string, src string) error {
+func (s *Server) AttachToObject(ctx context.Context, dst string, src string, opts models.AttachToObjectOptions) error {
 	_, err := s.client.AttachToObject(ctx, &client.AttachToObjectRequest{
 		Dst: dst,
 		Src: src,
@@ -137,7 +138,7 @@ func (s *Server) ResetTries() {
 	s.tries.Store(0)
 }
 
-func (s *Server) DeleteAttr(ctx context.Context, attr string, object string) error {
+func (s *Server) DeleteAttr(ctx context.Context, attr string, object string, opts models.DeleteAttrOptions) error {
 	_, err := s.client.DeleteAttr(ctx, &client.DeleteAttrRequest{
 		Object: object,
 		Key:    attr,

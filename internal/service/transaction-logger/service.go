@@ -18,6 +18,7 @@ const (
 	Attach
 	DeleteObject
 	CreateUser
+	DeleteUser
 )
 
 type Event struct {

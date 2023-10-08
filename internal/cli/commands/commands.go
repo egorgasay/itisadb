@@ -191,7 +191,7 @@ func (c *Commands) ObjectToJSON(name, key string) (string, error) {
 }
 
 func (c *Commands) get(key string, server int32) (string, error) {
-	resp, err := c.cl.Get(context.Background(), &api.GetRequest{Key: key, Server: &server})
+	resp, err := c.cl.Get(context.Background(), &api.GetRequest{Key: key, Options: &api.GetRequest_Options{Server: &server}})
 	if err != nil {
 		return "", err
 	}

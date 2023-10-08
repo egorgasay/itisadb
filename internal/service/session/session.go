@@ -9,16 +9,16 @@ import (
 )
 
 type Session struct {
-	keeper    domains.Keeper
+	storage   domains.Storage
 	generator domains.Generator
 	logger    *zap.Logger
 
 	key []byte
 }
 
-func New(keeper domains.Keeper, generator domains.Generator, l *zap.Logger) domains.Session {
+func New(storage domains.Storage, generator domains.Generator, l *zap.Logger) domains.Session {
 	return Session{
-		keeper:    keeper,
+		storage:   storage,
 		generator: generator,
 		logger:    l,
 		key:       []byte("CHANGE_ME"), // TODO: change me
@@ -26,7 +26,7 @@ func New(keeper domains.Keeper, generator domains.Generator, l *zap.Logger) doma
 }
 
 func (s Session) AuthByPassword(ctx context.Context, username, password string) (string, error) {
-	id, user, err := s.keeper.GetUserByName(username)
+	id, user, err := s.storage.GetUserByName(username)
 	if err != nil {
 		return "", err
 	}
@@ -53,7 +53,7 @@ func (s Session) AuthByToken(ctx context.Context, token string) (string, error) 
 		return "", err
 	}
 
-	user, err := s.keeper.GetUserByID(id)
+	user, err := s.storage.GetUserByID(id)
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +62,7 @@ func (s Session) AuthByToken(ctx context.Context, token string) (string, error) 
 }
 
 func (s Session) Create(ctx context.Context, guid int) (string, error) {
-	//id, err := s.keeper.CreateUser(models.User{Username: username, Password: password})
+	//id, err := s.storage.CreateUser(models.User{Username: username, Password: password})
 	//if err != nil {
 	//	return "", err
 	//}
