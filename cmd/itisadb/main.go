@@ -67,7 +67,7 @@ func main() {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}
 
-	go runGRPC(ctx, lg, logic, cfg.NetworkConfig)
+	go runGRPC(ctx, lg, logic, cfg.NetworkConfig, ses)
 	go runWebCLI(ctx, cfg.WebAppConfig, lg, cfg.NetworkConfig.GRPC)
 
 	if cfg.NetworkConfig.REST != "" {

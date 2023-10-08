@@ -8,7 +8,7 @@ import (
 	"itisadb/internal/models"
 )
 
-func (c *Core) Authenticate(ctx context.Context, userID uint, login string, password string) (string, error) {
+func (c *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
 	token, err := c.session.AuthByPassword(ctx, login, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate: %w", err)

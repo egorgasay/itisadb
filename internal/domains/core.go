@@ -22,10 +22,10 @@ type Core interface {
 	DeleteAttr(ctx context.Context, userID uint, attr, object string, opts models.DeleteAttrOptions) error
 
 	Connect(address string, available uint64, total uint64) (int32, error)
-	Disconnect(ctx context.Context, userID uint, number int32) error
+	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
 
-	Authenticate(ctx context.Context, userID uint, login, password string) (string, error)
+	Authenticate(ctx context.Context, login, password string) (string, error)
 	CreateUser(ctx context.Context, userID uint, user models.User) error
 	DeleteUser(ctx context.Context, userID uint, login string) error
 	ChangePassword(ctx context.Context, userID uint, login, password string) error

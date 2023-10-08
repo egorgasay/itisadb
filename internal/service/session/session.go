@@ -43,30 +43,25 @@ func (s Session) AuthByPassword(ctx context.Context, username, password string) 
 	return token, nil
 }
 
-func (s Session) AuthByToken(ctx context.Context, token string) (string, error) {
+func (s Session) AuthByToken(ctx context.Context, token string) (int, error) {
 	if ctx.Err() != nil {
-		return "", ctx.Err()
+		return 0, ctx.Err()
 	}
 
 	id, err := s.guidFromJWT(token)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	user, err := s.storage.GetUserByID(id)
+	_, err = s.storage.GetUserByID(id)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return user.Username, nil
+	return id, nil
 }
 
 func (s Session) Create(ctx context.Context, guid int) (string, error) {
-	//id, err := s.storage.CreateUser(models.User{Username: username, Password: password})
-	//if err != nil {
-	//	return "", err
-	//}
-
 	token, _, err := s.generator.AccessToken(ctx, guid, s.key, constants.AccessTTL)
 	if err != nil {
 		return "", err
@@ -96,11 +91,11 @@ func (s Session) guidFromJWT(token string) (int, error) {
 		return 0, constants.ErrInvalidToken
 	}
 
-	guidInt, ok := guid.(int)
+	guidInt, ok := guid.(float64)
 	if !ok {
-		s.logger.Error("can't convert guid to string", zap.Error(err))
+		s.logger.Error("can't convert guid to float64", zap.Error(err))
 		return 0, constants.ErrInvalidToken
 	}
 
-	return guidInt, nil
+	return int(guidInt), nil
 }

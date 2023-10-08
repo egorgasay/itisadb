@@ -10,12 +10,17 @@ func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grp
 		return handler(ctx, req)
 	}
 
-	_, err := getToken(ctx)
+	token, err := getToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: check token
+	userID, err := h.session.AuthByToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = context.WithValue(ctx, "userID", uint(userID))
 
 	return handler(ctx, req)
 }

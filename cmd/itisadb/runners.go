@@ -16,6 +16,7 @@ import (
 	"itisadb/internal/cli/handler"
 	"itisadb/internal/cli/storage"
 	"itisadb/internal/cli/usecase"
+	"itisadb/internal/domains"
 	grpchandler "itisadb/internal/handler/grpc"
 	resthandler "itisadb/internal/handler/rest"
 	"itisadb/internal/service/core"
@@ -26,8 +27,14 @@ import (
 	"net/http"
 )
 
-func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg config.NetworkConfig) {
-	h := grpchandler.New(logic, l)
+func runGRPC(
+	ctx context.Context,
+	l *zap.Logger,
+	logic domains.Core,
+	cfg config.NetworkConfig,
+	session domains.Session,
+) {
+	h := grpchandler.New(logic, l, session)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(h.AuthMiddleware),
 	)
@@ -56,7 +63,12 @@ func runGRPC(ctx context.Context, l *zap.Logger, logic *core.Core, cfg config.Ne
 	}
 }
 
-func runREST(ctx context.Context, l *zap.Logger, logic *core.Core, cfg config.NetworkConfig) {
+func runREST(
+	ctx context.Context,
+	l *zap.Logger,
+	logic *core.Core,
+	cfg config.NetworkConfig,
+) {
 	handler := resthandler.New(logic)
 	lis, err := net.Listen("tcp", cfg.REST)
 	if err != nil {
