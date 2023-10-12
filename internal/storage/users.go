@@ -10,7 +10,7 @@ func (s *Storage) CreateUser(user models.User) (id int, err error) {
 	defer s.users.RUnlock()
 
 	s.users.Iter(func(k int, v models.User) (stop bool) {
-		if v.Username == user.Username {
+		if v.Login == user.Login {
 			id = k
 			return true
 		}
@@ -45,7 +45,7 @@ func (s *Storage) GetUserByName(username string) (id int, u models.User, err err
 
 	find := false
 	s.users.Iter(func(k int, v models.User) (stop bool) {
-		if v.Username == username {
+		if v.Login == username {
 			id = k
 			u = v
 			find = true

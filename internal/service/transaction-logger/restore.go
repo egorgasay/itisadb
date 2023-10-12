@@ -44,7 +44,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				// TODO: case Detach:
 			case CreateUser:
 				r.CreateUser(models.User{
-					Username: e.Name,
+					Login:    e.Name,
 					Password: e.Value,
 				})
 

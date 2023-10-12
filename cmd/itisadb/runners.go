@@ -69,7 +69,7 @@ func runREST(
 	logic *core.Core,
 	cfg config.NetworkConfig,
 ) {
-	handler := resthandler.New(logic)
+	h := resthandler.New(logic)
 	lis, err := net.Listen("tcp", cfg.REST)
 	if err != nil {
 		l.Fatal("failed to listen: %v", zap.Error(err))
@@ -77,7 +77,7 @@ func runREST(
 
 	err = pkg.WithContext(ctx, func() error {
 		l.Info("Starting FastHTTP %s", zap.String("address", cfg.REST))
-		if err := fasthttp.Serve(lis, handler.ServeHTTP); err != nil {
+		if err := fasthttp.Serve(lis, h.ServeHTTP); err != nil {
 			return fmt.Errorf("error in REST Serve: %w", err)
 		}
 

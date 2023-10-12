@@ -24,7 +24,7 @@ func (c *Core) CreateUser(ctx context.Context, userID uint, user models.User) er
 
 	_, err := c.storage.CreateUser(user)
 	if err != nil {
-		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Username))
+		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Login))
 		return err
 	}
 

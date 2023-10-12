@@ -57,6 +57,8 @@ func main() {
 
 		tl.Run()
 		lg.Info("Transaction logger started")
+	} else {
+		lg.Info("Transaction logger disabled")
 	}
 
 	gen := generator.New(lg)

@@ -61,7 +61,7 @@ func New(
 
 	_, err = storage.CreateUser(
 		models.User{
-			Username: "itisadb",
+			Login:    "itisadb",
 			Password: "itisadb",
 			Level:    2, // TODO:
 		},
