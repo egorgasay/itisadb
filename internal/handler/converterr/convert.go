@@ -27,6 +27,8 @@ func ToGRPC(err error) error {
 		return status.Error(codes.Unauthenticated, err.Error())
 	case context.Canceled:
 		return status.Error(codes.Canceled, err.Error())
+	case constants.ErrForbidden:
+		return status.Error(codes.PermissionDenied, err.Error())
 	default:
 		return err
 	}

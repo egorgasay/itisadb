@@ -22,7 +22,22 @@ func (c *Core) CreateUser(ctx context.Context, userID uint, user models.User) er
 		return ctx.Err()
 	}
 
-	_, err := c.storage.CreateUser(user)
+	if user.Level > constants.SecretLevel || user.Level < constants.DefaultLevel {
+		return constants.ErrForbidden
+	}
+
+	creator, err := c.storage.GetUserByID(int(userID))
+	if err != nil {
+		c.logger.Warn("failed to get user for delete", zap.Error(err), zap.String("user", user.Login))
+		return err
+	}
+
+	if creator.Level < user.Level {
+		c.logger.Warn("can't create user", zap.Error(err), zap.String("user", user.Login))
+		return constants.ErrForbidden
+	}
+
+	_, err = c.storage.CreateUser(user)
 	if err != nil {
 		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Login))
 		return err

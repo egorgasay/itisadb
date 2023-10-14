@@ -63,7 +63,7 @@ func New(
 		models.User{
 			Login:    "itisadb",
 			Password: "itisadb",
-			Level:    2, // TODO:
+			Level:    constants.SecretLevel, // TODO:
 		},
 	)
 	if err != nil && !errors.Is(err, constants.ErrAlreadyExists) {
