@@ -123,7 +123,7 @@ func TestStorage_Get(t *testing.T) {
 
 func TestStorage_GetFromObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -189,7 +189,7 @@ func TestStorage_GetFromObject(t *testing.T) {
 
 func TestStorage_SetToObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name  string
@@ -259,7 +259,7 @@ func TestStorage_SetToObject(t *testing.T) {
 
 func TestStorage_AttachToObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		dst string
@@ -347,14 +347,14 @@ func TestStorage_AttachToObject(t *testing.T) {
 
 				originalMap := make(map[string]string, 10)
 
-				original.Iter(func(k string, v ivalue) bool {
+				original.Iter(func(k string, v iObject) bool {
 					originalMap[k] = v.GetValue()
 					return false
 				})
 
 				attachedMap := make(map[string]string, 10)
 
-				attached.Iter(func(k string, v ivalue) bool {
+				attached.Iter(func(k string, v iObject) bool {
 					attachedMap[k] = v.GetValue()
 					return false
 				})
@@ -369,7 +369,7 @@ func TestStorage_AttachToObject(t *testing.T) {
 
 func TestStorage_DeleteObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -422,7 +422,7 @@ func TestStorage_DeleteObject(t *testing.T) {
 
 func TestStorage_CreateObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -473,7 +473,7 @@ func TestStorage_CreateObject(t *testing.T) {
 
 func TestStorage_ToJSON(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -592,7 +592,7 @@ func cmpWordsInJSON(target1, target2 string) (equals bool) {
 
 func TestStorage_GetObject2(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 
 	var want = "{\n\t\"isObject\": true,\n\t\"name\": \"qwe\",\n\t\"values\": [\n\t\t{\n\t\t\t\"isObject\": true,\n\t\t\t\"name\": \"edc\",\n\t\t\t\"values\": [\n\t\t\t\t{\n\t\t\t\t\t\"isObject\": true,\n\t\t\t\t\t\"name\": \"rty\",\n\t\t\t\t\t\"values\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"isObject\": false,\n\t\t\t\t\t\t\t\"name\": \"r3g\",\n\t\t\t\t\t\t\t\"value\": \"g3f\"\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"isObject\": false,\n\t\t\t\t\t\"name\": \"3g\",\n\t\t\t\t\t\"value\": \"3f\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"isObject\": false,\n\t\t\t\"name\": \"rfg\",\n\t\t\t\"value\": \"gwf\"\n\t\t}\n\t]\n}"
@@ -639,7 +639,7 @@ func TestStorage_GetObject2(t *testing.T) {
 
 func TestStorage_findObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -687,7 +687,7 @@ func TestStorage_findObject(t *testing.T) {
 
 func TestStorage_Size(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string
@@ -760,7 +760,7 @@ func TestStorage_Size(t *testing.T) {
 
 func TestStorage_IsObject(t *testing.T) {
 	s := Storage{
-		objects: objects{Map: swiss.NewMap[string, ivalue](10), RWMutex: &sync.RWMutex{}},
+		objects: objects{Map: swiss.NewMap[string, iObject](10), RWMutex: &sync.RWMutex{}},
 	}
 	type args struct {
 		name string

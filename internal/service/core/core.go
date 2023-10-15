@@ -89,7 +89,7 @@ func toServerNumber(server *int32) int32 {
 	return *server
 }
 
-func (c *Core) Set(ctx context.Context, userID uint, key, val string, opts models.SetOptions) (int32, error) {
+func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
 	if c.useMainStorage(opts.Server) {
 		err := c.storage.Set(key, val, opts)
 		if err != nil {
@@ -126,7 +126,7 @@ func (c *Core) Set(ctx context.Context, userID uint, key, val string, opts model
 	return cl.GetNumber(), nil
 }
 
-func (c *Core) Get(ctx context.Context, userID uint, key string, opts models.GetOptions) (val string, err error) {
+func (c *Core) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val string, err error) {
 	return val, c.withContext(ctx, func() error {
 		val, err = c.get(ctx, userID, key, opts)
 		return err
@@ -139,7 +139,7 @@ func (c *Core) useMainStorage(server *int32) bool {
 		(server != nil && *server == mainStorage)
 }
 
-func (c *Core) get(ctx context.Context, userID uint, key string, opts models.GetOptions) (string, error) {
+func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetOptions) (string, error) {
 	if c.useMainStorage(opts.Server) {
 		v, err := c.storage.Get(key)
 		if err != nil {
@@ -229,13 +229,13 @@ func (c *Core) withContext(ctx context.Context, fn func() error) (err error) {
 	}
 }
 
-func (c *Core) Delete(ctx context.Context, userID uint, key string, opts models.DeleteOptions) (err error) {
+func (c *Core) Delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) (err error) {
 	return c.withContext(ctx, func() error {
 		return c.delete(ctx, userID, key, opts)
 	})
 }
 
-func (c *Core) delete(ctx context.Context, userID uint, key string, opts models.DeleteOptions) error {
+func (c *Core) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error {
 	if c.useMainStorage(opts.Server) {
 		if err := c.storage.Delete(key); err != nil {
 			c.logger.Warn("failed to delete", zap.Error(err))

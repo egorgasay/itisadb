@@ -45,7 +45,7 @@ const (
 	AllAndDB
 )
 
-func (c *Commands) Do(act Action, args ...string) (string, error) {
+func (c *Commands) Do(token string, act Action, args ...string) (string, error) {
 	switch strings.ToLower(string(act)) {
 	case get:
 		if len(args) < 1 {
@@ -60,7 +60,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 			}
 		}
 
-		return c.get(args[0], int32(server))
+		return c.get(token, args[0], int32(server))
 	case set, uset:
 		if len(args) < 2 {
 			return "", ErrWrongInput
@@ -71,11 +71,11 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 			num, err := strconv.Atoi(args[len(args)-1])
 			if err == nil {
 				server = int32(num)
-				return c.set(args[0], strings.Join(args[1:len(args)-1], " "), server, uset == act)
+				return c.set(token, args[0], strings.Join(args[1:len(args)-1], " "), server, uset == act)
 			}
 		}
 
-		return c.set(args[0], strings.Join(args[1:], " "), server, uset == act)
+		return c.set(token, args[0], strings.Join(args[1:], " "), server, uset == act)
 	case newEl:
 		if len(args) < 1 {
 			return "", ErrWrongInput
@@ -87,9 +87,9 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 				return "", ErrWrongInput
 			}
 			name := args[1]
-			return c.newObject(name)
+			return c.newObject(token, name)
 		default:
-			return c.set(args[0], "", 0, false)
+			return c.set(token, args[0], "", 0, false)
 		}
 	case object:
 		if len(args) < 3 {
@@ -102,7 +102,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		if len(args) > 3 {
 			value = strings.Join(args[3:], " ")
 		}
-		return c.object(act, name, key, value)
+		return c.object(token, act, name, key, value)
 	case show:
 		if len(args) < 1 {
 			return "", ErrWrongInput
@@ -114,7 +114,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 				return "", ErrWrongInput
 			}
 			name := args[1]
-			return c.showObject(name)
+			return c.showObject(token, name)
 		default:
 			return "", ErrUnknownCMD
 		}
@@ -124,7 +124,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 		}
 		dst := args[0]
 		src := args[1]
-		if err := c.attach(dst, src); err != nil {
+		if err := c.attach(ctx, dst, src); err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("status: ok, attached %s to %s", src, dst), nil
@@ -133,7 +133,7 @@ func (c *Commands) Do(act Action, args ...string) (string, error) {
 	return "", ErrUnknownCMD
 }
 
-func (c *Commands) newObject(name string) (string, error) {
+func (c *Commands) newObject(token, name string) (string, error) {
 	_, err := c.cl.Object(context.Background(), &api.ObjectRequest{Name: name})
 	if err != nil {
 		return "", err
@@ -142,7 +142,7 @@ func (c *Commands) newObject(name string) (string, error) {
 	return fmt.Sprintf("status: ok, object %s created", name), nil
 }
 
-func (c *Commands) showObject(name string) (string, error) {
+func (c *Commands) showObject(token, name string) (string, error) {
 	m, err := c.cl.ObjectToJSON(context.Background(), &api.ObjectToJSONRequest{Name: name})
 	if err != nil {
 		return "", err
@@ -151,19 +151,19 @@ func (c *Commands) showObject(name string) (string, error) {
 	return m.Object, nil
 }
 
-func (c *Commands) object(act, name, key, value string) (string, error) {
+func (c *Commands) object(token, act, name, key, value string) (string, error) {
 	switch act {
 	case set:
-		return c.setObject(name, key, value)
+		return c.setObject(token, name, key, value)
 	case get:
-		return c.ObjectToJSON(name, key)
+		return c.ObjectToJSON(token, name, key)
 	default:
 		return "", fmt.Errorf("unknown action")
 	}
 
 }
 
-func (c *Commands) setObject(name, key, value string) (string, error) {
+func (c *Commands) setObject(token, name, key, value string) (string, error) {
 	r, err := c.cl.SetToObject(context.Background(), &api.SetToObjectRequest{
 		Object: name,
 		Key:    key,
@@ -177,7 +177,7 @@ func (c *Commands) setObject(name, key, value string) (string, error) {
 	return fmt.Sprintf("status: ok, saved in object %s, on server #%d", name, r.SavedTo), nil
 }
 
-func (c *Commands) ObjectToJSON(name, key string) (string, error) {
+func (c *Commands) ObjectToJSON(token, name, key string) (string, error) {
 	r, err := c.cl.GetFromObject(context.Background(), &api.GetFromObjectRequest{
 		Object: name,
 		Key:    key,
@@ -190,7 +190,7 @@ func (c *Commands) ObjectToJSON(name, key string) (string, error) {
 	return r.Value, nil
 }
 
-func (c *Commands) get(key string, server int32) (string, error) {
+func (c *Commands) get(token, key string, server int32) (string, error) {
 	resp, err := c.cl.Get(context.Background(), &api.GetRequest{Key: key, Options: &api.GetRequest_Options{Server: &server}})
 	if err != nil {
 		return "", err
@@ -202,7 +202,7 @@ func (c *Commands) get(key string, server int32) (string, error) {
 	return resp.Value, nil
 }
 
-func (c *Commands) attach(dst string, src string) error {
+func (c *Commands) attach(token, dst string, src string) error {
 	_, err := c.cl.AttachToObject(context.Background(), &api.AttachToObjectRequest{
 		Dst: dst,
 		Src: src,
@@ -226,7 +226,7 @@ func (c *Commands) attach(dst string, src string) error {
 	return nil
 }
 
-func (c *Commands) set(key, value string, server int32, uniques bool) (string, error) {
+func (c *Commands) set(ctx context.Context, key, value string, server int32, uniques bool) (string, error) {
 	//response, err := c.cl.Set(context.Background(), &api.SetRequest{Key: key, Value: value, Server: &server,
 	//	Uniques: uniques})
 	//if err != nil {

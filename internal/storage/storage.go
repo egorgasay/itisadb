@@ -24,7 +24,7 @@ type ramStorage struct {
 }
 
 type objects struct {
-	*swiss.Map[string, ivalue]
+	*swiss.Map[string, *object]
 	*sync.RWMutex
 }
 
@@ -36,8 +36,8 @@ type users struct {
 func New() (*Storage, error) {
 	st := &Storage{
 		mu:         &sync.RWMutex{},
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10000000), RWMutex: &sync.RWMutex{}},
-		objects:    objects{Map: swiss.NewMap[string, ivalue](100000), RWMutex: &sync.RWMutex{}},
+		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10_000_000), RWMutex: &sync.RWMutex{}},
+		objects:    objects{Map: swiss.NewMap[string, *object](100000), RWMutex: &sync.RWMutex{}},
 		users:      users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
@@ -47,7 +47,7 @@ func New() (*Storage, error) {
 func (s *Storage) Set(key, val string, opts models.SetOptions) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
-	if opts.Uniques && s.ramStorage.Has(key) {
+	if opts.Unique && s.ramStorage.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)
@@ -68,6 +68,9 @@ func (s *Storage) Get(key string) (string, error) {
 }
 
 func (s *Storage) GetFromObject(name, key string) (string, error) {
+	s.objects.RLock()
+	defer s.objects.RUnlock()
+
 	v, err := s.findObject(name)
 	if err != nil {
 		return "", err
@@ -77,20 +80,26 @@ func (s *Storage) GetFromObject(name, key string) (string, error) {
 }
 
 func (s *Storage) SetToObject(name, key, value string, opts models.SetToObjectOptions) error {
-	object, err := s.findObject(name)
+	s.objects.Lock()
+	defer s.objects.Unlock()
+
+	obj, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
-	if opts.Uniques && object.Has(key) {
+	if opts.Uniques && obj.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 
-	object.Set(key, value)
+	obj.Set(key, value)
 	return nil
 }
 
 func (s *Storage) AttachToObject(dst, src string) error {
+	s.objects.Lock()
+	defer s.objects.Unlock()
+
 	object1, err := s.findObject(dst)
 	if err != nil {
 		return err
@@ -110,6 +119,9 @@ func (s *Storage) AttachToObject(dst, src string) error {
 }
 
 func (s *Storage) DeleteObject(name string) error {
+	s.objects.Lock()
+	defer s.objects.Unlock()
+
 	split := strings.Split(name, ".")
 	if name == "" || len(split) == 0 {
 		return constants.ErrEmptyObjectName
@@ -137,6 +149,9 @@ func (s *Storage) DeleteObject(name string) error {
 
 // CreateObject ..
 func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err error) {
+	s.objects.Lock()
+	defer s.objects.Unlock()
+
 	path := strings.Split(name, ".")
 	if name == "" || len(path) == 0 {
 		return constants.ErrEmptyObjectName
@@ -144,10 +159,8 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 
 	val, ok := s.objects.Get(path[0])
 	if !ok || val.IsEmpty() {
-		s.objects.Lock()
 		val = NewObject(path[0], nil)
 		s.objects.Put(path[0], val)
-		s.objects.Unlock()
 	}
 
 	path = path[1:]
@@ -165,24 +178,26 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 
 // TODO: JSONToObject
 func (s *Storage) ObjectToJSON(name string) (string, error) {
-	object, err := s.findObject(name)
+	s.objects.RLock()
+	defer s.objects.RUnlock()
+
+	obj, err := s.findObject(name)
 	if err != nil {
 		return "", err
 	}
 
-	en, err := json.MarshalIndent(object, "", "\t")
+	en, err := json.MarshalIndent(obj, "", "\t")
 	return string(en), err
 }
 
-func (v *value) MarshalJSON() ([]byte, error) {
+func (v *object) MarshalJSON() ([]byte, error) {
 	arr := make([]any, 0, 100)
 	var data map[string]interface{}
 
 	if v.values != nil {
-		v.values.Iter(func(k string, v ivalue) bool {
-			val := v.(*value)
-			if val != nil {
-				arr = append(arr, v.(*value))
+		v.values.Iter(func(k string, v *object) bool {
+			if v != nil {
+				arr = append(arr, v)
 			}
 
 			return false
@@ -202,7 +217,7 @@ func (v *value) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(data, "", "\t")
 }
 
-func (s *Storage) findObject(name string) (ivalue, error) {
+func (s *Storage) findObject(name string) (*object, error) {
 	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
@@ -219,7 +234,7 @@ func (s *Storage) findObject(name string) (ivalue, error) {
 	for _, objectName := range path {
 		switch val.IsObject() {
 		case true:
-			val, ok = val.GetIValue(objectName)
+			val, ok = val.Object(objectName)
 			if !ok {
 				return nil, constants.ErrObjectNotFound
 			}
@@ -237,6 +252,9 @@ func (s *Storage) findObject(name string) (ivalue, error) {
 
 // Size returns the size of the object
 func (s *Storage) Size(name string) (uint64, error) {
+	s.objects.RLock()
+	defer s.objects.RUnlock()
+
 	object, err := s.findObject(name)
 	if err != nil {
 		return 0, err
@@ -245,6 +263,9 @@ func (s *Storage) Size(name string) (uint64, error) {
 }
 
 func (s *Storage) IsObject(name string) bool {
+	s.objects.RLock()
+	defer s.objects.RUnlock()
+
 	if val, err := s.findObject(name); err != nil {
 		return false
 	} else {
@@ -254,8 +275,9 @@ func (s *Storage) IsObject(name string) bool {
 
 func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Lock()
+	defer s.ramStorage.Unlock()
+
 	s.ramStorage.Delete(key)
-	s.ramStorage.Unlock()
 }
 
 func (s *Storage) Delete(key string) error {
@@ -271,10 +293,25 @@ func (s *Storage) Delete(key string) error {
 }
 
 func (s *Storage) DeleteAttr(name, key string) error {
+	s.objects.Lock()
+	defer s.objects.Unlock()
+
 	object, err := s.findObject(name)
 	if err != nil {
 		return err
 	}
 
 	return object.Delete(key)
+}
+
+func (s *Storage) GetUserLevel(id int) (models.Level, error) {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	val, ok := s.users.Get(id)
+	if !ok {
+		return 0, constants.ErrNotFound
+	}
+
+	return val.Level, nil
 }

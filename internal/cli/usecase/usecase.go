@@ -38,11 +38,11 @@ func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string) *Us
 	return &UseCase{conn: b, storage: storage, cmds: cmds}
 }
 
-func (uc *UseCase) ProcessQuery(cookie string, line string) (string, error) {
-	uc.storage.SaveCommand(cookie, line)
+func (uc *UseCase) ProcessQuery(token string, line string) (string, error) {
+	uc.storage.SaveCommand(token, line)
 	split := strings.Split(line, " ")
 
-	res, err := uc.cmds.Do(commands.Action(strings.ToLower(split[0])), split[1:]...)
+	res, err := uc.cmds.Do(token, commands.Action(strings.ToLower(split[0])), split[1:]...)
 	if err != nil {
 		return res, err
 	}

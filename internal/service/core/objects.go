@@ -3,21 +3,51 @@ package core
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 )
 
-func (c *Core) Object(ctx context.Context, userID uint, name string, opts models.ObjectOptions) (s int32, err error) {
+func (c *Core) Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
 		s, err = c.object(ctx, userID, name, opts)
 		return err
 	})
 }
 
-func (c *Core) object(ctx context.Context, userID uint, name string, opts models.ObjectOptions) (int32, error) {
+func (c *Core) getObjectSNum(name string) (int32, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	num, ok := c.objects[name]
+	return num, ok
+}
+
+func (c *Core) setObjectSNum(name string, num int32) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.objects[name] = num
+}
+
+func (c *Core) validateObjectPermission(userID int, objectLevel models.Level) bool {
+	userLevel, err := c.storage.GetUserLevel(userID)
+	if err != nil {
+		c.logger.Warn("failed to get user level", zap.Error(err))
+		return false
+	}
+
+	return userLevel < objectLevel
+}
+
+func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
+	num, ok := c.getObjectSNum(name)
 
 	if c.useMainStorage(opts.Server) {
+		if !c.validateObjectPermission(userID, opts.Level) {
+			return 0, constants.ErrForbidden
+		}
+
 		if ok {
 			if num != mainStorage {
 				return 0, constants.ErrServerNotFound
@@ -33,14 +63,10 @@ func (c *Core) object(ctx context.Context, userID uint, name string, opts models
 			c.tlogger.WriteCreateObject(name)
 		}
 
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		c.objects[name] = mainStorage
+		c.setObjectSNum(name, mainStorage)
 
 		return mainStorage, nil
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	cl, ok := c.servers.GetServerByID(num)
 	if !ok || cl == nil {
@@ -61,23 +87,25 @@ func (c *Core) object(ctx context.Context, userID uint, name string, opts models
 		}
 	}
 
-	c.objects[name] = num
+	c.setObjectSNum(name, num)
 	return num, nil
 }
 
-func (c *Core) GetFromObject(ctx context.Context, userID uint, object, key string, opts models.GetFromObjectOptions) (v string, err error) {
+func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (v string, err error) {
 	return v, c.withContext(ctx, func() error {
 		v, err = c.getFromObject(ctx, userID, object, key, opts)
 		return err
 	})
 }
 
-func (c *Core) getFromObject(ctx context.Context, userID uint, object, key string, opts models.GetFromObjectOptions) (string, error) {
-	c.mu.RLock()
-	num, ok := c.objects[object]
-	c.mu.RUnlock()
+func (c *Core) getFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (string, error) {
+	num, ok := c.getObjectSNum(object)
 
 	if c.useMainStorage(opts.Server) {
+		//if !c.validateObjectPermission(userID, opts.Level) {
+		//	return "", constants.ErrForbidden
+		//}
+
 		if ok && num != mainStorage {
 			return "", constants.ErrServerNotFound
 		}
@@ -105,14 +133,14 @@ func (c *Core) getFromObject(ctx context.Context, userID uint, object, key strin
 	return resp.Value, nil
 }
 
-func (c *Core) SetToObject(ctx context.Context, userID uint, object, key, val string, opts models.SetToObjectOptions) (s int32, err error) {
+func (c *Core) SetToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
 		s, err = c.setToObject(ctx, userID, object, key, val, opts)
 		return err
 	})
 }
 
-func (c *Core) setToObject(ctx context.Context, userID uint, object, key, val string, opts models.SetToObjectOptions) (int32, error) {
+func (c *Core) setToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (int32, error) {
 	c.mu.RLock()
 	num, ok := c.objects[object]
 	c.mu.RUnlock()
@@ -153,7 +181,7 @@ func (c *Core) setToObject(ctx context.Context, userID uint, object, key, val st
 	return num, nil
 }
 
-func (c *Core) ObjectToJSON(ctx context.Context, userID uint, name string, opts models.ObjectToJSONOptions) (string, error) {
+func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (string, error) {
 	if ctx.Err() != nil {
 		return "", ctx.Err()
 	}
@@ -192,7 +220,7 @@ func (c *Core) ObjectToJSON(ctx context.Context, userID uint, name string, opts 
 	return res.Object, nil
 }
 
-func (c *Core) IsObject(ctx context.Context, userID uint, name string, opts models.IsObjectOptions) (bool, error) {
+func (c *Core) IsObject(ctx context.Context, userID int, name string, opts models.IsObjectOptions) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
@@ -204,14 +232,14 @@ func (c *Core) IsObject(ctx context.Context, userID uint, name string, opts mode
 	return ok, nil
 }
 
-func (c *Core) Size(ctx context.Context, userID uint, name string, opts models.SizeOptions) (size uint64, err error) {
+func (c *Core) Size(ctx context.Context, userID int, name string, opts models.SizeOptions) (size uint64, err error) {
 	return size, c.withContext(ctx, func() error {
 		size, err = c.size(ctx, userID, name, opts)
 		return err
 	})
 }
 
-func (c *Core) size(ctx context.Context, userID uint, name string, opts models.SizeOptions) (uint64, error) {
+func (c *Core) size(ctx context.Context, userID int, name string, opts models.SizeOptions) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -250,13 +278,13 @@ func (c *Core) size(ctx context.Context, userID uint, name string, opts models.S
 	return res.Size, nil
 }
 
-func (c *Core) DeleteObject(ctx context.Context, userID uint, name string, opts models.DeleteObjectOptions) error {
+func (c *Core) DeleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error {
 	return c.withContext(ctx, func() error {
 		return c.deleteObject(ctx, userID, name, opts)
 	})
 }
 
-func (c *Core) deleteObject(ctx context.Context, userID uint, name string, opts models.DeleteObjectOptions) error {
+func (c *Core) deleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -307,13 +335,13 @@ func (c *Core) deleteObject(ctx context.Context, userID uint, name string, opts 
 	return nil
 }
 
-func (c *Core) AttachToObject(ctx context.Context, userID uint, dst, src string, opts models.AttachToObjectOptions) error {
+func (c *Core) AttachToObject(ctx context.Context, userID int, dst, src string, opts models.AttachToObjectOptions) error {
 	return c.withContext(ctx, func() error {
 		return c.attachToObject(ctx, userID, dst, src, opts)
 	})
 }
 
-func (c *Core) attachToObject(ctx context.Context, userID uint, dst, src string, opts models.AttachToObjectOptions) error {
+func (c *Core) attachToObject(ctx context.Context, userID int, dst, src string, opts models.AttachToObjectOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -354,13 +382,13 @@ func (c *Core) attachToObject(ctx context.Context, userID uint, dst, src string,
 	return nil
 }
 
-func (c *Core) DeleteAttr(ctx context.Context, userID uint, key string, object string, opts models.DeleteAttrOptions) error {
+func (c *Core) DeleteAttr(ctx context.Context, userID int, key string, object string, opts models.DeleteAttrOptions) error {
 	return c.withContext(ctx, func() error {
 		return c.deleteAttr(ctx, userID, key, object, opts)
 	})
 }
 
-func (c *Core) deleteAttr(ctx context.Context, userID uint, key, object string, opts models.DeleteAttrOptions) error {
+func (c *Core) deleteAttr(ctx context.Context, userID int, key, object string, opts models.DeleteAttrOptions) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

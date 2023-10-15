@@ -1,7 +1,9 @@
 package constants
 
+import "itisadb/internal/models"
+
 const (
-	DefaultLevel byte = iota
+	DefaultLevel models.Level = iota
 	RestrictedLevel
 	SecretLevel
 )

@@ -22,6 +22,10 @@ func IsTheSameArray[T comparable](a, b []T) bool {
 	return true
 }
 
+func Clone[S ~[]E, E any](s S) S {
+	return append(s[:0:0], s...)
+}
+
 func WithContext(ctx context.Context, fn func() error, pool chan struct{}, onStop func()) (err error) {
 	ch := make(chan struct{})
 

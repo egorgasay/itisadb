@@ -43,4 +43,4 @@ On = true
 
 # Host of the web application.
 # Example: "127.0.0.1:8080"
-Host = ":8080"
+Host = ":8070"

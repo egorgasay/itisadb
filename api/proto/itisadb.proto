@@ -71,7 +71,6 @@ message SetRequest {
   message Options {
     optional int32 server = 1;
     bool uniques = 2;
-    bool read_only = 3;
   }
   Options options = 3;
 }
@@ -141,7 +140,6 @@ message SetToObjectRequest {
   message Options {
     optional int32 server = 1;
     bool uniques = 2;
-    bool read_only = 3;
   }
   Options options = 4;
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func Test_value_GetValue(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
+	v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100), isObject: true}
 	tests := []struct {
 		name    string
 		wantVal string
@@ -34,7 +34,7 @@ func Test_value_GetValue(t *testing.T) {
 }
 
 func Test_value_IsEmpty(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
+	v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100), isObject: true}
 	tests := []struct {
 		name string
 		want bool
@@ -53,7 +53,7 @@ func Test_value_IsEmpty(t *testing.T) {
 			if tt.want {
 				v.values = nil
 			} else {
-				v.values = swiss.NewMap[string, ivalue](100)
+				v.values = swiss.NewMap[string, iObject](100)
 			}
 			if got := v.IsEmpty(); got != tt.want {
 				t.Errorf("IsEmpty() = %v, want %v", got, tt.want)
@@ -63,7 +63,7 @@ func Test_value_IsEmpty(t *testing.T) {
 }
 
 func Test_value_Get(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
+	v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100), isObject: true}
 	tests := []struct {
 		name    string
 		arg     string
@@ -123,7 +123,7 @@ func Test_value_Size(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: true}
+		v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100), isObject: true}
 		t.Run(tt.name, func(t *testing.T) {
 			for i := 0; i < tt.want; i++ {
 				v.Set(fmt.Sprint(i), tt.name)
@@ -151,7 +151,7 @@ func Test_value_IsObject(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100), isObject: tt.want}
+			v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100), isObject: tt.want}
 			if got := v.IsObject(); got != tt.want {
 				t.Errorf("IsObject() = %v, want %v", got, tt.want)
 			}
@@ -160,10 +160,10 @@ func Test_value_IsObject(t *testing.T) {
 }
 
 func Test_value_AttachObject(t *testing.T) {
-	v := &value{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, ivalue](100)}
+	v := &object{mutex: &sync.RWMutex{}, values: swiss.NewMap[string, iObject](100)}
 	type args struct {
 		name string
-		val  ivalue
+		val  iObject
 	}
 	tests := []struct {
 		name    string

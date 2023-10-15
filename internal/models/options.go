@@ -5,16 +5,15 @@ type GetOptions struct {
 }
 
 type SetOptions struct {
-	Server   *int32
-	Uniques  bool
-	ReadOnly bool
+	Server *int32
+	Unique bool
 }
 
 type DeleteOptions struct {
 	Server *int32
 }
 
-type Level int8
+type Level byte
 
 type ObjectOptions struct {
 	Server *int32

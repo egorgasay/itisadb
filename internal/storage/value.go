@@ -3,74 +3,42 @@ package storage
 import (
 	"github.com/dolthub/swiss"
 	"itisadb/internal/constants"
-	"sync"
+	"itisadb/pkg"
 )
 
-type value struct {
+type object struct {
 	value      string
 	name       string
-	values     *swiss.Map[string, ivalue]
-	mutex      *sync.RWMutex
-	attachedTo map[string]bool
+	values     *swiss.Map[string, *object]
+	attachedTo []string
 }
 
-type ivalue interface {
-	GetValue() (val string)
-	Get(name string) (val string, err error)
-	Set(key, val string)
-	SetValueUnique(val string) error
-	CreateObject(name string)
-	RecreateObject()
-	IsObject() bool
-	IsEmpty() bool
-	NextOrCreate(name string) (val ivalue)
-	GetIValue(name string) (val ivalue, ok bool)
-	Size() int
-	Iter(func(k string, v ivalue) bool)
-	AttachObject(src ivalue) error
-	DeleteObject()
-	Delete(key string) error
-	Has(key string) bool
-	IsAttached(name string) bool
-	setAttached(attachedTo map[string]bool)
-	Name() string
-}
-
-func NewObject(name string, attachedTo map[string]bool) *value {
+func NewObject(name string, attachedTo []string) *object {
 	if attachedTo == nil {
-		attachedTo = make(map[string]bool)
+		attachedTo = []string{name}
 	}
-	attachedTo[name] = true
-	return &value{
-		mutex:      &sync.RWMutex{},
-		values:     swiss.NewMap[string, ivalue](10),
+	return &object{
+		values:     swiss.NewMap[string, *object](10),
 		attachedTo: attachedTo,
 		name:       name,
 	}
 }
 
-func (v *value) GetValue() (val string) {
-	v.mutex.RLock()
+func (v *object) GetValue() (val string) {
 	val = v.value
-	v.mutex.RUnlock()
 	return val
 }
 
-func (v *value) Name() string {
+func (v *object) Name() string {
 	return v.name
 }
 
-func (v *value) IsEmpty() bool {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
-
+func (v *object) IsEmpty() bool {
 	return v.values == nil
 }
 
-func (v *value) Get(name string) (string, error) {
-	v.mutex.RLock()
+func (v *object) Get(name string) (string, error) {
 	val, ok := v.values.Get(name)
-	v.mutex.RUnlock()
 	if !ok {
 		return "", constants.ErrNotFound
 	}
@@ -78,38 +46,35 @@ func (v *value) Get(name string) (string, error) {
 	return val.GetValue(), nil
 }
 
-func (v *value) Size() int {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
+func (v *object) Size() int {
 	return v.values.Count()
 }
 
-func (v *value) IsObject() bool {
+func (v *object) IsObject() bool {
 	return v.values != nil
 }
 
-func (v *value) IsAttached(name string) bool {
-	return v.attachedTo[name]
-}
-
-func (v *value) setAttached(attachedTo map[string]bool) {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-	for k := range attachedTo {
-		v.attachedTo[k] = true
+func (v *object) IsAttached(name string) bool {
+	for _, n := range pkg.Clone(v.attachedTo) {
+		if n == name {
+			return true
+		}
 	}
+	return false
 }
 
-func (v *value) AttachObject(src ivalue) (err error) {
-	v.mutex.Lock()
+func (v *object) setAttached(attachedTo []string) {
+	v.attachedTo = attachedTo
+}
+
+func (v *object) AttachObject(src *object) (err error) {
 	defer func() {
-		v.mutex.Unlock()
 		if err == nil {
 			src.setAttached(v.attachedTo)
 		}
 	}()
 	if v.values == nil {
-		v.values = swiss.NewMap[string, ivalue](10)
+		v.values = swiss.NewMap[string, *object](10)
 		v.values.Put(src.Name(), src)
 		return nil
 	}
@@ -120,19 +85,11 @@ func (v *value) AttachObject(src ivalue) (err error) {
 	return nil
 }
 
-func (v *value) Iter(f func(k string, v ivalue) bool) {
+func (v *object) Iter(f func(k string, v *object) bool) {
 	v.values.Iter(f)
 }
 
-func (v *value) DeleteObject() {
-	v.mutex.Lock()
-	v.values = nil
-	v.mutex.Unlock()
-}
-
-func (v *value) NextOrCreate(name string) ivalue {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
+func (v *object) NextOrCreate(name string) *object {
 	val, ok := v.values.Get(name)
 	if !ok {
 		blank := NewObject(name, v.attachedTo)
@@ -143,9 +100,7 @@ func (v *value) NextOrCreate(name string) ivalue {
 	return val
 }
 
-func (v *value) GetIValue(name string) (ivalue, bool) {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
+func (v *object) Object(name string) (*object, bool) {
 	val, ok := v.values.Get(name)
 	if !ok {
 		return nil, false
@@ -154,16 +109,7 @@ func (v *value) GetIValue(name string) (ivalue, bool) {
 	return val, true
 }
 
-func (v *value) Set(key, val string) {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-	v.values.Put(key, &value{value: val, mutex: &sync.RWMutex{}, name: key})
-}
-
-func (v *value) SetValueUnique(val string) error {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-
+func (v *object) SetValueUnique(val string) error {
 	if v.values.Has(val) {
 		return constants.ErrAlreadyExists
 	}
@@ -172,26 +118,7 @@ func (v *value) SetValueUnique(val string) error {
 	return nil
 }
 
-func (v *value) CreateObject(name string) {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-	if v.values.Has(name) {
-		return
-	}
-
-	v.values.Put(name, &value{values: swiss.NewMap[string, ivalue](100), mutex: &sync.RWMutex{}})
-}
-
-func (v *value) RecreateObject() {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-	v.values = swiss.NewMap[string, ivalue](10000)
-}
-
-func (v *value) Delete(key string) error {
-	v.mutex.Lock()
-	defer v.mutex.Unlock()
-
+func (v *object) Delete(key string) error {
 	if !v.values.Has(key) {
 		return constants.ErrNotFound
 	}
@@ -200,8 +127,17 @@ func (v *value) Delete(key string) error {
 	return nil
 }
 
-func (v *value) Has(key string) bool {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
+func (v *object) RecreateObject() {
+	v.values = swiss.NewMap[string, *object](10)
+}
+
+func (v *object) Set(key string, value string) {
+	v.values.Put(key, &object{
+		value: value,
+		name:  key,
+	})
+}
+
+func (v *object) Has(key string) bool {
 	return v.values.Has(key)
 }

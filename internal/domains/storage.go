@@ -26,4 +26,5 @@ type Storage interface {
 	GetUserByName(username string) (int, models.User, error)
 	DeleteUser(id int) error
 	SaveUser(id int, user models.User) error
+	GetUserLevel(id int) (models.Level, error)
 }

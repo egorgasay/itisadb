@@ -34,13 +34,13 @@ func safeDeref[T any](x *T) T {
 	return *x
 }
 
-func userIDFromContext(ctx context.Context) (uint, error) {
+func userIDFromContext(ctx context.Context) (int, error) {
 	value := ctx.Value("userID")
 	if value == nil {
 		return 0, constants.ErrForbidden
 	}
 
-	userID, ok := value.(uint)
+	userID, ok := value.(int)
 	if !ok {
 		return 0, constants.ErrForbidden
 	}

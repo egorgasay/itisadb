@@ -17,7 +17,7 @@ func (c *Core) Authenticate(ctx context.Context, login string, password string) 
 	return token, nil
 }
 
-func (c *Core) CreateUser(ctx context.Context, userID uint, user models.User) error {
+func (c *Core) CreateUser(ctx context.Context, userID int, user models.User) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -50,7 +50,7 @@ func (c *Core) CreateUser(ctx context.Context, userID uint, user models.User) er
 	return nil
 }
 
-func (c *Core) DeleteUser(ctx context.Context, userID uint, login string) error {
+func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -85,7 +85,7 @@ func (c *Core) DeleteUser(ctx context.Context, userID uint, login string) error 
 	return nil
 }
 
-func (c *Core) ChangePassword(ctx context.Context, userID uint, login, password string) error {
+func (c *Core) ChangePassword(ctx context.Context, userID int, login, password string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -96,7 +96,7 @@ func (c *Core) ChangePassword(ctx context.Context, userID uint, login, password 
 		return err
 	}
 
-	us, err := c.storage.GetUserByID(int(userID))
+	us, err := c.storage.GetUserByID(userID)
 	if err != nil {
 		c.logger.Warn("failed to get user for change password", zap.Error(err), zap.String("user", login))
 		return err
@@ -121,7 +121,7 @@ func (c *Core) ChangePassword(ctx context.Context, userID uint, login, password 
 	return nil
 }
 
-func (c *Core) ChangeLevel(ctx context.Context, userID uint, login string, level int8) error {
+func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level int8) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
