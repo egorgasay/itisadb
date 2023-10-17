@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/egorgasay/itisadb-go-sdk"
 	"google.golang.org/grpc/metadata"
 	"itisadb/config"
 	"log"
@@ -21,7 +22,7 @@ type UseCase struct {
 	storage *storage.Storage
 	conn    api.ItisaDBClient
 
-	// sdk *itisadb.Client
+	sdk *itisadb.Client
 
 	cmds   *commands.Commands
 	tokens map[string]string
@@ -38,16 +39,48 @@ func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string) *Us
 	return &UseCase{conn: b, storage: storage, cmds: cmds}
 }
 
-func (uc *UseCase) ProcessQuery(token string, line string) (string, error) {
+func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) (string, error) {
 	uc.storage.SaveCommand(token, line)
-	split := strings.Split(line, " ")
+	//split := strings.Split(line, " ")
 
-	res, err := uc.cmds.Do(token, commands.Action(strings.ToLower(split[0])), split[1:]...)
+	//res, err := uc.cmds.Do(ctx, commands.Action(strings.ToLower(split[0])), split[1:]...)
+	//if err != nil {
+	//	return res, err
+	//}
+
+	cmd, err := commands.ParseCommand(ctx, line)
 	if err != nil {
-		return res, err
+		return "", err
 	}
 
 	return strings.Replace(strings.Replace(res, "\n", "<br/>", -1), "\t", "&emsp;", -1), nil
+}
+
+func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error {
+	server := cmd.Server()
+	unique := cmd.Unique()
+	readonly := cmd.ReadOnly()
+	level := cmd.Level()
+
+	switch cmd.Action() {
+	case commands.Set:
+		resp, err := uc.conn.Set(ctx, &api.SetRequest{
+			Key:   cmd.Args()[0],
+			Value: cmd.Args()[1],
+			Options: &api.SetRequest_Options{
+				Server:   &server,
+				Uniques:  unique,
+				ReadOnly: readonly,
+				Level:    level,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.New("unknown command")
+	}
 }
 
 func (uc *UseCase) History(cookie string) (string, error) {
@@ -68,6 +101,8 @@ func (uc *UseCase) Authenticate(ctx context.Context, username, password string) 
 	}
 
 	// TODO: save token
+
+	uc.tokens[username] = resp.Token
 
 	return resp.Token, nil
 }
