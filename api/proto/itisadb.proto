@@ -71,6 +71,8 @@ message SetRequest {
   message Options {
     optional int32 server = 1;
     bool uniques = 2;
+    bool readOnly = 3;
+    Level level = 4;
   }
   Options options = 3;
 }
@@ -140,6 +142,8 @@ message SetToObjectRequest {
   message Options {
     optional int32 server = 1;
     bool uniques = 2;
+    bool readOnly = 3;
+    Level level = 4;
   }
   Options options = 4;
 }

@@ -48,8 +48,8 @@ const (
 	AllAndDB
 )
 
-func (c *Commands) Do(ctx context.Context, act Action, args ...string) (string, error) {
-	switch strings.ToLower(string(act)) {
+func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, error) {
+	switch strings.ToLower(act) {
 	case get:
 		if len(args) < 1 {
 			return "", ErrWrongInput
@@ -65,20 +65,12 @@ func (c *Commands) Do(ctx context.Context, act Action, args ...string) (string, 
 
 		return c.get(ctx, args[0], int32(server))
 	case Set, uset:
-		if len(args) < 2 {
-			return "", ErrWrongInput
+		cmd, err := ParseSet(act, args)
+		if err != nil {
+			return "", err
 		}
 
-		var server int32 = 0
-		if len(args) > 2 {
-			num, err := strconv.Atoi(args[len(args)-1])
-			if err == nil {
-				server = int32(num)
-				return c.set(ctx, args[0], strings.Join(args[1:len(args)-1], " "), server, uset == act)
-			}
-		}
-
-		return c.set(ctx, args[0], strings.Join(args[1:], " "), server, uset == act)
+		return c.set(ctx, cmd)
 	case newEl:
 		if len(args) < 1 {
 			return "", ErrWrongInput
@@ -92,7 +84,11 @@ func (c *Commands) Do(ctx context.Context, act Action, args ...string) (string, 
 			name := args[1]
 			return c.newObject(ctx, name)
 		default:
-			return c.set(ctx, args[0], "", 0, false)
+			cmd, err := ParseSet(act, args)
+			if err != nil {
+				return "", err
+			}
+			return c.set(ctx, cmd)
 		}
 	case object:
 		if len(args) < 3 {
@@ -229,14 +225,30 @@ func (c *Commands) attach(ctx context.Context, dst string, src string) error {
 	return nil
 }
 
-func (c *Commands) set(ctx context.Context, key, value string, server int32, uniques bool) (string, error) {
+func toServerNumber(server int32) *int32 {
+	if server != 0 {
+		return &server
+	}
+
+	return nil
+}
+
+func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
+	args := cmd.Args()
+
+	if len(args) < 2 {
+		return "", ErrWrongInput
+	}
+
 	response, err := c.cl.Set(ctx, &api.SetRequest{
-		Key: key, Value: value,
+		Key:   args[0],
+		Value: args[1],
 		Options: &api.SetRequest_Options{
-			Server:  &server,
-			Uniques: uniques,
+			Server:  toServerNumber(cmd.Server()),
+			Uniques: cmd.Unique(),
 		},
 	})
+
 	if err != nil {
 		return "", err
 	}
@@ -257,7 +269,6 @@ func (c *Commands) set(ctx context.Context, key, value string, server int32, uni
 	}
 
 	return resp, nil
-	// return "", nil
 }
 
 type Command interface {
@@ -277,7 +288,7 @@ func ParseCommand(ctx context.Context, text string) (Command, error) {
 
 	switch cmd := strings.ToLower(split[0]); cmd {
 	case Set, uset, rset, urset:
-		return ParseSet[SetCommand](cmd, split[1:])
+		return ParseSet(cmd, split[1:])
 	}
 
 	return nil, fmt.Errorf("unknown command")

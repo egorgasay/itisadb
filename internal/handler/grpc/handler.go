@@ -34,22 +34,23 @@ func safeDeref[T any](x *T) T {
 	return *x
 }
 
-func userIDFromContext(ctx context.Context) (int, error) {
+func (h *Handler) userIDFromContext(ctx context.Context) (int, error) {
 	value := ctx.Value("userID")
 	if value == nil {
 		return 0, constants.ErrForbidden
 	}
 
-	userID, ok := value.(int)
+	userID, ok := value.(uint)
 	if !ok {
+		h.logger.Warn("failed to cast userID", zap.Any("value", value))
 		return 0, constants.ErrForbidden
 	}
 
-	return userID, nil
+	return int(userID), nil
 }
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +73,7 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 }
 
 func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*api.SetToObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +119,7 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 }
 
 func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest) (*api.GetFromObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +142,7 @@ func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest
 }
 
 func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 }
 
 func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectRequest) (*api.AttachToObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectReque
 }
 
 func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) (*api.DeleteObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +217,7 @@ func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*ap
 }
 
 func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.ObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +238,7 @@ func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.Object
 }
 
 func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +261,7 @@ func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) 
 }
 
 func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.IsObjectResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +284,7 @@ func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.Is
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +305,7 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 }
 
 func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +354,7 @@ func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*
 }
 
 func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*api.CreateUserResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +374,7 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*ap
 	return &api.CreateUserResponse{}, nil
 }
 func (h *Handler) DeleteUser(ctx context.Context, r *api.DeleteUserRequest) (*api.DeleteUserResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +387,7 @@ func (h *Handler) DeleteUser(ctx context.Context, r *api.DeleteUserRequest) (*ap
 	return &api.DeleteUserResponse{}, nil
 }
 func (h *Handler) ChangePassword(ctx context.Context, r *api.ChangePasswordRequest) (*api.ChangePasswordResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +400,7 @@ func (h *Handler) ChangePassword(ctx context.Context, r *api.ChangePasswordReque
 	return &api.ChangePasswordResponse{}, nil
 }
 func (h *Handler) ChangeLevel(ctx context.Context, r *api.ChangeLevelRequest) (*api.ChangeLevelResponse, error) {
-	userID, err := userIDFromContext(ctx)
+	userID, err := h.userIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}

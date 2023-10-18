@@ -48,7 +48,7 @@ func (h *Handler) Action(c echo.Context) error {
 	}
 
 	action := c.Request().URL.Query().Get("action")
-	res, err := h.logic.ProcessQuery(cookie.Value, action)
+	res, err := h.logic.ProcessQuery(c.Request().Context(), cookie.Value, action)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code().String() == codes.NotFound.String() {
