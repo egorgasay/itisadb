@@ -5,8 +5,8 @@ type GetOptions struct {
 }
 
 type SetOptions struct {
-	Server *int32
-	Unique bool
+	Server   *int32
+	ReadOnly bool
 }
 
 type DeleteOptions struct {

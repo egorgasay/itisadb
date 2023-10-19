@@ -35,17 +35,7 @@ Important! When using a file logger, it is worth considering that when using key
 
 ## Server with Memory Balancer
 ```bash
-go run cmd/balancer/main.go -a=':PORT'
-```
-
-## Server with WebApplication
-```bash
-go run cmd/grpc-storage-cli/main.go -a=':PORT' -b='BALANCER_IP:BALANCER_PORT'
-```
-
-## Server (or servers) with Storage instance
-```bash
-go run cmd/grpc-storage/main.go -a=':PORT' -connect='BALANCER_IP:BALANCER_PORT' -tlog_dir='DIR_FOR_TRANSACTION_LOGGER'
+go run cmd/itisadb/main.go
 ```
   
 !!! DO NOT USE temporary directories for tlog_dir !!!
@@ -69,26 +59,32 @@ https://grpc-web.egorpoletaikin.repl.co
 
 ### Set
 ```php
-set key value server(optional) - Sets the value to the storage.  
+[mode]set <key> "<value>" [on <server>] [level <level>] - Sets the value to the storage.  
 server > 0 - Save to exact server.  
 server = 0 (default) - Automatic saving to a less loaded server. 
 ```
 
 ### Get
 ```php
-get key server(optional) - Gets the value from the storage.  
+get key [from <server>] [level <level>] - Gets the value from the storage.  
 server > 0 - Search on a specific server (speed: fast).  
 server = 0 (default) - Deep search (speed: slow). 
-server = -1 - DB search (speed: medium). 
+```
+
+### Level
+```php
+level = 0 (Default) - NO encryption, NO ACL validation
+level = 1 (Restricted) - NO encryption, ACL validation
+level = 2 (Secret) - encryption, ACL validation
 ```
 
 ### Object
 ```js
-new_object name - Creates an object with the specified name.
-object name set attr value - Sets the value of the object attribute.
-object name get attr - Gets the value of the object attribute.
-show_object name - Displays the object as a map.
-attach dst src - Attaches src object to dst.
+new object name [on <server>] [level <level>] - Creates an object with the specified name.
+object name [level <level>] set attr "value" - Sets the value of the object attribute.
+object name [level <level>] get attr - Gets the value of the object attribute.
+show object name [level <level>] - Displays the object as a map.
+attach dst [level <level>] src [level <level>] - Attaches src object to dst.
 ```
 
 ### Other

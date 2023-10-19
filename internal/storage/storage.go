@@ -47,7 +47,7 @@ func New() (*Storage, error) {
 func (s *Storage) Set(key, val string, opts models.SetOptions) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
-	if opts.Unique && s.ramStorage.Has(key) {
+	if opts.ReadOnly && s.ramStorage.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 	s.ramStorage.Put(key, val)

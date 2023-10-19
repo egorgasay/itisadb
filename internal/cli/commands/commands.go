@@ -64,7 +64,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 		}
 
 		return c.get(ctx, args[0], int32(server))
-	case Set, uset:
+	case Set, RSet:
 		cmd, err := ParseSet(act, args)
 		if err != nil {
 			return "", err
@@ -244,8 +244,9 @@ func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
 		Key:   args[0],
 		Value: args[1],
 		Options: &api.SetRequest_Options{
-			Server:  toServerNumber(cmd.Server()),
-			Uniques: cmd.Unique(),
+			Server:   toServerNumber(cmd.Server()),
+			ReadOnly: cmd.ReadOnly(),
+			Level:    api.Level(cmd.Level()),
 		},
 	})
 
@@ -275,7 +276,6 @@ type Command interface {
 	Action() string
 	Args() []string
 	Server() int32
-	Unique() bool
 	ReadOnly() bool
 	Level() uint8
 }
@@ -287,7 +287,7 @@ func ParseCommand(ctx context.Context, text string) (Command, error) {
 	}
 
 	switch cmd := strings.ToLower(split[0]); cmd {
-	case Set, uset, rset, urset:
+	case Set, RSet:
 		return ParseSet(cmd, split[1:])
 	}
 

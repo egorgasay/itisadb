@@ -58,7 +58,6 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 
 func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error {
 	server := cmd.Server()
-	unique := cmd.Unique()
 	readonly := cmd.ReadOnly()
 	level := cmd.Level()
 
@@ -69,7 +68,6 @@ func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error 
 			Value: cmd.Args()[1],
 			Options: &api.SetRequest_Options{
 				Server:   &server,
-				Uniques:  unique,
 				ReadOnly: readonly,
 				Level:    api.Level(level),
 			},

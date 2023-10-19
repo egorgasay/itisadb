@@ -7,10 +7,8 @@ import (
 )
 
 const (
-	Set   = "set"   // usual Set
-	uset  = "uset"  // unique Set
-	rset  = "rset"  // read only Set
-	urset = "ruset" // read only unique Set
+	Set  = "set"  // usual Set
+	RSet = "rset" // read only Set
 )
 
 type SetCommand struct {
@@ -19,7 +17,6 @@ type SetCommand struct {
 	value  string
 
 	server   int32
-	unique   bool
 	readOnly bool
 	level    uint8
 }
@@ -34,10 +31,6 @@ func (s SetCommand) Args() []string {
 
 func (s SetCommand) Server() int32 {
 	return s.server
-}
-
-func (s SetCommand) Unique() bool {
-	return s.unique
 }
 
 func (s SetCommand) ReadOnly() bool {
@@ -118,13 +111,8 @@ func ParseSet(action string, split []string) (sc SetCommand, err error) {
 	sc.action = Set
 	switch action {
 	case Set:
-	case uset:
-		sc.unique = true
-	case rset:
+	case RSet:
 		sc.readOnly = true
-	case urset:
-		sc.readOnly = true
-		sc.unique = true
 	}
 
 	return sc, nil
