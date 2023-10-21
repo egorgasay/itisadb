@@ -1,8 +1,8 @@
+# ItisaDB ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/egorgasay/grpc-storage) ![GitHub issues](https://img.shields.io/github/issues/egorgasay/grpc-storage) ![License](https://img.shields.io/badge/license-MIT-green)
 
-# <p align="center">itisadb<br> ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/egorgasay/grpc-storage) ![GitHub issues](https://img.shields.io/github/issues/egorgasay/grpc-storage) ![License](https://img.shields.io/badge/license-MIT-green)</p>
-This is a system consisting of several microservices (Memory Balancer, Storage, WebApplication), which is a distributed key-value database. There can be an unlimited number of Storage instances, they are setToAll connected to the Memory Balancer via gRPC, which distributes the load between them. You can connect to the Web Application (Echo) via the Web interface to enter the necessary data manually. The system is fault-tolerant, guarantees complete data recovery even after a power outage.
+This is a system consisting of several microservices (Memory Balancer, Storage, WebApplication), which is a distributed key-value database. There can be an unlimited number of Storage instances, they are connected to the Memory Balancer via gRPC, which distributes the load between them. You can connect to the Web Application (Echo) via the Web interface to enter the necessary data manually. The system is fault-tolerant, guarantees complete data recovery even after a power outage.
 <p align="center" >
-<img src="https://github.com/egorgasay/itisadb/assets/102957432/db0868a1-086f-4db5-8da9-d12e78ce89c9"  width="1000" />
+<img src="https://github.com/egorgasay/itisadb/assets/102957432/2fe84aea-9068-4615-bb16-da94d8277aad"  width="1000" />
 </p>
 
 # Drivers  
@@ -17,7 +17,7 @@ By default, the value is saved to the minimally loaded server and returns its nu
   
 Instead of the usual tables, a model close to object orientation is used here. An object is a kind of instance of a class. Each "Object" has attributes and can have nested "Objects". When creating an "Object", the server with the lowest load will be selected, but nested objects can only be created on its parent object server, this allows you to be sure that all data in one object is always available.
 
-<img src="https://github.com/egorgasay/itisadb/assets/102957432/2f56cfd0-80ae-45e9-8c13-b0a8da9e88fc"  width="1000" />
+<img src="https://github.com/egorgasay/itisadb/assets/102957432/ad8cd23b-3b4a-49c9-895f-3917ead8a7c7"  width="1000" />
 
 
 # Transaction Logger
@@ -40,7 +40,7 @@ go run cmd/itisadb/main.go
   
 !!! DO NOT USE temporary directories for tlog_dir !!!
 
-## Usage
+## Syntax
 
 ### SET - Sets the value to the storage.
 ```php
@@ -172,15 +172,8 @@ SERVERS - List of active servers with stats.
 
 # Preview of the WebApplication
 (The launch of a web application can take up to 30 seconds)
-
-## Go (still on v0.7, use index keyword instead of object)
+(still on v0.7, use index keyword instead of object)
 https://grpc-storage.egorpoletaikin.repl.co
-## PHP (still on v0.7, use index keyword instead of object)
-https://grpc-web.egorpoletaikin.repl.co
 
 ## Main page
-## Go
 ![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
-
-## PHP
-![изображение](https://user-images.githubusercontent.com/102957432/234688999-76a4e627-5a6b-41d1-9220-9d27db1d312f.png)
