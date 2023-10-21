@@ -40,55 +40,147 @@ go run cmd/itisadb/main.go
   
 !!! DO NOT USE temporary directories for tlog_dir !!!
 
-# Preview of the WebApplication  
-(The launch of a web application can take up to 30 seconds)
-
-## Go (still on v0.7, use index keyword instead of object) 
-https://grpc-storage.egorpoletaikin.repl.co 
-## PHP (still on v0.7, use index keyword instead of object)
-https://grpc-web.egorpoletaikin.repl.co   
-
-## Main page
-## Go  
-![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
-  
-## PHP
-![изображение](https://user-images.githubusercontent.com/102957432/234688999-76a4e627-5a6b-41d1-9220-9d27db1d312f.png)
-
 ## Usage
 
-### Set
+### SET - Sets the value to the storage.
 ```php
-[mode]set <key> "<value>" [on <server>] [level <level>] - Sets the value to the storage.  
-server > 0 - Save to exact server.  
-server = 0 (default) - Automatic saving to a less loaded server. 
+SET key "value" [ MODE - NX | RO | XX ] [ LEVEL - D | R | L ] [ SERVER - [0-9]+ ]  
+
+MODE - Defines the mode of the operation. 
+- `NX` - If the key already exists, it won't be overwritten. 
+- `RO` - If the key already exists, an error will be returned.
+- `XX` - If the key doesn't exist, it won't be created.
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+
+SERVER - Defines server number to use. 
+- Automaticly saving to a less loaded server by default.
 ```
 
-### Get
+### GET - Gets the value from the storage.
 ```php
-get key [from <server>] [level <level>] - Gets the value from the storage.  
-server > 0 - Search on a specific server (speed: fast).  
-server = 0 (default) - Deep search (speed: slow). 
+GET key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+
+FROM - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).  
+- `= 0` (default) - Deep search (speed: slow). 
 ```
 
-### Level
+### DELETE - Deletes the key-value pair from the storage.
 ```php
-level = 0 (Default) - NO encryption, NO ACL validation
-level = 1 (Restricted) - NO encryption, ACL validation
-level = 2 (Secret) - encryption, ACL validation
+DELETE key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+
+FROM - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).  
+- `= 0` (default) - Deep search (speed: slow). 
 ```
 
-### Object
-```js
-new object name [on <server>] [level <level>] - Creates an object with the specified name.
-object name [level <level>] set attr "value" - Sets the value of the object attribute.
-object name [level <level>] get attr - Gets the value of the object attribute.
-show object name [level <level>] - Displays the object as a map.
-attach dst [level <level>] src [level <level>] - Attaches src object to dst.
+### NEW OBJECT - Creates an object with the specified name.
+```php
+NEW OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+
+ON - Defines server number to use. 
+- Automaticly saving to a less loaded server by default.
+```
+
+### DELETE OBJECT - Deletes the object with the specified name.
+```php
+DELETE OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+
+ON - Defines server number to use. 
+- Automaticly saving to a less loaded server by default.
+```
+
+### SETO - Sets the value to the object.
+```php
+SETO name key "value" [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+```
+
+### GETO - Gets the value from the object.
+```php
+GETO name key [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+```
+
+### DELETEO - Deletes the object key.
+```php
+DELETEO name key [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+```
+
+### SHOW - Displays the object as JSON.
+```php
+SHOW OBJECT name [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
+```
+
+### ATTACH - Attaches the src object to the dst.
+```php
+ATTACH dst [ LEVEL - D | R | L ] src [ LEVEL - D | R | L ]
+
+LEVEL - Defines the level of permission.
+- `D` (Default) - NO encryption, NO ACL validation
+- `R` (Restricted) - NO encryption, ACL validation
+- `S` (Secret) - encryption, ACL validation
 ```
 
 ### Other
 ```php
-history - History of user actions.  
-servers - List of active servers with stats.  
+HISTORY - History of user actions.  
+SERVERS - List of active servers with stats.  
 ```
+
+# Preview of the WebApplication
+(The launch of a web application can take up to 30 seconds)
+
+## Go (still on v0.7, use index keyword instead of object)
+https://grpc-storage.egorpoletaikin.repl.co
+## PHP (still on v0.7, use index keyword instead of object)
+https://grpc-web.egorpoletaikin.repl.co
+
+## Main page
+## Go
+![изображение](https://user-images.githubusercontent.com/102957432/231824845-3c4f064d-2de9-433e-a616-05ca79edbef7.png)
+
+## PHP
+![изображение](https://user-images.githubusercontent.com/102957432/234688999-76a4e627-5a6b-41d1-9220-9d27db1d312f.png)
