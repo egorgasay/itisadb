@@ -76,18 +76,22 @@ func ParseSet(action string, split []string) (sc SetCommand, err error) {
 	unhandledText = strings.Join(split, " ")
 
 	for i := 0; i < len(split); i++ {
-		switch split[i] {
+		switch strings.ToLower(split[i]) {
 		case level:
 			if i+1 >= len(split) {
 				return SetCommand{}, fmt.Errorf("wrong set signature. can't missing level")
 			}
 
-			lvl, err := strconv.ParseInt(split[i+1], 10, 8)
-			if err != nil {
-				return SetCommand{}, fmt.Errorf("wrong set signature. can't parse level")
+			switch split[i+1] {
+			case "D":
+				sc.level = 0
+			case "R":
+				sc.level = 1
+			case "S":
+				sc.level = 2
+			default:
+				return SetCommand{}, fmt.Errorf("wrong set signature. can't recognize level")
 			}
-
-			sc.level = uint8(lvl)
 			split = split[i+2:]
 		case on:
 			if i+1 >= len(split) {

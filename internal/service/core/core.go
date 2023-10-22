@@ -71,13 +71,15 @@ func New(
 	}
 
 	return &Core{
-		servers: servers,
 		logger:  logger,
-		objects: objects,
+		servers: servers,
 		storage: storage,
-		pool:    make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
-		cfg:     cfg,
+		tlogger: tlogger,
 		session: session,
+		objects: objects,
+		mu:      sync.RWMutex{},
+		cfg:     cfg,
+		pool:    make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
 	}, nil
 }
 

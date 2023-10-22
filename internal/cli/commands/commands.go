@@ -142,7 +142,7 @@ func (c *Commands) newObject(ctx context.Context, name string) (string, error) {
 }
 
 func (c *Commands) showObject(ctx context.Context, name string) (string, error) {
-	m, err := c.cl.ObjectToJSON(context.Background(), &api.ObjectToJSONRequest{Name: name})
+	m, err := c.cl.ObjectToJSON(ctx, &api.ObjectToJSONRequest{Name: name})
 	if err != nil {
 		return "", err
 	}

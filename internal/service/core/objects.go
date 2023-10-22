@@ -37,7 +37,7 @@ func (c *Core) validateObjectPermission(userID int, objectLevel models.Level) bo
 		return false
 	}
 
-	return userLevel < objectLevel
+	return userLevel >= objectLevel
 }
 
 func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {

@@ -19,7 +19,7 @@ window.onload = function () {
       } else if (command == "servers") {
         fetch("/servers").then(response => response.json()).then(json => output.innerHTML = json.text);
       }else {
-        fetch("/act?action="+command).then(response => response.json()).then(json => output.innerHTML = json.text);
+        fetch("/act?action="+encodeURIComponent(command)).then(response => response.json()).then(json => output.innerHTML = json.text);
       }
     }
   });

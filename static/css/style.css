@@ -17,6 +17,7 @@ body {
   border: none;
   color: #fff;
   padding-left: 5px;
+  width: 700px;
 }
 
 .textfield:focus {

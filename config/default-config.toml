@@ -23,11 +23,11 @@ Servers = []
 
 # Mechanism for transaction logging.
 [TransactionLogger]
-On = false
+On = true
 
 # Directory where transaction logs are stored.
 # Example: "transaction-logger"
-BackupDirectory = ""
+BackupDirectory = "transaction-logger"
 
 # Encryption parameters.
 [Encryption]
