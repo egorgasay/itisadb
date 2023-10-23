@@ -61,11 +61,22 @@ func New(
 
 	_, err = storage.CreateUser(
 		models.User{
-			Login:    "itisadb",
-			Password: "itisadb",
-			Level:    constants.SecretLevel, // TODO:
+			Login:    "",
+			Password: "",
+			Level:    constants.DefaultLevel,
+			Active:   cfg.Security.MandatoryAuthorization,
 		},
 	)
+
+	_, err = storage.CreateUser(
+		models.User{
+			Login:    "itisadb",
+			Password: "itisadb",
+			Level:    constants.SecretLevel,
+			Active:   true,
+		},
+	)
+
 	if err != nil && !errors.Is(err, constants.ErrAlreadyExists) {
 		return nil, err
 	}
@@ -98,7 +109,7 @@ func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models
 			return mainStorage, err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteSet(key, val)
 		}
 
@@ -244,7 +255,7 @@ func (c *Core) delete(ctx context.Context, userID int, key string, opts models.D
 			return err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteDelete(key)
 		}
 

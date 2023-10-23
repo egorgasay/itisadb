@@ -29,5 +29,5 @@ type Core interface {
 	CreateUser(ctx context.Context, userID int, user models.User) error
 	DeleteUser(ctx context.Context, userID int, login string) error
 	ChangePassword(ctx context.Context, userID int, login, password string) error
-	ChangeLevel(ctx context.Context, userID int, login string, level int8) error
+	ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error
 }

@@ -1,5 +1,7 @@
 package models
 
+import "itisadb/internal/constants"
+
 type GetOptions struct {
 	Server *int32
 }
@@ -14,6 +16,22 @@ type DeleteOptions struct {
 }
 
 type Level byte
+
+func (l Level) Higher() Level {
+	return max(l+1, constants.MinLevel)
+}
+
+func (l Level) Lower() Level {
+	return min(l-1, constants.MaxLevel)
+}
+
+func (l Level) IsHighest() bool {
+	return l == constants.MaxLevel
+}
+
+func (l Level) IsLowest() bool {
+	return l == constants.MinLevel
+}
 
 type ObjectOptions struct {
 	Server *int32

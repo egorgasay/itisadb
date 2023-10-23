@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 )
@@ -30,21 +29,11 @@ func (c *Core) setObjectSNum(name string, num int32) {
 	c.objects[name] = num
 }
 
-func (c *Core) validateObjectPermission(userID int, objectLevel models.Level) bool {
-	userLevel, err := c.storage.GetUserLevel(userID)
-	if err != nil {
-		c.logger.Warn("failed to get user level", zap.Error(err))
-		return false
-	}
-
-	return userLevel >= objectLevel
-}
-
 func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
 	num, ok := c.getObjectSNum(name)
 
 	if c.useMainStorage(opts.Server) {
-		if !c.validateObjectPermission(userID, opts.Level) {
+		if !c.hasPermission(userID, opts.Level) {
 			return 0, constants.ErrForbidden
 		}
 
@@ -59,7 +48,7 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 			return 0, fmt.Errorf("can't create object: %w", err)
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteCreateObject(name)
 		}
 
@@ -80,7 +69,7 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 
 	num = cl.GetNumber()
 
-	if c.cfg.TransactionLoggerConfig.On {
+	if c.cfg.TransactionLogger.On {
 		err = c.tlogger.SaveObjectLoc(ctx, name, num)
 		if err != nil {
 			c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
@@ -159,7 +148,7 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 			return 0, err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteSetToObject(object, key, val)
 		}
 
@@ -307,7 +296,7 @@ func (c *Core) deleteObject(ctx context.Context, userID int, name string, opts m
 			return err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteDeleteObject(name)
 		}
 
@@ -363,7 +352,7 @@ func (c *Core) attachToObject(ctx context.Context, userID int, dst, src string, 
 			return err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteAttach(dst, src)
 		}
 
@@ -411,7 +400,7 @@ func (c *Core) deleteAttr(ctx context.Context, userID int, key, object string, o
 			return err
 		}
 
-		if c.cfg.TransactionLoggerConfig.On {
+		if c.cfg.TransactionLogger.On {
 			c.tlogger.WriteDeleteAttr(object, key)
 		}
 

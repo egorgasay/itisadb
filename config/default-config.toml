@@ -44,3 +44,15 @@ On = true
 # Host of the web application.
 # Example: "127.0.0.1:8080"
 Host = ":8070"
+
+# Security settings.
+[Security]
+On = true
+
+# Mandatory authorization.
+# If false, authentication is not required for keys and objects that has Default level.
+MandatoryAuthorization = false
+
+# Mandatory encryption.
+# If false, encryption is not mandatory for keys and objects that has Secret level.
+MandatoryEncryption = true

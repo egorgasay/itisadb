@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	if info.FullMethod == "/api.ItisaDB/Authenticate" {
+	if !h.conf.On || info.FullMethod == "/api.ItisaDB/Authenticate" {
 		return handler(ctx, req)
 	}
 

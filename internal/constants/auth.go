@@ -11,3 +11,7 @@ const (
 	GUID = "guid"
 	IAT  = "iat"
 )
+
+const NoUser = 0
+
+const UserKey = "userID"

@@ -41,7 +41,7 @@ func main() {
 	}
 
 	var tl domains.TransactionLogger
-	if cfg.TransactionLoggerConfig.On {
+	if cfg.TransactionLogger.On {
 		tl, err = transactionlogger.New()
 		if err != nil {
 			lg.Fatal("failed to inizialise transaction logger: %v", zap.Error(err))
@@ -69,11 +69,11 @@ func main() {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}
 
-	go runGRPC(ctx, lg, logic, cfg.NetworkConfig, ses)
-	go runWebCLI(ctx, cfg.WebAppConfig, lg, cfg.NetworkConfig.GRPC)
+	go runGRPC(ctx, lg, logic, cfg.Network, ses)
+	go runWebCLI(ctx, cfg.WebApp, lg, cfg.Network.GRPC)
 
-	if cfg.NetworkConfig.REST != "" {
-		go runREST(ctx, lg, logic, cfg.NetworkConfig)
+	if cfg.Network.REST != "" {
+		go runREST(ctx, lg, logic, cfg.Network)
 	}
 
 	quit := make(chan os.Signal, 1)

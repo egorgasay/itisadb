@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	TransactionLoggerConfig TransactionLoggerConfig `toml:"TransactionLogger"`
-	NetworkConfig           NetworkConfig           `toml:"Network"`
-	EncryptionConfig        EncryptionConfig        `toml:"Encryption"`
-	WebAppConfig            WebAppConfig            `toml:"WebApp"`
-	Balancer                BalancerConfig          `toml:"Balancer"`
+	TransactionLogger TransactionLoggerConfig `toml:"TransactionLogger"`
+	Network           NetworkConfig           `toml:"Network"`
+	Encryption        EncryptionConfig        `toml:"Encryption"`
+	WebApp            WebAppConfig            `toml:"WebApp"`
+	Balancer          BalancerConfig          `toml:"Balancer"`
+	Security          SecurityConfig          `toml:"Security"`
 }
 
 type TransactionLoggerConfig struct {
@@ -39,6 +40,18 @@ type BalancerConfig struct {
 	Servers []string `toml:"Servers"`
 }
 
+type SecurityConfig struct {
+	On                     bool `toml:"On"`
+	MandatoryAuthorization bool `toml:"MandatoryAuthorization"`
+	MandatoryEncryption    bool `toml:"MandatoryEncryption"`
+}
+
+var _noSecurity = SecurityConfig{
+	On:                     false,
+	MandatoryAuthorization: false,
+	MandatoryEncryption:    false,
+}
+
 func New() (*Config, error) {
 	flag.Parse()
 
@@ -46,6 +59,10 @@ func New() (*Config, error) {
 	_, err := toml.DecodeFile("config/default-config.toml", cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
+	}
+
+	if !cfg.Security.On {
+		cfg.Security = _noSecurity
 	}
 
 	return cfg, nil

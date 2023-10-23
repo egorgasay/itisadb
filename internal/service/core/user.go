@@ -22,28 +22,18 @@ func (c *Core) CreateUser(ctx context.Context, userID int, user models.User) err
 		return ctx.Err()
 	}
 
-	if user.Level > constants.SecretLevel || user.Level < constants.DefaultLevel {
+	if !c.hasPermission(userID, user.Level) {
 		return constants.ErrForbidden
 	}
 
-	creator, err := c.storage.GetUserByID(int(userID))
-	if err != nil {
-		c.logger.Warn("failed to get user for delete", zap.Error(err), zap.String("user", user.Login))
-		return err
-	}
-
-	if creator.Level < user.Level {
-		c.logger.Warn("can't create user", zap.Error(err), zap.String("user", user.Login))
-		return constants.ErrForbidden
-	}
-
-	_, err = c.storage.CreateUser(user)
+	user.Active = true
+	_, err := c.storage.CreateUser(user)
 	if err != nil {
 		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Login))
 		return err
 	}
 
-	if c.cfg.TransactionLoggerConfig.On {
+	if c.cfg.TransactionLogger.On {
 		c.tlogger.WriteCreateUser(user)
 	}
 
@@ -61,14 +51,7 @@ func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
 		return err
 	}
 
-	us, err := c.storage.GetUserByID(int(userID))
-	if err != nil {
-		c.logger.Warn("failed to get user for delete", zap.Error(err), zap.String("user", login))
-		return err
-	}
-
-	if targetUser.Level > us.Level {
-		c.logger.Warn("can't delete user", zap.Error(err), zap.String("user", login))
+	if !c.hasPermission(userID, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -78,7 +61,7 @@ func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
 		return err
 	}
 
-	if c.cfg.TransactionLoggerConfig.On {
+	if c.cfg.TransactionLogger.On {
 		c.tlogger.WriteDeleteUser(login)
 	}
 
@@ -96,14 +79,7 @@ func (c *Core) ChangePassword(ctx context.Context, userID int, login, password s
 		return err
 	}
 
-	us, err := c.storage.GetUserByID(userID)
-	if err != nil {
-		c.logger.Warn("failed to get user for change password", zap.Error(err), zap.String("user", login))
-		return err
-	}
-
-	if targetUser.Level > us.Level {
-		c.logger.Warn("can't change password", zap.Error(err), zap.String("user", login))
+	if !c.hasPermission(userID, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -114,16 +90,20 @@ func (c *Core) ChangePassword(ctx context.Context, userID int, login, password s
 		return err
 	}
 
-	if c.cfg.TransactionLoggerConfig.On {
+	if c.cfg.TransactionLogger.On {
 		c.tlogger.WriteCreateUser(targetUser)
 	}
 
 	return nil
 }
 
-func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level int8) error {
+func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
+	}
+
+	if !c.hasPermission(userID, level) {
+		return constants.ErrForbidden
 	}
 
 	targetID, targetUser, err := c.storage.GetUserByName(login)
@@ -132,27 +112,36 @@ func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level 
 		return err
 	}
 
-	us, err := c.storage.GetUserByID(int(userID))
-	if err != nil {
-		c.logger.Warn("failed to get user for change level", zap.Error(err), zap.String("user", login))
-		return err
-	}
-
-	if targetUser.Level > us.Level {
-		c.logger.Warn("can't change level", zap.Error(err), zap.String("user", login))
-		return constants.ErrForbidden
-	}
-
-	targetUser.Level = models.Level(level)
+	targetUser.Level = level
 	err = c.storage.SaveUser(targetID, targetUser)
 	if err != nil {
 		c.logger.Warn("failed to change level", zap.Error(err), zap.String("user", login))
 		return err
 	}
 
-	if c.cfg.TransactionLoggerConfig.On {
+	if c.cfg.TransactionLogger.On {
 		c.tlogger.WriteCreateUser(targetUser)
 	}
 
 	return nil
+}
+
+func (c *Core) hasPermission(userID int, level models.Level) bool {
+	// always ok when security is disabled
+	if !c.cfg.Security.On {
+		return true
+	}
+
+	// ok when security is not mandatory for Default level
+	if !c.cfg.Security.MandatoryAuthorization && level == constants.DefaultLevel {
+		return true
+	}
+
+	userLevel, err := c.storage.GetUserLevel(userID)
+	if err != nil {
+		c.logger.Warn("failed to get user level", zap.Error(err))
+		return false
+	}
+
+	return userLevel >= level
 }
