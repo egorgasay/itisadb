@@ -26,6 +26,13 @@ func Clone[S ~[]E, E any](s S) S {
 	return append(s[:0:0], s...)
 }
 
+func SafeDeref[T any](t *T) T {
+	if t == nil {
+		return *new(T)
+	}
+	return *t
+}
+
 func WithContext(ctx context.Context, fn func() error, pool chan struct{}, onStop func()) (err error) {
 	ch := make(chan struct{})
 

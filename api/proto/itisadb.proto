@@ -123,16 +123,6 @@ message DeleteObjectRequest {
   Options options = 2;
 }
 
-message GetToObjectRequest {
-  string key = 1;
-  string name = 2;
-
-  message Options {
-    optional int32 server = 1;
-  }
-  Options options = 3;
-}
-
 message SetToObjectRequest {
   string key = 1;
   string value = 2;
@@ -161,6 +151,7 @@ message GetRequest {
 
   message Options {
     optional int32 server = 1;
+    optional Level level = 2;
   }
   Options options = 2;
 }
@@ -181,6 +172,7 @@ message GetFromObjectRequest {
 
   message Options {
     optional int32 server = 1;
+    optional Level level = 2;
   }
   Options options = 3;
 }

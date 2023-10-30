@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
+	"itisadb/pkg"
 )
 
 func (c *Core) Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (s int32, err error) {
@@ -18,7 +19,7 @@ func (c *Core) getObjectSNum(name string) (int32, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	num, ok := c.objects[name]
+	num, ok := c.storage.GetObjectInfo[name]
 	return num, ok
 }
 
@@ -32,52 +33,51 @@ func (c *Core) setObjectSNum(name string, num int32) {
 func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
 	num, ok := c.getObjectSNum(name)
 
-	if c.useMainStorage(opts.Server) {
-		if !c.hasPermission(userID, opts.Level) {
-			return 0, constants.ErrForbidden
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(num)
+		if !ok || cl == nil {
+			return 0, constants.ErrServerNotFound
 		}
 
-		if ok {
-			if num != mainStorage {
-				return 0, constants.ErrServerNotFound
-			}
-			return mainStorage, nil
+		err := cl.NewObject(ctx, name, opts)
+		if err != nil {
+			return 0, err
 		}
 
-		if err := c.storage.CreateObject(name, opts); err != nil {
-			return 0, fmt.Errorf("can't create object: %w", err)
-		}
+		num = cl.GetNumber()
 
 		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteCreateObject(name)
+			err = c.tlogger.SaveObjectLoc(ctx, name, num)
+			if err != nil {
+				c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
+			}
 		}
 
-		c.setObjectSNum(name, mainStorage)
+		c.setObjectSNum(name, num)
+	}
 
+	if !c.hasPermission(userID, opts.Level) {
+		return 0, constants.ErrForbidden
+	}
+
+	if ok {
+		if num != mainStorage {
+			return 0, constants.ErrServerNotFound
+		}
 		return mainStorage, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
-		return 0, constants.ErrServerNotFound
+	if err := c.storage.CreateObject(name, opts); err != nil {
+		return 0, fmt.Errorf("can't create object: %w", err)
 	}
-
-	err := cl.NewObject(ctx, name, opts)
-	if err != nil {
-		return 0, err
-	}
-
-	num = cl.GetNumber()
 
 	if c.cfg.TransactionLogger.On {
-		err = c.tlogger.SaveObjectLoc(ctx, name, num)
-		if err != nil {
-			c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
-		}
+		c.tlogger.WriteCreateObject(name)
 	}
 
-	c.setObjectSNum(name, num)
-	return num, nil
+	c.setObjectSNum(name, mainStorage)
+
+	return mainStorage, nil
 }
 
 func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (v string, err error) {
@@ -90,36 +90,36 @@ func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string
 func (c *Core) getFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (string, error) {
 	num, ok := c.getObjectSNum(object)
 
-	if c.useMainStorage(opts.Server) {
-		//if !c.validateObjectPermission(userID, opts.Level) {
-		//	return "", constants.ErrForbidden
-		//}
+	if !c.useMainStorage(opts.Server) {
+		serverNumber := toServerNumber(opts.Server)
 
-		if ok && num != mainStorage {
+		cl, ok := c.servers.GetServerByID(serverNumber)
+		if !ok || cl == nil {
 			return "", constants.ErrServerNotFound
 		}
 
-		v, err := c.storage.GetFromObject(object, key)
+		resp, err := cl.GetFromObject(ctx, object, key, opts)
 		if err != nil {
 			return "", err
 		}
 
-		return v, nil
+		return resp.Value, nil
 	}
 
-	serverNumber := toServerNumber(opts.Server)
+	if !c.hasPermission(userID, pkg.SafeDeref(opts.Level)) {
+		return "", constants.ErrForbidden
+	}
 
-	cl, ok := c.servers.GetServerByID(serverNumber)
-	if !ok || cl == nil {
+	if ok && num != mainStorage {
 		return "", constants.ErrServerNotFound
 	}
 
-	resp, err := cl.GetFromObject(ctx, object, key, opts)
+	v, err := c.storage.GetFromObject(object, key)
 	if err != nil {
 		return "", err
 	}
 
-	return resp.Value, nil
+	return v, nil
 }
 
 func (c *Core) SetToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (s int32, err error) {
@@ -138,36 +138,36 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 		return 0, constants.ErrObjectNotFound
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(num)
+		if !ok || cl == nil {
 			return 0, constants.ErrServerNotFound
 		}
 
-		err := c.storage.SetToObject(object, key, val, opts)
+		opts.Server = nil
+
+		err := cl.SetToObject(ctx, object, key, val, opts)
 		if err != nil {
 			return 0, err
 		}
 
-		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteSetToObject(object, key, val)
-		}
-
-		return mainStorage, nil
+		return num, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
-		return 0, constants.ErrServerNotFound
+	if !c.hasPermission(userID) {
+		return 0, constants.ErrForbidden
 	}
 
-	opts.Server = nil
-
-	err := cl.SetToObject(ctx, object, key, val, opts)
+	err := c.storage.SetToObject(object, key, val, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	return num, nil
+	if c.cfg.TransactionLogger.On {
+		c.tlogger.WriteSetToObject(object, key, val)
+	}
+
+	return mainStorage, nil
 }
 
 func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
+	"strconv"
 	"strings"
 )
 
@@ -23,7 +24,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 		case e, ok = <-events:
 			switch e.EventType {
 			case Set:
-				r.Set(e.Name, e.Value, models.SetOptions{})
+				r.Set(e.Name, e.Value, models.SetOptions{}) // TODO: add opt support
 			case Delete:
 				r.Delete(e.Name)
 			case SetToObject:
@@ -43,11 +44,55 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				r.DeleteObject(e.Name)
 				// TODO: case Detach:
 			case CreateUser:
+				split := strings.Split(e.Metadata, ";")
+				if len(split) < 2 {
+					return fmt.Errorf("[%w]\n CreateUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+
+				activeStr := split[0]
+				levelStr := split[1]
+
+				active, err := strconv.ParseBool(activeStr)
+				if err != nil {
+					return fmt.Errorf("[%w]\n invalid active value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+
+				level, err := strconv.Atoi(levelStr)
+				if err != nil {
+					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+
 				r.CreateUser(models.User{
 					Login:    e.Name,
 					Password: e.Value,
+					Level:    models.Level(level),
+					Active:   active,
 				})
+			case AddObjectInfo:
+				split := strings.Split(e.Value, ";")
+				if len(split) < 2 {
+					return fmt.Errorf("[%w]\n AddObjectInfo invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
 
+				serverStr := split[0]
+				levelStr := split[1]
+
+				server, err := strconv.Atoi(serverStr)
+				if err != nil {
+					return fmt.Errorf("[%w]\n invalid server value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+
+				level, err := strconv.Atoi(levelStr)
+				if err != nil {
+					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+				}
+
+				r.AddObjectInfo(e.Name, models.ObjectInfo{
+					Server: int32(server),
+					Level:  models.Level(level),
+				})
+			case DeleteObjectInfo:
+				r.DeleteObjectInfo(e.Name)
 			}
 		}
 	}

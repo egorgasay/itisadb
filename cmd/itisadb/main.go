@@ -29,18 +29,13 @@ func main() {
 		lg.Fatal("failed to inizialise config: %v", zap.Error(err))
 	}
 
+	var tl domains.TransactionLogger
+
 	store, err := storage.New()
 	if err != nil {
 		lg.Fatal("failed to inizialise storage: %v", zap.String("error", err.Error()))
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	s, err := servers.New()
-	if err != nil {
-		lg.Fatal("failed to inizialise servers: %v", zap.Error(err))
-	}
-
-	var tl domains.TransactionLogger
 	if cfg.TransactionLogger.On {
 		tl, err = transactionlogger.New()
 		if err != nil {
@@ -56,9 +51,16 @@ func main() {
 		lg.Info("Transaction logger recovery completed")
 
 		tl.Run()
+
 		lg.Info("Transaction logger started")
 	} else {
 		lg.Info("Transaction logger disabled")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	s, err := servers.New()
+	if err != nil {
+		lg.Fatal("failed to inizialise servers: %v", zap.Error(err))
 	}
 
 	gen := generator.New(lg)

@@ -12,10 +12,10 @@ import (
 )
 
 type Storage struct {
-	ramStorage ramStorage
-	objects    objects
-	users      users
-	mu         *sync.RWMutex
+	ramStorage  ramStorage
+	objects     objects
+	users       users
+	objectsInfo objectsInfo
 }
 
 type ramStorage struct {
@@ -33,12 +33,17 @@ type users struct {
 	*sync.RWMutex
 }
 
+type objectsInfo struct {
+	*swiss.Map[string, models.ObjectInfo]
+	*sync.RWMutex
+}
+
 func New() (*Storage, error) {
 	st := &Storage{
-		mu:         &sync.RWMutex{},
-		ramStorage: ramStorage{Map: swiss.NewMap[string, string](10_000_000), RWMutex: &sync.RWMutex{}},
-		objects:    objects{Map: swiss.NewMap[string, *object](100000), RWMutex: &sync.RWMutex{}},
-		users:      users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
+		objectsInfo: objectsInfo{Map: swiss.NewMap[string, models.ObjectInfo](10_000), RWMutex: &sync.RWMutex{}},
+		ramStorage:  ramStorage{Map: swiss.NewMap[string, string](10_000_000), RWMutex: &sync.RWMutex{}},
+		objects:     objects{Map: swiss.NewMap[string, *object](100_000), RWMutex: &sync.RWMutex{}},
+		users:       users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
 	return st, nil
@@ -314,4 +319,30 @@ func (s *Storage) GetUserLevel(id int) (models.Level, error) {
 	}
 
 	return val.Level, nil
+}
+
+func (s *Storage) AddObjectInfo(name string, info models.ObjectInfo) {
+	s.objectsInfo.Lock()
+	defer s.objectsInfo.Unlock()
+
+	s.objectsInfo.Put(name, info)
+}
+
+func (s *Storage) GetObjectInfo(name string) (models.ObjectInfo, error) {
+	s.objectsInfo.RLock()
+	defer s.objectsInfo.RUnlock()
+
+	val, ok := s.objectsInfo.Get(name)
+	if !ok {
+		return models.ObjectInfo{}, constants.ErrNotFound
+	}
+
+	return val, nil
+}
+
+func (s *Storage) DeleteObjectInfo(name string) {
+	s.objectsInfo.Lock()
+	defer s.objectsInfo.Unlock()
+
+	s.objectsInfo.Delete(name)
 }

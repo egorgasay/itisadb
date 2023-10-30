@@ -2,6 +2,7 @@ package transactionlogger
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync"
@@ -19,12 +20,15 @@ const (
 	DeleteObject
 	CreateUser
 	DeleteUser
+	AddObjectInfo
+	DeleteObjectInfo
 )
 
 type Event struct {
 	EventType EventType
 	Name      string
 	Value     string
+	Metadata  string
 }
 
 type TransactionLogger struct {
@@ -39,6 +43,8 @@ type TransactionLogger struct {
 	errors chan error
 
 	sync.RWMutex
+
+	logger *zap.Logger
 }
 
 func New() (*TransactionLogger, error) {

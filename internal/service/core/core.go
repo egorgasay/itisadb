@@ -32,8 +32,7 @@ type Core struct {
 	tlogger domains.TransactionLogger
 	session domains.Session
 
-	objects map[string]int32
-	mu      sync.RWMutex
+	mu sync.RWMutex
 
 	cfg *config.Config
 
@@ -50,14 +49,6 @@ func New(
 	session domains.Session,
 ) (*Core, error) {
 	var err error
-
-	objects := make(map[string]int32)
-	if tlogger != nil {
-		objects, err = tlogger.RestoreObjects(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to restore objects: %w", err)
-		}
-	}
 
 	_, err = storage.CreateUser(
 		models.User{
@@ -87,7 +78,6 @@ func New(
 		storage: storage,
 		tlogger: tlogger,
 		session: session,
-		objects: objects,
 		mu:      sync.RWMutex{},
 		cfg:     cfg,
 		pool:    make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG

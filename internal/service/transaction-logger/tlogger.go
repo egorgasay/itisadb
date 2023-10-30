@@ -3,8 +3,8 @@ package transactionlogger
 import (
 	"bufio"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"modernc.org/strutil"
 	"os"
 	"strconv"
@@ -46,9 +46,20 @@ func (t *TransactionLogger) Run() {
 		defer close(errorsch)
 
 		for e := range events {
-			data := strutil.Base64Encode([]byte(fmt.Sprintf("%v %s %s", e.EventType, e.Name, e.Value)))
+			var data []byte
+			// TODO: Check this
+			data = []byte(
+				fmt.Sprintf(
+					"%d %s %s %s\n",
+					e.EventType,
+					b64.EncodeToString([]byte(e.Name)),
+					b64.EncodeToString([]byte(e.Value)),
+					b64.EncodeToString([]byte(e.Metadata)),
+				),
+			)
+
 			op.sb.Write(data)
-			op.sb.WriteByte('\n')
+
 			op.counter++
 			t.currentCOL++
 
@@ -58,7 +69,7 @@ func (t *TransactionLogger) Run() {
 				//t.file.Sync() TODO: ???
 				t.RUnlock()
 				if err != nil {
-					log.Println("flash: ", err)
+					t.logger.Error("flash error", zap.Error(err))
 					t.errors <- err
 				}
 				op.sb.Reset()

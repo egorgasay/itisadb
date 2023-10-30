@@ -1,9 +1,14 @@
 package transactionlogger
 
-import "itisadb/internal/models"
+import (
+	"encoding/base64"
+	"fmt"
+	"itisadb/internal/models"
+)
 
-func (t *TransactionLogger) WriteSet(key, value string) {
-	t.events <- Event{EventType: Set, Name: key, Value: value}
+func (t *TransactionLogger) WriteSet(key, value string, opts models.SetOptions) {
+	metadata := fmt.Sprintf("%t;%d;%d", opts.ReadOnly, opts.Server, opts.Level)
+	t.events <- Event{EventType: Set, Name: key, Value: value, Metadata: metadata}
 }
 
 func (t *TransactionLogger) WriteDelete(key string) {
@@ -26,14 +31,27 @@ func (t *TransactionLogger) WriteAttach(dst string, src string) {
 	t.events <- Event{EventType: Attach, Name: dst, Value: src}
 }
 
-func (t *TransactionLogger) WriteDeleteAttr(name string, key string) {
-	t.events <- Event{EventType: DeleteAttr, Name: name + "." + key}
+func (t *TransactionLogger) WriteDeleteAttr(object string, key string) {
+	t.events <- Event{EventType: DeleteAttr, Name: object + "." + key}
 }
 
+var b64 = base64.Encoding{}
+
 func (t *TransactionLogger) WriteCreateUser(user models.User) {
-	t.events <- Event{EventType: CreateUser, Name: user.Login, Value: user.Password}
+	value := fmt.Sprintf("%t;%d", user.Active, user.Level)
+
+	t.events <- Event{EventType: CreateUser, Name: user.Login, Value: value}
 }
 
 func (t *TransactionLogger) WriteDeleteUser(login string) {
 	t.events <- Event{EventType: DeleteUser, Name: login}
+}
+
+func (t *TransactionLogger) WriteAddObjectInfo(name string, info models.ObjectInfo) {
+	value := fmt.Sprintf("%d;%d", info.Server, info.Level)
+	t.events <- Event{EventType: AddObjectInfo, Name: name, Value: value}
+}
+
+func (t *TransactionLogger) WriteDeleteObjectInfo(name string) {
+	t.events <- Event{EventType: DeleteObjectInfo, Name: name}
 }

@@ -1,7 +1,6 @@
 package domains
 
 import (
-	"context"
 	"itisadb/internal/models"
 )
 
@@ -18,8 +17,8 @@ type TransactionLogger interface {
 	WriteAttach(dst string, src string)
 	WriteDeleteAttr(name string, key string)
 	WriteCreateUser(user models.User)
-	RestoreObjects(ctx context.Context) (map[string]int32, error)
-	SaveObjectLoc(ctx context.Context, object string, server int32) error
+	WriteAddObjectInfo(name string, info models.ObjectInfo)
+	WriteDeleteObjectInfo(name string)
 	WriteDeleteUser(login string)
 }
 
@@ -31,4 +30,6 @@ type Restorer interface {
 	CreateObject(name string, opts models.ObjectOptions) error
 	AttachToObject(dst, src string) error
 	CreateUser(user models.User) (int, error)
+	AddObjectInfo(name string, info models.ObjectInfo)
+	DeleteObjectInfo(name string)
 }
