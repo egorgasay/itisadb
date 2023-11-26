@@ -60,21 +60,17 @@ func FromGRPC(err error) error {
 	}
 }
 
-func Unwrap(err error) (base error, inside error) {
-	switch err := err.(type) {
-	// fmt.Errorf()
+func Unwrap(MultiError error) (baseError error, insideError error) {
+	switch err := MultiError.(type) {
 	case interface{ Unwrap() error }:
-		return err.Unwrap(), err.Unwrap()
-
-	// errors.Join()
+		return Unwrap(err.Unwrap())
 	case interface{ Unwrap() []error }:
 		errStack := append([]error(nil), err.Unwrap()...)
 		if len(errStack) < 2 {
 			return nil, fmt.Errorf("invalid error stack: %v", errStack)
 		}
 		return errStack[0], errStack[1]
-
 	default:
-		return err, err
+		return MultiError, MultiError
 	}
 }

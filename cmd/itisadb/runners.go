@@ -31,22 +31,23 @@ func runGRPC(
 	ctx context.Context,
 	l *zap.Logger,
 	logic domains.Core,
-	cfg config.NetworkConfig,
+	securityCFG config.SecurityConfig,
+	networkCFG config.NetworkConfig,
 	session domains.Session,
 ) {
-	h := grpchandler.New(logic, l, session)
+	h := grpchandler.New(logic, l, session, securityCFG)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(h.AuthMiddleware),
 	)
 
-	lis, err := net.Listen("tcp", cfg.GRPC)
+	lis, err := net.Listen("tcp", networkCFG.GRPC)
 	if err != nil {
 		l.Fatal("failed to listen: %v", zap.Error(err))
 	}
 	api.RegisterItisaDBServer(grpcServer, h)
 
 	err = pkg.WithContext(ctx, func() error {
-		l.Info("Starting GRPC", zap.String("address", cfg.GRPC))
+		l.Info("Starting GRPC", zap.String("address", networkCFG.GRPC))
 		err = grpcServer.Serve(lis)
 		if err != nil {
 			return fmt.Errorf("grpcServer Serve: %v", err)

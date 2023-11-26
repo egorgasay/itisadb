@@ -2,11 +2,21 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
+	"itisadb/internal/service/servers"
 	"itisadb/pkg"
 )
+
+func (c *Core) earlyObjectNotFound(requested *int32, actual int32) bool {
+	if requested != nil {
+		return *requested != actual
+	}
+
+	return false
+}
 
 func (c *Core) Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (s int32, err error) {
 	return s, c.withContext(ctx, func() error {
@@ -15,56 +25,57 @@ func (c *Core) Object(ctx context.Context, userID int, name string, opts models.
 	})
 }
 
-func (c *Core) getObjectSNum(name string) (int32, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	num, ok := c.storage.GetObjectInfo[name]
-	return num, ok
-}
-
-func (c *Core) setObjectSNum(name string, num int32) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.objects[name] = num
-}
-
 func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
-	num, ok := c.getObjectSNum(name)
+	info, err := c.storage.GetObjectInfo(name)
+	errNotFound := errors.Is(err, constants.ErrObjectNotFound)
+
+	if err != nil && !errNotFound {
+		return 0, fmt.Errorf("can't get object info: %w", err)
+	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(num)
-		if !ok || cl == nil {
+		var serv *servers.Server
+		var ok bool
+
+		if errNotFound {
+			serv, ok = c.servers.GetServer()
+		} else {
+			serv, ok = c.servers.GetServerByID(info.Server)
+		}
+
+		if !ok {
 			return 0, constants.ErrServerNotFound
 		}
 
-		err := cl.NewObject(ctx, name, opts)
+		err := serv.NewObject(ctx, name, opts)
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("can't create object: %w", err)
 		}
 
-		num = cl.GetNumber()
+		num := serv.GetNumber()
+
+		info := models.ObjectInfo{
+			Server: num,
+			Level:  opts.Level,
+		}
 
 		if c.cfg.TransactionLogger.On {
-			err = c.tlogger.SaveObjectLoc(ctx, name, num)
-			if err != nil {
-				c.logger.Warn(fmt.Sprintf("error while saving object: %s", err.Error()))
-			}
+			c.tlogger.WriteAddObjectInfo(name, info)
 		}
 
-		c.setObjectSNum(name, num)
+		c.storage.AddObjectInfo(name, info)
 	}
 
 	if !c.hasPermission(userID, opts.Level) {
 		return 0, constants.ErrForbidden
 	}
 
-	if ok {
-		if num != mainStorage {
+	if !errNotFound {
+		if info.Server != _mainStorage {
 			return 0, constants.ErrServerNotFound
 		}
-		return mainStorage, nil
+
+		return _mainStorage, nil
 	}
 
 	if err := c.storage.CreateObject(name, opts); err != nil {
@@ -75,9 +86,14 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 		c.tlogger.WriteCreateObject(name)
 	}
 
-	c.setObjectSNum(name, mainStorage)
+	info = models.ObjectInfo{
+		Server: _mainStorage,
+		Level:  opts.Level,
+	}
 
-	return mainStorage, nil
+	c.storage.AddObjectInfo(name, info)
+
+	return _mainStorage, nil
 }
 
 func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (v string, err error) {
@@ -88,7 +104,14 @@ func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string
 }
 
 func (c *Core) getFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (string, error) {
-	num, ok := c.getObjectSNum(object)
+	info, err := c.getObjectInfo(object)
+	if err != nil {
+		return "", err
+	}
+
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return "", constants.ErrServerNotFound
+	}
 
 	if !c.useMainStorage(opts.Server) {
 		serverNumber := toServerNumber(opts.Server)
@@ -110,10 +133,6 @@ func (c *Core) getFromObject(ctx context.Context, userID int, object, key string
 		return "", constants.ErrForbidden
 	}
 
-	if ok && num != mainStorage {
-		return "", constants.ErrServerNotFound
-	}
-
 	v, err := c.storage.GetFromObject(object, key)
 	if err != nil {
 		return "", err
@@ -130,35 +149,40 @@ func (c *Core) SetToObject(ctx context.Context, userID int, object, key, val str
 }
 
 func (c *Core) setToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (int32, error) {
-	c.mu.RLock()
-	num, ok := c.objects[object]
-	c.mu.RUnlock()
+	info, err := c.storage.GetObjectInfo(object)
+	if err != nil {
+		return 0, fmt.Errorf("can't get object info: %w", err)
+	}
 
-	if !ok {
-		return 0, constants.ErrObjectNotFound
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return 0, constants.ErrServerNotFound
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(num)
+		cl, ok := c.servers.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return 0, constants.ErrServerNotFound
 		}
 
 		opts.Server = nil
 
-		err := cl.SetToObject(ctx, object, key, val, opts)
+		err = cl.SetToObject(ctx, object, key, val, opts)
 		if err != nil {
 			return 0, err
 		}
 
-		return num, nil
+		return info.Server, nil
 	}
 
-	if !c.hasPermission(userID) {
+	if info.Server != _mainStorage {
+		return 0, constants.ErrServerNotFound
+	}
+
+	if !c.hasPermission(userID, info.Level) {
 		return 0, constants.ErrForbidden
 	}
 
-	err := c.storage.SetToObject(object, key, val, opts)
+	err = c.storage.SetToObject(object, key, val, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -167,7 +191,7 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 		c.tlogger.WriteSetToObject(object, key, val)
 	}
 
-	return mainStorage, nil
+	return _mainStorage, nil
 }
 
 func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (string, error) {
@@ -175,38 +199,43 @@ func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts m
 		return "", ctx.Err()
 	}
 
-	c.mu.RLock()
-	num, ok := c.objects[name]
-	c.mu.RUnlock()
-
-	if !ok {
-		return "", constants.ErrObjectNotFound
+	info, err := c.storage.GetObjectInfo(name)
+	if err != nil {
+		return "", fmt.Errorf("can't get object info: %w", err)
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return "", constants.ErrServerNotFound
+	}
+
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(info.Server)
+		if !ok || cl == nil {
 			return "", constants.ErrServerNotFound
 		}
 
-		objJSON, err := c.storage.ObjectToJSON(name)
+		res, err := cl.ObjectToJSON(ctx, name, opts)
 		if err != nil {
 			return "", err
 		}
 
-		return objJSON, nil
+		return res.Object, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
+	if info.Server != _mainStorage {
 		return "", constants.ErrServerNotFound
 	}
 
-	res, err := cl.ObjectToJSON(ctx, name, opts)
+	if !c.hasPermission(userID, info.Level) {
+		return "", constants.ErrForbidden
+	}
+
+	objJSON, err := c.storage.ObjectToJSON(name)
 	if err != nil {
 		return "", err
 	}
 
-	return res.Object, nil
+	return objJSON, nil
 }
 
 func (c *Core) IsObject(ctx context.Context, userID int, name string, opts models.IsObjectOptions) (bool, error) {
@@ -214,11 +243,12 @@ func (c *Core) IsObject(ctx context.Context, userID int, name string, opts model
 		return false, ctx.Err()
 	}
 
-	c.mu.RLock()
-	_, ok := c.objects[name]
-	c.mu.RUnlock()
+	_, err := c.storage.GetObjectInfo(name)
+	if err != nil {
+		return false, fmt.Errorf("can't get object info: %w", err)
+	}
 
-	return ok, nil
+	return true, nil
 }
 
 func (c *Core) Size(ctx context.Context, userID int, name string, opts models.SizeOptions) (size uint64, err error) {
@@ -233,38 +263,43 @@ func (c *Core) size(ctx context.Context, userID int, name string, opts models.Si
 		return 0, ctx.Err()
 	}
 
-	c.mu.RLock()
-	num, ok := c.objects[name]
-	c.mu.RUnlock()
-
-	if !ok {
-		return 0, constants.ErrObjectNotFound
+	info, err := c.storage.GetObjectInfo(name)
+	if err != nil {
+		return 0, fmt.Errorf("can't get object info: %w", err)
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return 0, constants.ErrServerNotFound
+	}
+
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(info.Server)
+		if !ok || cl == nil {
 			return 0, constants.ErrServerNotFound
 		}
 
-		size, err := c.storage.Size(name)
+		res, err := cl.Size(ctx, name, opts)
 		if err != nil {
 			return 0, err
 		}
 
-		return size, nil
+		return res.Size, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
+	if info.Server != _mainStorage {
 		return 0, constants.ErrServerNotFound
 	}
 
-	res, err := cl.Size(ctx, name, opts)
+	if !c.hasPermission(userID, info.Level) {
+		return 0, constants.ErrForbidden
+	}
+
+	size, err := c.storage.Size(name)
 	if err != nil {
 		return 0, err
 	}
 
-	return res.Size, nil
+	return size, nil
 }
 
 func (c *Core) DeleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error {
@@ -278,48 +313,49 @@ func (c *Core) deleteObject(ctx context.Context, userID int, name string, opts m
 		return ctx.Err()
 	}
 
-	c.mu.RLock()
-	num, ok := c.objects[name]
-	c.mu.RUnlock()
-
-	if !ok {
-		return constants.ErrObjectNotFound
+	info, err := c.storage.GetObjectInfo(name)
+	if err != nil {
+		return fmt.Errorf("can't get object info: %w", err)
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return constants.ErrServerNotFound
+	}
+
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(info.Server)
+		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.storage.DeleteObject(name)
+		err = cl.DeleteObject(ctx, name, opts)
 		if err != nil {
 			return err
 		}
 
-		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteDeleteObject(name)
-		}
-
-		c.mu.Lock()
-		delete(c.objects, name)
-		c.mu.Unlock()
+		c.storage.DeleteObjectInfo(name)
 
 		return nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
+	if info.Server != _mainStorage {
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.DeleteObject(ctx, name, opts)
+	if !c.hasPermission(userID, info.Level) {
+		return constants.ErrForbidden
+	}
+
+	err = c.storage.DeleteObject(name)
 	if err != nil {
 		return err
 	}
 
-	c.mu.Lock()
-	delete(c.objects, name)
-	c.mu.Unlock()
+	if c.cfg.TransactionLogger.On {
+		c.tlogger.WriteDeleteObject(name)
+	}
+
+	c.storage.DeleteObjectInfo(name)
 
 	return nil
 }
@@ -334,40 +370,47 @@ func (c *Core) attachToObject(ctx context.Context, userID int, dst, src string, 
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	c.mu.RLock()
-	num, ok := c.objects[dst]
-	c.mu.RUnlock()
 
-	if !ok {
-		return constants.ErrObjectNotFound
+	info, err := c.storage.GetObjectInfo(src)
+	if err != nil {
+		return fmt.Errorf("can't get object info: %w", err)
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return constants.ErrServerNotFound
+	}
+
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(info.Server)
+		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.storage.AttachToObject(dst, src)
+		err = cl.AttachToObject(ctx, dst, src, opts)
 		if err != nil {
 			return err
-		}
-
-		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteAttach(dst, src)
 		}
 
 		return nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
+	if info.Server != _mainStorage {
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.AttachToObject(ctx, dst, src, opts)
+	if !c.hasPermission(userID, info.Level) {
+		return constants.ErrForbidden
+	}
+
+	err = c.storage.AttachToObject(dst, src)
 	if err != nil {
 		return err
 	}
+
+	if c.cfg.TransactionLogger.On {
+		c.tlogger.WriteAttach(dst, src)
+	}
+
 	return nil
 }
 
@@ -382,39 +425,45 @@ func (c *Core) deleteAttr(ctx context.Context, userID int, key, object string, o
 		return ctx.Err()
 	}
 
-	c.mu.RLock()
-	num, ok := c.objects[object]
-	c.mu.RUnlock()
-
-	if !ok {
-		return constants.ErrObjectNotFound
+	info, err := c.storage.GetObjectInfo(object)
+	if err != nil {
+		return fmt.Errorf("can't get object info: %w", err)
 	}
 
-	if c.useMainStorage(opts.Server) {
-		if num != mainStorage {
+	if c.earlyObjectNotFound(opts.Server, info.Server) {
+		return constants.ErrServerNotFound
+	}
+
+	if !c.useMainStorage(opts.Server) {
+		cl, ok := c.servers.GetServerByID(info.Server)
+		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}
 
-		err := c.storage.DeleteAttr(object, key)
+		err = cl.DeleteAttr(ctx, key, object, opts)
 		if err != nil {
 			return err
-		}
-
-		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteDeleteAttr(object, key)
 		}
 
 		return nil
 	}
 
-	cl, ok := c.servers.GetServerByID(num)
-	if !ok || cl == nil {
+	if info.Server != _mainStorage {
 		return constants.ErrServerNotFound
 	}
 
-	err := cl.DeleteAttr(ctx, key, object, opts)
+	if !c.hasPermission(userID, info.Level) {
+		return constants.ErrForbidden
+	}
+
+	err = c.storage.DeleteAttr(object, key)
 	if err != nil {
 		return err
 	}
+
+	if c.cfg.TransactionLogger.On {
+		c.tlogger.WriteDeleteAttr(object, key)
+	}
+
 	return nil
 }

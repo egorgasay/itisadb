@@ -22,6 +22,8 @@ func (c *Core) CreateUser(ctx context.Context, userID int, user models.User) err
 		return ctx.Err()
 	}
 
+	// TODO: determine server?
+
 	if !c.hasPermission(userID, user.Level) {
 		return constants.ErrForbidden
 	}
@@ -44,6 +46,8 @@ func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
+
+	// TODO: determine server
 
 	targetID, targetUser, err := c.storage.GetUserByName(login)
 	if err != nil {
@@ -73,6 +77,8 @@ func (c *Core) ChangePassword(ctx context.Context, userID int, login, password s
 		return ctx.Err()
 	}
 
+	// TODO: determine server
+
 	targetID, targetUser, err := c.storage.GetUserByName(login)
 	if err != nil {
 		c.logger.Warn("failed to get user for change password", zap.Error(err), zap.String("user", login))
@@ -101,6 +107,8 @@ func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level 
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
+
+	// TODO: determine server
 
 	if !c.hasPermission(userID, level) {
 		return constants.ErrForbidden

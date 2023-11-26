@@ -9,7 +9,7 @@ type TransactionLogger interface {
 	Err() <-chan error
 	Stop() error
 	Restore(r Restorer) error
-	WriteSet(key string, value string)
+	WriteSet(key string, value string, opts models.SetOptions)
 	WriteDelete(key string)
 	WriteSetToObject(name string, key string, val string)
 	WriteCreateObject(name string)

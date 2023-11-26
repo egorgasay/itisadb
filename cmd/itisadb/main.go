@@ -66,12 +66,14 @@ func main() {
 	gen := generator.New(lg)
 	ses := session.New(store, gen, lg)
 
-	logic, err := core.New(ctx, cfg, lg, store, tl, s, ses)
+	appCFG := *cfg
+
+	logic, err := core.New(ctx, appCFG, lg, store, tl, s, ses)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}
 
-	go runGRPC(ctx, lg, logic, cfg.Network, ses)
+	go runGRPC(ctx, lg, logic, appCFG.Security, appCFG.Network, ses)
 	go runWebCLI(ctx, cfg.WebApp, lg, cfg.Network.GRPC)
 
 	if cfg.Network.REST != "" {
