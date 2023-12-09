@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/egorgasay/gost"
+	"github.com/egorgasay/itisadb-go-sdk"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,11 +19,43 @@ import (
 )
 
 type Servers struct {
-	servers map[int32]*Server
+	servers map[int32]Server
 	poolCh  chan struct{}
 	freeID  int32
 	sync.RWMutex
 }
+
+type Server interface {
+	RAM() models.RAM
+	SetRAM(ram models.RAM)
+
+	Number() int32
+	Tries() uint32
+	IncTries()
+	ResetTries()
+
+	Find(ctx context.Context, key string, out chan<- string, once *sync.Once, opts models.GetOptions)
+
+	appLogic
+}
+
+type appLogic interface {
+	GetOne(ctx context.Context, key string, opts ...itisadb.GetOptions) (res gost.Result[string])
+	DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[bool]
+	SetOne(ctx context.Context, key string, val string, opts ...itisadb.SetOptions) (res gost.Result[int32])
+}
+
+//Set(ctx context.Context, key string, value string, opts models.SetOptions) error
+//Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error)
+//ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (*api.ObjectToJSONResponse, error)
+//GetFromObject(ctx context.Context, name string, key string, opts models.GetFromObjectOptions) (*api.GetFromObjectResponse, error)
+//SetToObject(ctx context.Context, name string, key string, value string, opts models.SetToObjectOptions) error
+//NewObject(ctx context.Context, name string, opts models.ObjectOptions) error
+//Size(ctx context.Context, name string, opts models.SizeOptions) (*api.ObjectSizeResponse, error)
+//DeleteObject(ctx context.Context, name string, opts models.DeleteObjectOptions) error
+//Delete(ctx context.Context, Key string, opts models.DeleteOptions) error
+//AttachToObject(ctx context.Context, dst string, src string, opts models.AttachToObjectOptions) error
+//DeleteAttr(ctx context.Context, attr string, object string, opts models.DeleteAttrOptions) error
 
 func New() (*Servers, error) {
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
@@ -30,7 +64,7 @@ func New() (*Servers, error) {
 	}
 	defer f.Close()
 
-	s := make(map[int32]*Server, 10)
+	s := make(map[int32]Server, 10)
 
 	maxProc := runtime.GOMAXPROCS(0) * 100
 
@@ -57,7 +91,7 @@ func New() (*Servers, error) {
 	return servers, nil
 }
 
-func (s *Servers) GetServer() (*Server, bool) {
+func (s *Servers) GetServer() (Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -65,7 +99,7 @@ func (s *Servers) GetServer() (*Server, bool) {
 	var serverNumber int32 = 0
 
 	for num, cl := range s.servers {
-		r := cl.GetRAM()
+		r := cl.RAM()
 		if val := float64(r.Available) / float64(r.Total) * 100; val > best {
 			serverNumber = num
 			best = val
@@ -102,7 +136,7 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 
 	// add test connection
 
-	var stClient = &Server{
+	var stClient = &RemoteServer{
 		client: cl,
 		ram:    models.RAM{Available: available, Total: total},
 		mu:     &sync.RWMutex{},
@@ -147,9 +181,9 @@ func (s *Servers) GetServers() []string {
 
 	var servers = make([]string, 0, 5)
 	for _, cl := range s.servers {
-		r := cl.GetRAM()
+		r := cl.RAM()
 		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB",
-			cl.GetNumber(), r.Available, r.Total))
+			cl.Number(), r.Available, r.Total))
 	}
 
 	return servers
@@ -173,7 +207,7 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 		c := cl
 		s.poolCh <- struct{}{}
 		go func() {
-			c.find(ctxCancel, key, out, &once, opts)
+			c.Find(ctxCancel, key, out, &once, opts)
 			<-s.poolCh
 			wg.Done()
 		}()
@@ -195,18 +229,7 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 	}
 }
 
-func (s *Server) find(ctx context.Context, key string, out chan<- string, once *sync.Once, opts models.GetOptions) {
-	get, err := s.Get(ctx, key, opts)
-	if err != nil {
-		return
-	}
-
-	once.Do(func() {
-		out <- get.Value
-	})
-}
-
-func (s *Servers) GetServerByID(number int32) (*Server, bool) {
+func (s *Servers) GetServerByID(number int32) (Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 	srv, ok := s.servers[number]
@@ -230,11 +253,11 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.Set
 
 	wg.Add(len(s.servers))
 
-	set := func(server *Server, number int32) {
+	set := func(server Server, number int32) {
 		defer wg.Done()
-		err := server.Set(ctx, key, val, opts)
+		err := server.SetOne(ctx, key, val, opts).Error()
 		if err != nil {
-			if server.GetTries() > 2 {
+			if server.Tries() > 2 {
 				delete(s.servers, number)
 			}
 			server.IncTries()
@@ -249,7 +272,7 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.Set
 
 	for n, serv := range s.servers {
 		s.poolCh <- struct{}{}
-		go func(serv *Server, n int32) {
+		go func(serv Server, n int32) {
 			set(serv, n)
 			<-s.poolCh
 		}(serv, n)
@@ -268,11 +291,11 @@ func (s *Servers) DelFromAll(ctx context.Context, key string, opts models.Delete
 
 	wg.Add(len(s.servers))
 
-	del := func(server *Server, number int32) {
+	del := func(server Server, number int32) {
 		defer wg.Done()
-		err := server.Delete(ctx, key, opts)
+		err := server.DelOne(ctx, key, opts).Error()
 		if err != nil {
-			if server.GetTries() > 2 {
+			if server.Tries() > 2 {
 				delete(s.servers, number)
 			}
 			server.IncTries()
@@ -287,7 +310,7 @@ func (s *Servers) DelFromAll(ctx context.Context, key string, opts models.Delete
 
 	for n, serv := range s.servers {
 		s.poolCh <- struct{}{}
-		go func(serv *Server, n int32) {
+		go func(serv Server, n int32) {
 			del(serv, n)
 			<-s.poolCh
 		}(serv, n)

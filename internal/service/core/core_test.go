@@ -19,7 +19,7 @@ import (
 
 func TestUseCase_Connect(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -106,7 +106,7 @@ func TestUseCase_Connect(t *testing.T) {
 
 func TestUseCase_Delete(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 	type args struct {
 		ctx context.Context
@@ -201,7 +201,7 @@ func TestUseCase_Delete(t *testing.T) {
 
 func TestUseCase_Disconnect(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -258,7 +258,7 @@ func TestUseCase_Disconnect(t *testing.T) {
 
 func TestUseCase_Get(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -370,7 +370,7 @@ func TestUseCase_Get(t *testing.T) {
 
 func TestUseCase_Set(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 	type args struct {
 		ctx          context.Context

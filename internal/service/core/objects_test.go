@@ -22,7 +22,7 @@ type gStorageBehavior func(cl *storagemock.MockStorageClient)
 
 func TestUseCase_AttachToObject(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -128,7 +128,7 @@ func TestUseCase_AttachToObject(t *testing.T) {
 
 func TestUseCase_DeleteAttr(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -233,7 +233,7 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 
 func TestUseCase_DeleteObject(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -333,7 +333,7 @@ func TestUseCase_DeleteObject(t *testing.T) {
 
 func TestUseCase_GetFromObject(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -455,7 +455,7 @@ func TestUseCase_GetFromObject(t *testing.T) {
 
 func TestUseCase_ObjectToJSON(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -568,7 +568,7 @@ func TestUseCase_ObjectToJSON(t *testing.T) {
 
 func TestUseCase_Object(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -671,7 +671,7 @@ func TestUseCase_Object(t *testing.T) {
 
 func TestUseCase_IsObject(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -739,7 +739,7 @@ func TestUseCase_IsObject(t *testing.T) {
 
 func TestUseCase_SetToObject(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -864,7 +864,7 @@ func TestUseCase_SetToObject(t *testing.T) {
 
 func TestUseCase_Size(t *testing.T) {
 	srv := struct {
-		serv *servers.Server
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {

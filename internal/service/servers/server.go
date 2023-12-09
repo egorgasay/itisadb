@@ -3,27 +3,26 @@ package servers
 import (
 	"context"
 	"github.com/egorgasay/itisadb-go-sdk"
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"itisadb/internal/models"
-	"itisadb/pkg/api"
-	client "itisadb/pkg/api"
 	"sync"
 	"sync/atomic"
 )
 
 // =============== server ====================== //
 
-func NewServer(client api.ItisaDBClient, number int32) *Server {
-	return &Server{
-		client: client,
+func NewServer(cl api.ItisaDBClient, number int32) *RemoteServer {
+	return &RemoteServer{
+		client: cl,
 		number: number,
 		mu:     &sync.RWMutex{},
 		tries:  atomic.Uint32{},
 	}
 }
 
-type Server struct {
+type RemoteServer struct {
 	tries  atomic.Uint32
-	client client.ItisaDBClient
+	client api.ItisaDBClient
 	ram    models.RAM
 	number int32
 	mu     *sync.RWMutex
@@ -31,13 +30,13 @@ type Server struct {
 	sdk *itisadb.Client
 }
 
-func (s *Server) GetRAM() models.RAM {
+func (s *RemoteServer) RAM() models.RAM {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.ram
 }
 
-func (s *Server) setRAM(ram models.RAM) {
+func (s *RemoteServer) SetRAM(ram models.RAM) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if ram.Total == 0 {
@@ -46,29 +45,29 @@ func (s *Server) setRAM(ram models.RAM) {
 	s.ram = models.RAM{Total: ram.Total, Available: ram.Available}
 }
 
-func (s *Server) Set(ctx context.Context, key, value string, opts models.SetOptions) error {
-	_, err := s.client.Set(ctx, &client.SetRequest{
+func (s *RemoteServer) Set(ctx context.Context, key, value string, opts models.SetOptions) error {
+	_, err := s.client.Set(ctx, &api.SetRequest{
 		Key:   key,
 		Value: value,
 	})
 	return err
 }
 
-func (s *Server) Get(ctx context.Context, key string, opts models.GetOptions) (*client.GetResponse, error) {
-	r, err := s.client.Get(ctx, &client.GetRequest{Key: key})
+func (s *RemoteServer) Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error) {
+	r, err := s.client.Get(ctx, &api.GetRequest{Key: key})
 	return r, err
 
 }
 
-func (s *Server) ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (*client.ObjectToJSONResponse, error) {
-	r, err := s.client.ObjectToJSON(ctx, &client.ObjectToJSONRequest{
+func (s *RemoteServer) ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (*api.ObjectToJSONResponse, error) {
+	r, err := s.client.ObjectToJSON(ctx, &api.ObjectToJSONRequest{
 		Name: name,
 	})
 	return r, err
 }
 
-func (s *Server) GetFromObject(ctx context.Context, name, key string, opts models.GetFromObjectOptions) (*client.GetFromObjectResponse, error) {
-	r, err := s.client.GetFromObject(ctx, &client.GetFromObjectRequest{
+func (s *RemoteServer) GetFromObject(ctx context.Context, name, key string, opts models.GetFromObjectOptions) (*api.GetFromObjectResponse, error) {
+	r, err := s.client.GetFromObject(ctx, &api.GetFromObjectRequest{
 		Key:    key,
 		Object: name,
 	})
@@ -76,8 +75,8 @@ func (s *Server) GetFromObject(ctx context.Context, name, key string, opts model
 
 }
 
-func (s *Server) SetToObject(ctx context.Context, name, key, value string, opts models.SetToObjectOptions) error {
-	_, err := s.client.SetToObject(ctx, &client.SetToObjectRequest{
+func (s *RemoteServer) SetToObject(ctx context.Context, name, key, value string, opts models.SetToObjectOptions) error {
+	_, err := s.client.SetToObject(ctx, &api.SetToObjectRequest{
 		Key:    key,
 		Value:  value,
 		Object: name,
@@ -86,62 +85,73 @@ func (s *Server) SetToObject(ctx context.Context, name, key, value string, opts 
 
 }
 
-func (s *Server) NewObject(ctx context.Context, name string, opts models.ObjectOptions) error {
-	_, err := s.client.NewObject(ctx, &client.NewObjectRequest{
+func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) error {
+	_, err := s.client.NewObject(ctx, &api.NewObjectRequest{
 		Name: name,
 	})
 	return err
 }
 
-func (s *Server) Size(ctx context.Context, name string, opts models.SizeOptions) (*client.ObjectSizeResponse, error) {
-	r, err := s.client.Size(ctx, &client.ObjectSizeRequest{
+func (s *RemoteServer) Size(ctx context.Context, name string, opts models.SizeOptions) (*api.ObjectSizeResponse, error) {
+	r, err := s.client.Size(ctx, &api.ObjectSizeRequest{
 		Name: name,
 	})
 	return r, err
 }
 
-func (s *Server) DeleteObject(ctx context.Context, name string, opts models.DeleteObjectOptions) error {
-	_, err := s.client.DeleteObject(ctx, &client.DeleteObjectRequest{
+func (s *RemoteServer) DeleteObject(ctx context.Context, name string, opts models.DeleteObjectOptions) error {
+	_, err := s.client.DeleteObject(ctx, &api.DeleteObjectRequest{
 		Object: name,
 	})
 	return err
 }
 
-func (s *Server) Delete(ctx context.Context, Key string, opts models.DeleteOptions) error {
-	_, err := s.client.Delete(ctx, &client.DeleteRequest{
+func (s *RemoteServer) Delete(ctx context.Context, Key string, opts models.DeleteOptions) error {
+	_, err := s.client.Delete(ctx, &api.DeleteRequest{
 		Key: Key,
 	})
 	return err
 }
 
-func (s *Server) AttachToObject(ctx context.Context, dst string, src string, opts models.AttachToObjectOptions) error {
-	_, err := s.client.AttachToObject(ctx, &client.AttachToObjectRequest{
+func (s *RemoteServer) AttachToObject(ctx context.Context, dst string, src string, opts models.AttachToObjectOptions) error {
+	_, err := s.client.AttachToObject(ctx, &api.AttachToObjectRequest{
 		Dst: dst,
 		Src: src,
 	})
 	return err
 }
 
-func (s *Server) GetNumber() int32 {
+func (s *RemoteServer) GetNumber() int32 {
 	return s.number
 }
 
-func (s *Server) GetTries() uint32 {
+func (s *RemoteServer) GetTries() uint32 {
 	return s.tries.Load()
 }
 
-func (s *Server) IncTries() {
+func (s *RemoteServer) IncTries() {
 	s.tries.Add(1)
 }
 
-func (s *Server) ResetTries() {
+func (s *RemoteServer) ResetTries() {
 	s.tries.Store(0)
 }
 
-func (s *Server) DeleteAttr(ctx context.Context, attr string, object string, opts models.DeleteAttrOptions) error {
-	_, err := s.client.DeleteAttr(ctx, &client.DeleteAttrRequest{
+func (s *RemoteServer) DeleteAttr(ctx context.Context, attr string, object string, opts models.DeleteAttrOptions) error {
+	_, err := s.client.DeleteAttr(ctx, &api.DeleteAttrRequest{
 		Object: object,
 		Key:    attr,
 	})
 	return err
+}
+
+func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- string, once *sync.Once, opts models.GetOptions) {
+	get, err := s.Get(ctx, key, opts)
+	if err != nil {
+		return
+	}
+
+	once.Do(func() {
+		out <- get.Value
+	})
 }

@@ -71,7 +71,7 @@ func TestServer_AttachToObject(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -141,7 +141,7 @@ func TestServer_Delete(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -215,7 +215,7 @@ func TestServer_DeleteAttr(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -285,7 +285,7 @@ func TestServer_DeleteObject(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -359,7 +359,7 @@ func TestServer_Get(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -439,7 +439,7 @@ func TestServer_GetFromObject(t *testing.T) {
 	cl := storagemock.NewMockStorageClient(c)
 	for _, tt := range tests {
 		tt.mockBehavior(cl)
-		s := &Server{
+		s := &RemoteServer{
 			tries:   atomic.Uint32{},
 			storage: cl,
 			ram: RAM{
@@ -530,7 +530,7 @@ func TestServer_ObjectToJSON(t *testing.T) {
 			defer c.Finish()
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -603,7 +603,7 @@ func TestServer_NewObject(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -682,7 +682,7 @@ func TestServer_Set(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -765,7 +765,7 @@ func TestServer_SetToObject(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -842,7 +842,7 @@ func TestServer_Size(t *testing.T) {
 			cl := storagemock.NewMockStorageClient(c)
 			tt.mockBehavior(cl)
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -892,7 +892,7 @@ func TestServer_setRAM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
+			s := &RemoteServer{
 				tries: atomic.Uint32{},
 				ram: RAM{
 					available: 100,
@@ -901,7 +901,7 @@ func TestServer_setRAM(t *testing.T) {
 				number: 1,
 				mu:     &sync.RWMutex{},
 			}
-			s.setRAM(tt.args.ram)
+			s.SetRAM(tt.args.ram)
 
 			if tt.args.ram == nil {
 				return

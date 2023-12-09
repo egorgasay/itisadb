@@ -69,7 +69,7 @@ func TestServer_find(t *testing.T) {
 			ctx, cancel := context.WithTimeout(tt.args.ctx, 2*time.Second)
 			defer cancel()
 
-			s := &Server{
+			s := &RemoteServer{
 				tries:   atomic.Uint32{},
 				storage: cl,
 				ram: RAM{
@@ -90,7 +90,7 @@ func TestServer_find(t *testing.T) {
 				t.Fatalf("timeout")
 			case got := <-tt.args.out:
 				if got != tt.want {
-					t.Errorf("Server.find() = %v, want %v", got, tt.want)
+					t.Errorf("RemoteServer.find() = %v, want %v", got, tt.want)
 				}
 			}
 		})
@@ -129,7 +129,7 @@ func TestServers_AddClient(t *testing.T) {
 			defer c.Finish()
 
 			s := &Servers{
-				servers: map[int32]*Server{},
+				servers: map[int32]*RemoteServer{},
 				freeID:  1,
 				RWMutex: sync.RWMutex{},
 			}
@@ -155,7 +155,7 @@ func TestServers_DeepSearch(t *testing.T) {
 		name         string
 		args         args
 		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*Server
+		servers      map[int32]*RemoteServer
 		want         string
 		wantErr      bool
 	}{
@@ -169,7 +169,7 @@ func TestServers_DeepSearch(t *testing.T) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{
 					Value: "value"}, nil).AnyTimes()
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -210,7 +210,7 @@ func TestServers_DeepSearch(t *testing.T) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -242,7 +242,7 @@ func TestServers_DeepSearch(t *testing.T) {
 				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -305,7 +305,7 @@ func TestServers_Disconnect(t *testing.T) {
 	tests := []struct {
 		name         string
 		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*Server
+		servers      map[int32]*RemoteServer
 		want         bool
 		args         args
 	}{
@@ -316,7 +316,7 @@ func TestServers_Disconnect(t *testing.T) {
 			args: args{
 				number: 1,
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -345,7 +345,7 @@ func TestServers_Disconnect(t *testing.T) {
 			args: args{
 				number: 1,
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -374,7 +374,7 @@ func TestServers_Disconnect(t *testing.T) {
 			args: args{
 				number: 333,
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -428,7 +428,7 @@ func TestServers_Exists(t *testing.T) {
 	tests := []struct {
 		name         string
 		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*Server
+		servers      map[int32]*RemoteServer
 		args         args
 		want         bool
 	}{
@@ -437,7 +437,7 @@ func TestServers_Exists(t *testing.T) {
 			args: args{
 				number: 1,
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -464,7 +464,7 @@ func TestServers_Exists(t *testing.T) {
 			args: args{
 				number: 3,
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -504,13 +504,13 @@ func TestServers_Exists(t *testing.T) {
 func TestServers_GetClient(t *testing.T) {
 	tests := []struct {
 		name    string
-		servers map[int32]*Server
+		servers map[int32]*RemoteServer
 		want    int32
 		wantRes bool
 	}{
 		{
 			name: "ok",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -544,7 +544,7 @@ func TestServers_GetClient(t *testing.T) {
 		},
 		{
 			name: "ok2",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -578,7 +578,7 @@ func TestServers_GetClient(t *testing.T) {
 		},
 		{
 			name:    "noClients",
-			servers: map[int32]*Server{},
+			servers: map[int32]*RemoteServer{},
 		},
 	}
 	for _, tt := range tests {
@@ -611,14 +611,14 @@ func TestServers_GetClientByID(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		servers map[int32]*Server
+		servers map[int32]*RemoteServer
 		args    args
 		want    int32
 		ok      bool
 	}{
 		{
 			name: "ok",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					number: 1,
 					mu:     &sync.RWMutex{},
@@ -640,7 +640,7 @@ func TestServers_GetClientByID(t *testing.T) {
 		},
 		{
 			name: "notFound",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					number: 1,
 					mu:     &sync.RWMutex{},
@@ -686,12 +686,12 @@ func TestServers_GetClientByID(t *testing.T) {
 func TestServers_GetServers(t *testing.T) {
 	tests := []struct {
 		name    string
-		servers map[int32]*Server
+		servers map[int32]*RemoteServer
 		want    []string
 	}{
 		{
 			name: "ok",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -728,7 +728,7 @@ func TestServers_GetServers(t *testing.T) {
 		},
 		{
 			name:    "noServers",
-			servers: map[int32]*Server{},
+			servers: map[int32]*RemoteServer{},
 			want:    []string{},
 		},
 	}
@@ -749,12 +749,12 @@ func TestServers_GetServers(t *testing.T) {
 func TestServers_Len(t *testing.T) {
 	tests := []struct {
 		name    string
-		servers map[int32]*Server
+		servers map[int32]*RemoteServer
 		want    int32
 	}{
 		{
 			name: "ok",
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -787,7 +787,7 @@ func TestServers_Len(t *testing.T) {
 		},
 		{
 			name:    "noServers",
-			servers: map[int32]*Server{},
+			servers: map[int32]*RemoteServer{},
 			want:    0,
 		},
 	}
@@ -816,7 +816,7 @@ func TestServers_SetToAll(t *testing.T) {
 		name         string
 		mockBehavior func(r *storagemock.MockStorageClient)
 		args         args
-		servers      map[int32]*Server
+		servers      map[int32]*RemoteServer
 		want         []int32
 	}{
 		{
@@ -829,7 +829,7 @@ func TestServers_SetToAll(t *testing.T) {
 			mockBehavior: func(r *storagemock.MockStorageClient) {
 				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, nil).Times(3)
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{
@@ -871,7 +871,7 @@ func TestServers_SetToAll(t *testing.T) {
 				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.Unavailable, "bad connection")).Times(3)
 			},
-			servers: map[int32]*Server{
+			servers: map[int32]*RemoteServer{
 				1: {
 					tries: atomic.Uint32{},
 					ram: RAM{

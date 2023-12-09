@@ -34,7 +34,7 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		var serv *servers.Server
+		var serv *servers.RemoteServer
 		var ok bool
 
 		if errNotFound {
