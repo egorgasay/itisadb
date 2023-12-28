@@ -93,7 +93,7 @@ func (s *Storage) SetToObject(name, key, value string, opts models.SetToObjectOp
 		return err
 	}
 
-	if opts.Uniques && obj.Has(key) {
+	if opts.ReadOnly && obj.Has(key) {
 		return constants.ErrAlreadyExists
 	}
 

@@ -13,7 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/cli/commands"
-	"itisadb/pkg/api"
+
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 
 	"itisadb/internal/cli/storage"
 )
@@ -58,17 +59,21 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 
 func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error {
 	server := cmd.Server()
-	readonly := cmd.ReadOnly()
+	readonly := cmd.Mode()
 	level := cmd.Level()
 
 	switch cmd.Action() {
 	case commands.Set:
+		//uc.sdk.SetOne(ctx, cmd.Args()[0], cmd.Args()[1], itisadb.SetOptions{
+		//	Server:   &server,
+		//	ReadOnly: readonly == 1,
+		//})
 		resp, err := uc.conn.Set(ctx, &api.SetRequest{
 			Key:   cmd.Args()[0],
 			Value: cmd.Args()[1],
 			Options: &api.SetRequest_Options{
 				Server:   &server,
-				ReadOnly: readonly,
+				ReadOnly: readonly == 1, // TODO: fix
 				Level:    api.Level(level),
 			},
 		})

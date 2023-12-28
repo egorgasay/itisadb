@@ -44,17 +44,17 @@ go run cmd/itisadb/main.go
 
 ### SET - Sets the value to the storage.
 ```php
-SET key "value" [ MODE - NX | RO | XX ] [ LEVEL - D | R | L ] [ SERVER - [0-9]+ ]  
+SET key "value" [ MODE - NX | RO | XX ] [ LEVEL - R | S ] [ SERVER - [0-9]+ ]  
 
 MODE - Defines the mode of the operation. 
 - `NX` - If the key already exists, it won't be overwritten. 
 - `RO` - If the key already exists, an error will be returned.
 - `XX` - If the key doesn't exist, it won't be created.
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
+LEVEL - Defines the level of permission. 
 - `R` (Restricted) - NO encryption, ACL validation
 - `S` (Secret) - encryption, ACL validation
+By default - NO encryption, NO ACL validation
 
 SERVER - Defines server number to use. 
 - Automaticly saving to a less loaded server by default.

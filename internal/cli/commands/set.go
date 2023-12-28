@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	Set  = "set"  // usual Set
-	RSet = "rset" // read only Set
+	Set = "set" // usual Set
 )
 
 type SetCommand struct {
@@ -16,10 +15,23 @@ type SetCommand struct {
 	key    string
 	value  string
 
-	server   int32
-	readOnly bool
-	level    uint8
+	server int32
+	mode   uint8
+	level  uint8
 }
+
+const (
+	defaultSetMode = iota
+	readOnlySetMode
+	notExistingSetMode
+	existingSetMode
+)
+
+const (
+	defaultLevel = iota
+	restrictedLevel
+	secretLevel
+)
 
 func (s SetCommand) Action() string {
 	return s.action
@@ -33,8 +45,8 @@ func (s SetCommand) Server() int32 {
 	return s.server
 }
 
-func (s SetCommand) ReadOnly() bool {
-	return s.readOnly
+func (s SetCommand) Mode() uint8 {
+	return s.mode
 }
 
 func (s SetCommand) Level() uint8 {
@@ -46,28 +58,73 @@ func (s SetCommand) Extract() SetCommand {
 }
 
 // ParseSet parses set command.
-// [mode]set <key> "<value>" [on <server>] [level <level>]
-func ParseSet(action string, split []string) (sc SetCommand, err error) {
+/*
+------------------- [ MODE ] --- [    LEVEL     ] - [    SERVER    ]
+
+
+SET key "value" [ NX | RO | XX ] [ D | R | S ] [ [0-9]+ ]
+
+----------------------------------------------------------------------
+
+MODE - Defines the mode of the operation.
+
+- `NX` - If the key already exists, it won't be overwritten.
+
+- `RO` - If the key already exists, an error will be returned.
+
+- `XX` - If the key doesn't exist, it won't be created.
+
+----------------------------------------------------------------------
+
+LEVEL - Defines the level of permission.
+
+- `R` (Restricted) - NO encryption, ACL validation
+
+- `S` (Secret) - encryption, ACL validation
+
+By default - NO encryption, NO ACL validation
+
+----------------------------------------------------------------------
+
+SERVER - Defines server number to use.
+
+- Automatically saving to a less loaded server by default.
+
+----------------------------------------------------------------------
+
+Examples:
+
+@> SET key "value"
+
+@> SET key "value" XX
+
+@> SET key "value" R
+
+@> SET key "value" XX R 1
+
+*/
+func ParseSet(split []string) (sc SetCommand, err error) {
 	if len(split) < 2 {
 		return SetCommand{}, fmt.Errorf("wrong set signature")
 	}
 
+	sc.action = Set
 	sc.key = split[0]
 	unhandledText := strings.Join(split[1:], " ")
 
-	vsplit := strings.Split(unhandledText, `"`)
+	vSplit := strings.Split(unhandledText, `"`)
 
-	if len(vsplit) < 3 {
+	if len(vSplit) < 3 {
 		return SetCommand{}, fmt.Errorf("wrong set signature. can't parse value")
 	}
 
-	sc.value = strings.Join(vsplit[1:len(vsplit)-1], `"`)
+	sc.value = strings.Join(vSplit[1:len(vSplit)-1], `"`)
 
-	if vsplit[0] != "" {
+	if vSplit[0] != "" {
 		return SetCommand{}, fmt.Errorf("unexpected symbol before value")
 	}
 
-	after := vsplit[len(vsplit)-1]
+	after := vSplit[len(vSplit)-1]
 	if len(after) > 0 && after[0] != ' ' {
 		return SetCommand{}, fmt.Errorf("unexpected symbol after value")
 	}
@@ -76,47 +133,25 @@ func ParseSet(action string, split []string) (sc SetCommand, err error) {
 	unhandledText = strings.Join(split, " ")
 
 	for i := 0; i < len(split); i++ {
-		switch strings.ToLower(split[i]) {
-		case level:
-			if i+1 >= len(split) {
-				return SetCommand{}, fmt.Errorf("wrong set signature. can't missing level")
-			}
-
-			switch split[i+1] {
-			case "D":
-				sc.level = 0
-			case "R":
-				sc.level = 1
-			case "S":
-				sc.level = 2
-			default:
-				return SetCommand{}, fmt.Errorf("wrong set signature. can't recognize level")
-			}
-			split = split[i+2:]
-		case on:
-			if i+1 >= len(split) {
-				return SetCommand{}, fmt.Errorf("wrong set signature. can't missing server")
-			}
-
-			server, err := strconv.ParseInt(split[i+1], 10, 32)
-			if err != nil {
-				return SetCommand{}, fmt.Errorf("wrong set signature. can't parse server")
-			}
-
-			sc.server = int32(server)
-			split = split[i+2:]
+		switch split[i] {
+		case "RO":
+			sc.mode = readOnlySetMode
+		case "NX":
+			sc.mode = notExistingSetMode
+		case "XX":
+			sc.mode = existingSetMode
+		case "R":
+			sc.level = 1
+		case "S":
+			sc.level = 2
 		default:
-			return SetCommand{}, fmt.Errorf("unexpected symbol %s", split[i])
+			num, err := strconv.ParseInt(split[i], 10, 32)
+			if err != nil {
+				return SetCommand{}, fmt.Errorf("wrong set signature. can't recognize [%s]", split[i])
+			}
+
+			sc.server = int32(num)
 		}
-
-		i--
-	}
-
-	sc.action = Set
-	switch action {
-	case Set:
-	case RSet:
-		sc.readOnly = true
 	}
 
 	return sc, nil

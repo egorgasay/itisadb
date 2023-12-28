@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"itisadb/pkg/api"
+
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"strconv"
 	"strings"
 )
@@ -64,8 +65,8 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 		}
 
 		return c.get(ctx, args[0], int32(server))
-	case Set, RSet:
-		cmd, err := ParseSet(act, args)
+	case Set:
+		cmd, err := ParseSet(args)
 		if err != nil {
 			return "", err
 		}
@@ -84,7 +85,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 			name := args[1]
 			return c.newObject(ctx, name)
 		default:
-			cmd, err := ParseSet(act, args)
+			cmd, err := ParseSet(args)
 			if err != nil {
 				return "", err
 			}
@@ -245,7 +246,7 @@ func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
 		Value: args[1],
 		Options: &api.SetRequest_Options{
 			Server:   toServerNumber(cmd.Server()),
-			ReadOnly: cmd.ReadOnly(),
+			ReadOnly: cmd.Mode() == readOnlySetMode,
 			Level:    api.Level(cmd.Level()),
 		},
 	})
@@ -276,7 +277,7 @@ type Command interface {
 	Action() string
 	Args() []string
 	Server() int32
-	ReadOnly() bool
+	Mode() uint8
 	Level() uint8
 }
 
@@ -287,8 +288,8 @@ func ParseCommand(ctx context.Context, text string) (Command, error) {
 	}
 
 	switch cmd := strings.ToLower(split[0]); cmd {
-	case Set, RSet:
-		return ParseSet(cmd, split[1:])
+	case Set:
+		return ParseSet(split[1:])
 	}
 
 	return nil, fmt.Errorf("unknown command")

@@ -34,7 +34,7 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		var serv *servers.RemoteServer
+		var serv servers.Server
 		var ok bool
 
 		if errNotFound {
@@ -47,12 +47,14 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 			return 0, constants.ErrServerNotFound
 		}
 
-		err := serv.NewObject(ctx, name, opts)
-		if err != nil {
-			return 0, fmt.Errorf("can't create object: %w", err)
-		}
+		//err := serv.NewObject(ctx, name, opts)
+		//if err != nil {
+		//	return 0, fmt.Errorf("can't create object: %w", err)
+		//} // TODO:
 
-		num := serv.GetNumber()
+		// TODO:
+
+		num := serv.Number()
 
 		info := models.ObjectInfo{
 			Server: num,
@@ -121,12 +123,14 @@ func (c *Core) getFromObject(ctx context.Context, userID int, object, key string
 			return "", constants.ErrServerNotFound
 		}
 
-		resp, err := cl.GetFromObject(ctx, object, key, opts)
-		if err != nil {
-			return "", err
-		}
+		// _, _ = cl.GetFromObject(ctx, object, key, opts)
+		//if err != nil {
+		//	return "", err
+		//} TODO:
+		//
+		//resp
 
-		return resp.Value, nil
+		return "TODO", nil // TODO:
 	}
 
 	if !c.hasPermission(userID, pkg.SafeDeref(opts.Level)) {
@@ -166,10 +170,10 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 
 		opts.Server = nil
 
-		err = cl.SetToObject(ctx, object, key, val, opts)
-		if err != nil {
-			return 0, err
-		}
+		//err = cl.SetToObject(ctx, object, key, val, opts).Error()
+		//if err != nil {
+		//	return 0, err
+		//} TODO:
 
 		return info.Server, nil
 	}
@@ -214,12 +218,14 @@ func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts m
 			return "", constants.ErrServerNotFound
 		}
 
-		res, err := cl.ObjectToJSON(ctx, name, opts)
-		if err != nil {
-			return "", err
-		}
+		//res, err := cl.ObjectToJSON(ctx, name, opts)
+		//if err != nil {
+		//	return "", err
+		//} TODO:
+		//
+		//return res.Object, nil
 
-		return res.Object, nil
+		return "TODO", nil // TODO:
 	}
 
 	if info.Server != _mainStorage {
@@ -278,12 +284,14 @@ func (c *Core) size(ctx context.Context, userID int, name string, opts models.Si
 			return 0, constants.ErrServerNotFound
 		}
 
-		res, err := cl.Size(ctx, name, opts)
-		if err != nil {
-			return 0, err
-		}
+		//res, err := cl.Size(ctx, name, opts)
+		//if err != nil {
+		//	return 0, err 	TODO:
+		//}
+		//
+		//return res.Size, nil
 
-		return res.Size, nil
+		return 0, nil // TODO:
 	}
 
 	if info.Server != _mainStorage {
@@ -328,12 +336,14 @@ func (c *Core) deleteObject(ctx context.Context, userID int, name string, opts m
 			return constants.ErrServerNotFound
 		}
 
-		err = cl.DeleteObject(ctx, name, opts)
-		if err != nil {
-			return err
-		}
-
-		c.storage.DeleteObjectInfo(name)
+		//err = cl.DelOne(ctx, name, opts.ToSDK()).Error()
+		//if err != nil {
+		//	return err
+		//}
+		//
+		//c.storage.DeleteObjectInfo(name)
+		//
+		//return nil
 
 		return nil
 	}
@@ -386,12 +396,14 @@ func (c *Core) attachToObject(ctx context.Context, userID int, dst, src string, 
 			return constants.ErrServerNotFound
 		}
 
-		err = cl.AttachToObject(ctx, dst, src, opts)
-		if err != nil {
-			return err
-		}
+		//err = cl.AttachToObject(ctx, dst, src, opts)
+		//if err != nil {
+		//	return err
+		//} TODO:
+		//
+		//return nil
 
-		return nil
+		return nil // TODO:
 	}
 
 	if info.Server != _mainStorage {
@@ -440,10 +452,10 @@ func (c *Core) deleteAttr(ctx context.Context, userID int, key, object string, o
 			return constants.ErrServerNotFound
 		}
 
-		err = cl.DeleteAttr(ctx, key, object, opts)
-		if err != nil {
-			return err
-		}
+		//err = cl.DeleteAttr(ctx, key, object, opts)
+		//if err != nil {
+		//	return err
+		//} TODO:
 
 		return nil
 	}

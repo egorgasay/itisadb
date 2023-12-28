@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
 	"itisadb/internal/constants"
@@ -109,12 +110,12 @@ func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models
 			return 0, constants.ErrUnknownServer
 		}
 
-		err := cl.Set(context.Background(), key, val, opts)
+		err := cl.SetOne(context.Background(), key, val, opts.ToSDK()).Error()
 		if err != nil {
 			return 0, err
 		}
 
-		return cl.GetNumber(), nil
+		return cl.Number(), nil
 	}
 
 	err := c.storage.Set(key, val, opts)
@@ -170,18 +171,21 @@ func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetO
 			return "", constants.ErrUnknownServer
 		}
 
-		res, err := cl.Get(context.Background(), key, opts)
-		if err == nil {
+		var res string
+		switch r := cl.GetOne(context.Background(), key, opts.ToSDK()); r.Switch() {
+		case gost.IsOk:
 			cl.ResetTries()
-			return res.Value, nil
-		}
+			res = r.Unwrap()
 
-		c.logger.Warn(err.Error())
+			return res, nil
+		case gost.IsErr:
+			c.logger.Warn(r.Error().Error())
+		}
 
 		cl.IncTries()
 
-		if cl.GetTries() > 2 {
-			err = c.Disconnect(ctx, cl.GetNumber())
+		if cl.Tries() > 2 {
+			err := c.Disconnect(ctx, cl.Number())
 			if err != nil {
 				c.logger.Warn(err.Error())
 			}
@@ -264,7 +268,7 @@ func (c *Core) delete(ctx context.Context, userID int, key string, opts models.D
 			return constants.ErrUnknownServer
 		}
 
-		err := cl.Delete(ctx, key, opts)
+		err := cl.DelOne(ctx, key, opts.ToSDK()).Error()
 		if err != nil {
 			return err
 		}

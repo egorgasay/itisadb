@@ -7,11 +7,8 @@ import (
 	"github.com/egorgasay/gost"
 	"github.com/egorgasay/itisadb-go-sdk"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
-	"itisadb/pkg/api"
 	"os"
 	"runtime"
 	"strconv"
@@ -41,7 +38,7 @@ type Server interface {
 
 type appLogic interface {
 	GetOne(ctx context.Context, key string, opts ...itisadb.GetOptions) (res gost.Result[string])
-	DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[bool]
+	DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[gost.Nothing]
 	SetOne(ctx context.Context, key string, val string, opts ...itisadb.SetOptions) (res gost.Result[int32])
 }
 
@@ -127,19 +124,23 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 		s.freeID++
 	}
 
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return 0, errors.Wrap(ErrInternal, err.Error())
-	}
+	ctx := context.Background()
 
-	cl := api.NewItisaDBClient(conn)
+	var cl *itisadb.Client
+
+	switch r := itisadb.New(ctx, address); r.Switch() { /* TODO: add creds? */
+	case gost.IsOk:
+		cl = r.Unwrap()
+	case gost.IsErr:
+		return 0, r.Error()
+	}
 
 	// add test connection
 
 	var stClient = &RemoteServer{
-		client: cl,
-		ram:    models.RAM{Available: available, Total: total},
-		mu:     &sync.RWMutex{},
+		sdk: cl,
+		ram: models.RAM{Available: available, Total: total},
+		mu:  &sync.RWMutex{},
 	}
 
 	if server != 0 {
@@ -255,7 +256,10 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.Set
 
 	set := func(server Server, number int32) {
 		defer wg.Done()
-		err := server.SetOne(ctx, key, val, opts).Error()
+		err := server.SetOne(ctx, key, val, itisadb.SetOptions{
+			Server:   &number,
+			ReadOnly: opts.ReadOnly,
+		}).Error()
 		if err != nil {
 			if server.Tries() > 2 {
 				delete(s.servers, number)
@@ -293,7 +297,7 @@ func (s *Servers) DelFromAll(ctx context.Context, key string, opts models.Delete
 
 	del := func(server Server, number int32) {
 		defer wg.Done()
-		err := server.DelOne(ctx, key, opts).Error()
+		err := server.DelOne(ctx, key, itisadb.DeleteOptions{Server: &number}).Error()
 		if err != nil {
 			if server.Tries() > 2 {
 				delete(s.servers, number)

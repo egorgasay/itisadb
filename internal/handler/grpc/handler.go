@@ -9,7 +9,8 @@ import (
 	"itisadb/internal/domains"
 	"itisadb/internal/handler/converterr"
 	"itisadb/internal/models"
-	"itisadb/pkg/api"
+
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"strings"
 )
 
