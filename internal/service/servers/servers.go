@@ -40,6 +40,10 @@ type appLogic interface {
 	GetOne(ctx context.Context, key string, opts ...itisadb.GetOptions) (res gost.Result[string])
 	DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[gost.Nothing]
 	SetOne(ctx context.Context, key string, val string, opts ...itisadb.SetOptions) (res gost.Result[int32])
+
+	NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing])
+	SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing])
+	GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string])
 }
 
 //Set(ctx context.Context, key string, value string, opts models.SetOptions) error

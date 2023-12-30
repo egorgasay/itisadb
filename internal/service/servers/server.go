@@ -175,21 +175,34 @@ func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- string, 
 	})
 }
 
-func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) interface{} {
-	// TODO: implement me
-	panic("TODO: implement me")
-	return nil
+func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
+	r := s.sdk.Object(ctx, name, opts.ToSDK())
+	if err := r.Error(); err != nil {
+		return res.Err(err)
+	}
+
+	return res.Ok(gost.Nothing{})
 }
 
-func (s *RemoteServer) GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (interface{}, interface{}) {
-	// TODO: implement me
-	panic("TODO: implement me")
-	return nil, nil
+func (s *RemoteServer) GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string]) {
+	r := s.sdk.Object(ctx, object)
+	if err := r.Error(); err != nil {
+		return res.Err(err)
+	}
+
+	return r.Unwrap().Get(ctx, key, opts.ToSDK())
 }
 
-func (s *RemoteServer) SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) gost.Result[gost.Nothing] {
-	// return s.sdk.Object(ctx, object).Unwrap().Set(ctx, key, value, opts.ToSDK())
-	// TODO: implement me
-	panic("TODO: implement me")
-	return gost.Result[gost.Nothing]{}
+func (s *RemoteServer) SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
+	r := s.sdk.Object(ctx, object)
+	if err := r.Error(); err != nil {
+		return res.Err(err)
+	}
+
+	ro := r.Unwrap().Set(ctx, key, value, opts.ToSDK())
+	if err := ro.Error(); err != nil {
+		return res.Err(err)
+	}
+
+	return res.Ok(gost.Nothing{})
 }

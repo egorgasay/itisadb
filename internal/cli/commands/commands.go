@@ -30,11 +30,15 @@ var ErrEmpty = errors.New("the value does not exist")
 var ErrUnknownServer = errors.New("the value does not exist")
 
 const (
-	get    = "get"
-	newEl  = "new"
-	object = "object"
-	show   = "show"
-	attach = "attach"
+	get      = "get"
+	newEl    = "new"
+	object   = "object"
+	marshalo = "marshalo"
+	attach   = "attach"
+	seto     = "seto"
+	geto     = "geto"
+	delo     = "delo"
+	del      = "del"
 )
 
 const (
@@ -91,33 +95,27 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 			}
 			return c.set(ctx, cmd)
 		}
-	case object:
-		if len(args) < 3 {
+	case seto:
+		sc, err := ParseSet(args[1:])
+		if err != nil {
+			return "", err
+		}
+		return c.setObject(ctx, args[0], sc.key, sc.value)
+	case geto:
+		switch len(args) {
+		case 1:
+			return c.showObject(ctx, args[0])
+		case 2:
+			return c.getFromObject(ctx, args[0], args[1])
+		default:
 			return "", ErrWrongInput
 		}
-		name := args[0]
-		act := args[1]
-		key := args[2]
-		value := ""
-		if len(args) > 3 {
-			value = strings.Join(args[3:], " ")
-		}
-		return c.object(ctx, act, name, key, value)
-	case show:
+	case marshalo:
 		if len(args) < 1 {
 			return "", ErrWrongInput
 		}
-
-		switch strings.ToLower(args[0]) {
-		case object:
-			if len(args) < 2 {
-				return "", ErrWrongInput
-			}
-			name := args[1]
-			return c.showObject(ctx, name)
-		default:
-			return "", ErrUnknownCMD
-		}
+		name := args[0]
+		return c.showObject(ctx, name)
 	case attach:
 		if len(args) < 2 {
 			return "", ErrWrongInput
@@ -153,9 +151,11 @@ func (c *Commands) showObject(ctx context.Context, name string) (string, error) 
 
 func (c *Commands) object(ctx context.Context, act, name, key, value string) (string, error) {
 	switch act {
-	case Set:
+	case seto:
 		return c.setObject(ctx, name, key, value)
-	case get:
+	case geto:
+		return c.getFromObject(ctx, name, key)
+	case marshalo:
 		return c.ObjectToJSON(ctx, name, key)
 	default:
 		return "", fmt.Errorf("unknown action")
@@ -271,6 +271,19 @@ func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
 	}
 
 	return resp, nil
+}
+
+func (c *Commands) getFromObject(ctx context.Context, name string, key string) (string, error) {
+	r, err := c.cl.GetFromObject(ctx, &api.GetFromObjectRequest{
+		Object: name,
+		Key:    key,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return r.Value, nil
 }
 
 type Command interface {

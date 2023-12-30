@@ -66,7 +66,7 @@ func (t *TransactionLogger) Run() {
 			if op.counter == MaxBufferSize {
 				t.RLock()
 				_, err := t.file.WriteString(op.sb.String())
-				//t.file.Sync() TODO: ???
+				//t.file.Sync() // TODO: ???
 				t.RUnlock()
 				if err != nil {
 					t.logger.Error("flash error", zap.Error(err))
@@ -118,6 +118,7 @@ func (t *TransactionLogger) readEventsFrom(r io.Reader, outEvent chan<- Event, o
 		action := scanner.Text()
 		decode, err := strutil.Base64Decode([]byte(action))
 		if err != nil {
+			outError <- fmt.Errorf("transaction log read failure: %w", err)
 			return
 		}
 
@@ -128,6 +129,7 @@ func (t *TransactionLogger) readEventsFrom(r io.Reader, outEvent chan<- Event, o
 
 		num, err := strconv.Atoi(args[0])
 		if err != nil {
+			outError <- fmt.Errorf("transaction log read failure: %w", err)
 			continue
 		}
 

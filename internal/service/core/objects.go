@@ -27,7 +27,7 @@ func (c *Core) Object(ctx context.Context, userID int, name string, opts models.
 
 func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
 	info, err := c.storage.GetObjectInfo(name)
-	errNotFound := errors.Is(err, constants.ErrObjectNotFound)
+	errNotFound := errors.Is(err, constants.ErrNotFound)
 
 	if err != nil && !errNotFound {
 		return 0, fmt.Errorf("can't get object info: %w", err)
@@ -47,12 +47,10 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 			return 0, constants.ErrServerNotFound
 		}
 
-		//err := serv.NewObject(ctx, name, opts)
-		//if err != nil {
-		//	return 0, fmt.Errorf("can't create object: %w", err)
-		//} // TODO:
-
-		// TODO:
+		err := serv.NewObject(ctx, name, opts).Error()
+		if err != nil {
+			return 0, fmt.Errorf("can't create object: %w", err)
+		}
 
 		num := serv.Number()
 
@@ -123,14 +121,12 @@ func (c *Core) getFromObject(ctx context.Context, userID int, object, key string
 			return "", constants.ErrServerNotFound
 		}
 
-		// _, _ = cl.GetFromObject(ctx, object, key, opts)
-		//if err != nil {
-		//	return "", err
-		//} TODO:
-		//
-		//resp
+		r := cl.GetFromObject(ctx, object, key, opts)
+		if err := r.Error(); err != nil {
+			return "", err
+		}
 
-		return "TODO", nil // TODO:
+		return r.Unwrap(), nil
 	}
 
 	if !c.hasPermission(userID, pkg.SafeDeref(opts.Level)) {
@@ -170,10 +166,10 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 
 		opts.Server = nil
 
-		//err = cl.SetToObject(ctx, object, key, val, opts).Error()
-		//if err != nil {
-		//	return 0, err
-		//} TODO:
+		err = cl.SetToObject(ctx, object, key, val, opts).Error()
+		if err != nil {
+			return 0, err
+		}
 
 		return info.Server, nil
 	}

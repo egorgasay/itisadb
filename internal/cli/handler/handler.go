@@ -28,7 +28,7 @@ func (h *Handler) MainPage(c echo.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 
-	return c.Render(http.StatusOK, "index.html", nil)
+	return c.Render(http.StatusOK, "index-2.html", nil)
 }
 
 func (h *Handler) GetAuthPage(c echo.Context) error {

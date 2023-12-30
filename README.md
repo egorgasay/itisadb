@@ -74,9 +74,9 @@ FROM - Defines server number to use.
 - `= 0` (default) - Deep search (speed: slow). 
 ```
 
-### DELETE - Deletes the key-value pair from the storage.
+### DEL - Deletes the key-value pair from the storage.
 ```php
-DELETE key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
+DEL key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
 
 LEVEL - Defines the level of permission.
 - `D` (Default) - NO encryption, NO ACL validation
@@ -134,9 +134,9 @@ LEVEL - Defines the level of permission.
 - `S` (Secret) - encryption, ACL validation
 ```
 
-### DELETEO - Deletes the object key.
+### DELO - Deletes the object key.
 ```php
-DELETEO name key [ LEVEL - D | R | L ]
+DELO name key [ LEVEL - D | R | L ]
 
 LEVEL - Defines the level of permission.
 - `D` (Default) - NO encryption, NO ACL validation
@@ -144,9 +144,9 @@ LEVEL - Defines the level of permission.
 - `S` (Secret) - encryption, ACL validation
 ```
 
-### SHOW - Displays the object as JSON.
+### MARSHAL OBJECT - Displays the object as JSON.
 ```php
-SHOW OBJECT name [ LEVEL - D | R | L ]
+MARSHAL OBJECT name [ LEVEL - D | R | L ]
 
 LEVEL - Defines the level of permission.
 - `D` (Default) - NO encryption, NO ACL validation
