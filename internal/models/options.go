@@ -15,6 +15,7 @@ func (o GetOptions) ToSDK() itisadb.GetOptions {
 type SetOptions struct {
 	Server   *int32
 	ReadOnly bool
+	Unique   bool
 	Level    *int8 // TODO: handle?
 }
 

@@ -29,6 +29,9 @@ On = true
 # Example: "transaction-logger"
 BackupDirectory = "transaction-logger"
 
+# Buffer size.
+BufferSize = 1
+
 # Encryption parameters.
 [Encryption]
 On = false
@@ -44,6 +47,9 @@ On = true
 # Host of the web application.
 # Example: "127.0.0.1:8080"
 Host = ":8070"
+
+# Allows you to enable or disable logs for a web application.
+Logs = false
 
 # Security settings.
 [Security]

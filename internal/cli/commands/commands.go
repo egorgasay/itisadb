@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/egorgasay/gost"
+	"github.com/egorgasay/itisadb-go-sdk"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -13,12 +15,14 @@ import (
 )
 
 type Commands struct {
-	cl api.ItisaDBClient
+	cl  api.ItisaDBClient
+	sdk *itisadb.Client
 }
 
-func New(cl api.ItisaDBClient) *Commands {
+func New(cl api.ItisaDBClient, sdk *itisadb.Client) *Commands {
 	return &Commands{
-		cl: cl,
+		cl:  cl,
+		sdk: sdk,
 	}
 }
 
@@ -39,6 +43,7 @@ const (
 	geto     = "geto"
 	delo     = "delo"
 	del      = "del"
+	deleteEl = "delete"
 )
 
 const (
@@ -48,9 +53,7 @@ const (
 
 const (
 	_ = iota * -1
-	dbOnly
 	setToAll
-	AllAndDB
 )
 
 func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, error) {
@@ -89,11 +92,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 			name := args[1]
 			return c.newObject(ctx, name)
 		default:
-			cmd, err := ParseSet(args)
-			if err != nil {
-				return "", err
-			}
-			return c.set(ctx, cmd)
+			return "", ErrWrongInput
 		}
 	case seto:
 		sc, err := ParseSet(args[1:])
@@ -116,6 +115,29 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 		}
 		name := args[0]
 		return c.showObject(ctx, name)
+	case del:
+		if len(args) < 1 {
+			return "", ErrWrongInput
+		}
+		name := args[0]
+		return c.del(ctx, name)
+	case delo:
+		if len(args) < 2 {
+			return "", ErrWrongInput
+		}
+		object := args[0]
+		key := args[1]
+		return c.delo(ctx, object, key)
+	case deleteEl:
+		if len(args) < 2 {
+			return "", ErrWrongInput
+		}
+
+		switch strings.ToLower(args[0]) {
+		case object:
+			object := args[1]
+			return c.deleteObject(ctx, object)
+		}
 	case attach:
 		if len(args) < 2 {
 			return "", ErrWrongInput
@@ -190,16 +212,15 @@ func (c *Commands) ObjectToJSON(ctx context.Context, name, key string) (string, 
 	return r.Value, nil
 }
 
-func (c *Commands) get(сtx context.Context, key string, server int32) (string, error) {
-	resp, err := c.cl.Get(сtx, &api.GetRequest{Key: key, Options: &api.GetRequest_Options{Server: &server}})
-	if err != nil {
-		return "", err
+func (c *Commands) get(ctx context.Context, key string, server int32) (string, error) {
+	switch r := c.sdk.GetOne(ctx, key, itisadb.GetOptions{Server: &server}); r.Switch() {
+	case gost.IsOk:
+		return r.Unwrap(), nil
+	case gost.IsErr:
+		return "", fmt.Errorf(r.Error().Error())
 	}
 
-	if resp.Value == "" {
-		return "", ErrEmpty
-	}
-	return resp.Value, nil
+	return "", nil
 }
 
 func (c *Commands) attach(ctx context.Context, dst string, src string) error {
@@ -241,33 +262,26 @@ func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
 		return "", ErrWrongInput
 	}
 
-	response, err := c.cl.Set(ctx, &api.SetRequest{
-		Key:   args[0],
-		Value: args[1],
-		Options: &api.SetRequest_Options{
-			Server:   toServerNumber(cmd.Server()),
-			ReadOnly: cmd.Mode() == readOnlySetMode,
-			Level:    api.Level(cmd.Level()),
-		},
+	r := c.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
+		Server:   toServerNumber(cmd.Server()),
+		ReadOnly: cmd.Mode() == readOnlySetMode,
+		Level:    itisadb.Level(cmd.Level()),
+		Unique:   cmd.Mode() == uniqueSetMode,
 	})
 
-	if err != nil {
-		return "", err
+	if err := r.Error(); err != nil {
+		return "", fmt.Errorf(err.Error())
 	}
 
 	resp := ""
 
-	switch response.SavedTo {
+	switch savedTo := r.Unwrap(); savedTo {
 	case 0:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
-	case dbOnly:
-		resp = fmt.Sprintf("status: ok, saved on the database")
+		resp = fmt.Sprintf("status: ok, saved on server #%d", savedTo)
 	case setToAll:
 		resp = fmt.Sprintf("status: ok, saved on all servers")
-	case AllAndDB:
-		resp = fmt.Sprintf("status: ok, saved on all servers and in the database")
 	default:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", response.SavedTo)
+		resp = fmt.Sprintf("status: ok, saved on server #%d", savedTo)
 	}
 
 	return resp, nil
@@ -284,6 +298,33 @@ func (c *Commands) getFromObject(ctx context.Context, name string, key string) (
 	}
 
 	return r.Value, nil
+}
+
+func (c *Commands) del(ctx context.Context, name string) (string, error) {
+	_, err := c.cl.Delete(ctx, &api.DeleteRequest{Key: name})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("status: ok, deleted key %s", name), nil
+}
+
+func (c *Commands) delo(ctx context.Context, object, key string) (string, error) {
+	_, err := c.cl.DeleteAttr(ctx, &api.DeleteAttrRequest{Key: key, Object: object})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("status: ok, deleted object %s attribute %s", object, key), nil
+}
+
+func (c *Commands) deleteObject(ctx context.Context, object string) (string, error) {
+	_, err := c.cl.DeleteObject(ctx, &api.DeleteObjectRequest{Object: object})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("status: ok, deleted object %s", object), nil
 }
 
 type Command interface {

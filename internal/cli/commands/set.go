@@ -25,6 +25,7 @@ const (
 	readOnlySetMode
 	notExistingSetMode
 	existingSetMode
+	uniqueSetMode
 )
 
 const (
@@ -62,7 +63,7 @@ func (s SetCommand) Extract() SetCommand {
 ------------------- [ MODE ] --- [    LEVEL     ] - [    SERVER    ]
 
 
-SET key "value" [ NX | RO | XX ] [ D | R | S ] [ [0-9]+ ]
+SET key "value" [ RO | UQ | NX | XX ] [ D | R | S ] [ [0-9]+ ]
 
 ----------------------------------------------------------------------
 
@@ -70,7 +71,9 @@ MODE - Defines the mode of the operation.
 
 - `NX` - If the key already exists, it won't be overwritten.
 
-- `RO` - If the key already exists, an error will be returned.
+- `RO` - Mark the key as read-only and create it if it doesn't exist.
+
+- `UQ` - If the key already exists, an error will be returned.
 
 - `XX` - If the key doesn't exist, it won't be created.
 
@@ -140,6 +143,8 @@ func ParseSet(split []string) (sc SetCommand, err error) {
 			sc.mode = notExistingSetMode
 		case "XX":
 			sc.mode = existingSetMode
+		case "UQ":
+			sc.mode = uniqueSetMode
 		case "R":
 			sc.level = 1
 		case "S":

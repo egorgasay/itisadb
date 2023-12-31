@@ -3,6 +3,7 @@ package transactionlogger
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"itisadb/config"
 	"os"
 	"strconv"
 	"sync"
@@ -11,7 +12,8 @@ import (
 type EventType byte
 
 const (
-	Set EventType = iota
+	_ EventType = iota
+	Set
 	Delete
 	SetToObject
 	DeleteAttr
@@ -32,7 +34,6 @@ type Event struct {
 }
 
 type TransactionLogger struct {
-	pathToDir  string
 	pathToFile string
 	file       *os.File
 
@@ -45,9 +46,10 @@ type TransactionLogger struct {
 	sync.RWMutex
 
 	logger *zap.Logger
+	cfg    config.TransactionLoggerConfig
 }
 
-func New() (*TransactionLogger, error) {
+func New(cfg config.TransactionLoggerConfig) (*TransactionLogger, error) {
 	if err := os.MkdirAll(PATH, 0755); err != nil {
 		return nil, err
 	}
@@ -81,9 +83,9 @@ func New() (*TransactionLogger, error) {
 	}
 
 	return &TransactionLogger{
-		pathToDir:   PATH,
 		pathToFile:  filename,
 		file:        f,
 		currentName: int32(maxNumber),
+		cfg:         cfg,
 	}, nil
 }

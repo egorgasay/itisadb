@@ -18,6 +18,7 @@ type Config struct {
 type TransactionLoggerConfig struct {
 	On              bool   `toml:"On"`
 	BackupDirectory string `toml:"BackupDirectory"`
+	BufferSize      int    `toml:"BufferSize"`
 }
 
 type NetworkConfig struct {
@@ -33,6 +34,7 @@ type EncryptionConfig struct {
 type WebAppConfig struct {
 	On   bool   `toml:"On"`
 	Host string `toml:"Host"`
+	Logs bool   `toml:"Logs"`
 }
 
 type BalancerConfig struct {

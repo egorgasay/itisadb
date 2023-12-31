@@ -44,11 +44,13 @@ go run cmd/itisadb/main.go
 
 ### SET - Sets the value to the storage.
 ```php
-SET key "value" [ MODE - NX | RO | XX ] [ LEVEL - R | S ] [ SERVER - [0-9]+ ]  
+                MODE                  LEVEL     SERVER
+SET key "value" [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]  
 
 MODE - Defines the mode of the operation. 
+- `UQ` - If the key already exists, an error will be returned.
+- `RO` - Mark the key as read-only and create it if it doesn't exist.
 - `NX` - If the key already exists, it won't be overwritten. 
-- `RO` - If the key already exists, an error will be returned.
 - `XX` - If the key doesn't exist, it won't be created.
 
 LEVEL - Defines the level of permission. 
@@ -62,106 +64,101 @@ SERVER - Defines server number to use.
 
 ### GET - Gets the value from the storage.
 ```php
-GET key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
+        SERVER
+GET key [ [0-9]+ ]  
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
-
-FROM - Defines server number to use.
+SERVER - Defines server number to use.
 - `> 0` - Search on a specific server (speed: fast).  
 - `= 0` (default) - Deep search (speed: slow). 
 ```
 
 ### DEL - Deletes the key-value pair from the storage.
 ```php
-DEL key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  
+        SERVER
+DEL key [ [0-9]+ ] 
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
-
-FROM - Defines server number to use.
+SERVER - Defines server number to use.
 - `> 0` - Search on a specific server (speed: fast).  
 - `= 0` (default) - Deep search (speed: slow). 
 ```
 
 ### NEW OBJECT - Creates an object with the specified name.
 ```php
-NEW OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]
+                LEVEL         SERVER
+NEW OBJECT name [ D | R | L ] [ [0-9]+ ] 
 
 LEVEL - Defines the level of permission.
 - `D` (Default) - NO encryption, NO ACL validation
 - `R` (Restricted) - NO encryption, ACL validation
 - `S` (Secret) - encryption, ACL validation
 
-ON - Defines server number to use. 
+SERVER - Defines server number to use. 
 - Automaticly saving to a less loaded server by default.
 ```
 
 ### DELETE OBJECT - Deletes the object with the specified name.
 ```php
-DELETE OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]
+                   SERVER
+DELETE OBJECT name [ [0-9]+ ] 
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
-
-ON - Defines server number to use. 
+SERVER - Defines server number to use. 
 - Automaticly saving to a less loaded server by default.
 ```
 
 ### SETO - Sets the value to the object.
 ```php
-SETO name key "value" [ LEVEL - D | R | L ]
+                      MODE                  LEVEL         SERVER
+SETO name key "value" [ RO | UQ | NX | XX ] [ D | R | L ] [ [0-9]+ ]
+
+MODE - Defines the mode of the operation. 
+- `RO` - Mark the key as read-only and create it if it doesn't exist.
+- `UQ` - If the key already exists, an error will be returned.
+- `NX` - If the key already exists, it won't be overwritten. 
+- `XX` - If the key doesn't exist, it won't be created.
 
 LEVEL - Defines the level of permission.
 - `D` (Default) - NO encryption, NO ACL validation
 - `R` (Restricted) - NO encryption, ACL validation
 - `S` (Secret) - encryption, ACL validation
+
+SERVER - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).
+- `= 0` (default) - Deep search (speed: slow).
 ```
 
 ### GETO - Gets the value from the object.
 ```php
-GETO name key [ LEVEL - D | R | L ]
+              SERVER
+GETO name key [ [0-9]+ ]
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
+SERVER - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).
+- `= 0` (default) - Deep search (speed: slow).
 ```
 
 ### DELO - Deletes the object key.
 ```php
-DELO name key [ LEVEL - D | R | L ]
+              SERVER
+DELO name key [ [0-9]+ ]
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
+SERVER - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).
+- `= 0` (default) - Deep search (speed: slow).
 ```
 
 ### MARSHAL OBJECT - Displays the object as JSON.
 ```php
-MARSHAL OBJECT name [ LEVEL - D | R | L ]
+                    SERVER
+MARSHAL OBJECT name [ [0-9]+ ]
 
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
+SERVER - Defines server number to use.
+- `> 0` - Search on a specific server (speed: fast).
+- `= 0` (default) - Deep search (speed: slow).
 ```
 
 ### ATTACH - Attaches the src object to the dst.
 ```php
-ATTACH dst [ LEVEL - D | R | L ] src [ LEVEL - D | R | L ]
-
-LEVEL - Defines the level of permission.
-- `D` (Default) - NO encryption, NO ACL validation
-- `R` (Restricted) - NO encryption, ACL validation
-- `S` (Secret) - encryption, ACL validation
+ATTACH dst src 
 ```
 
 ### Other

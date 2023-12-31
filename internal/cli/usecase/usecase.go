@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/egorgasay/itisadb-go-sdk"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 	"itisadb/config"
 	"log"
@@ -27,17 +28,24 @@ type UseCase struct {
 
 	cmds   *commands.Commands
 	tokens map[string]string
+	logger *zap.Logger
 }
 
-func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string) *UseCase {
+func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string, lg *zap.Logger) *UseCase {
 	conn, err := grpc.Dial(balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
 	b := api.NewItisaDBClient(conn)
-	cmds := commands.New(b)
 
-	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: make(map[string]string)}
+	r := itisadb.New(context.TODO(), balancer)
+	if err := r.Error(); err != nil {
+		log.Fatal(err)
+	}
+
+	cmds := commands.New(b, r.Unwrap())
+
+	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: make(map[string]string), logger: lg}
 }
 
 func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) (string, error) {
@@ -46,6 +54,7 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 
 	res, err := uc.cmds.Do(withAuth(ctx, token), strings.ToLower(split[0]), split[1:]...)
 	if err != nil {
+		uc.logger.Warn(err.Error())
 		return res, err
 	}
 

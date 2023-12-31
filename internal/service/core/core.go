@@ -118,7 +118,12 @@ func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models
 		return cl.Number(), nil
 	}
 
-	err := c.storage.Set(key, val, opts)
+	v, err := c.storage.Get(key)
+	if err == nil && (opts.Unique || v.ReadOnly) {
+		return _mainStorage, constants.ErrAlreadyExists
+	}
+
+	err = c.storage.Set(key, val, opts)
 	if err != nil {
 		return _mainStorage, err
 	}
@@ -196,9 +201,10 @@ func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetO
 
 	v, err := c.storage.Get(key)
 	if err != nil {
-		return v, err
+		return "", err
 	}
-	return v, nil
+
+	return v.Value, nil
 }
 
 func (c *Core) Connect(address string, available, total uint64) (int32, error) {

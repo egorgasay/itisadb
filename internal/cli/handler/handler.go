@@ -4,22 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"itisadb/internal/cli/cookies"
 	"itisadb/internal/cli/schema"
 	"itisadb/internal/cli/usecase"
-	"itisadb/pkg/logger"
 	"net/http"
 )
 
 type Handler struct {
 	logic *usecase.UseCase
-	logger.ILogger
+	*zap.Logger
 }
 
-func New(logic *usecase.UseCase, loggerInstance logger.ILogger) *Handler {
-	return &Handler{logic: logic, ILogger: loggerInstance}
+func New(logic *usecase.UseCase, loggerInstance *zap.Logger) *Handler {
+	return &Handler{logic: logic, Logger: loggerInstance}
 }
 
 func (h *Handler) MainPage(c echo.Context) error {
@@ -59,7 +59,6 @@ func (h *Handler) Action(c echo.Context) error {
 			err = errors.New("memory balancer is offline")
 		}
 
-		h.Warn(err.Error())
 		var t = schema.Response{Text: err.Error()}
 		bytes, err := json.Marshal(t)
 		if err != nil {

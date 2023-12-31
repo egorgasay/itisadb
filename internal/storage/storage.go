@@ -2,7 +2,9 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 	_ "github.com/egorgasay/dockerdb/v2"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 	"strings"
@@ -19,7 +21,7 @@ type Storage struct {
 }
 
 type ramStorage struct {
-	*swiss.Map[string, string]
+	*swiss.Map[string, models.Value]
 	*sync.RWMutex
 }
 
@@ -41,7 +43,7 @@ type objectsInfo struct {
 func New() (*Storage, error) {
 	st := &Storage{
 		objectsInfo: objectsInfo{Map: swiss.NewMap[string, models.ObjectInfo](10_000), RWMutex: &sync.RWMutex{}},
-		ramStorage:  ramStorage{Map: swiss.NewMap[string, string](10_000_000), RWMutex: &sync.RWMutex{}},
+		ramStorage:  ramStorage{Map: swiss.NewMap[string, models.Value](10_000_000), RWMutex: &sync.RWMutex{}},
 		objects:     objects{Map: swiss.NewMap[string, *object](100_000), RWMutex: &sync.RWMutex{}},
 		users:       users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
@@ -52,21 +54,19 @@ func New() (*Storage, error) {
 func (s *Storage) Set(key, val string, opts models.SetOptions) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
-	if opts.ReadOnly && s.ramStorage.Has(key) {
-		return constants.ErrAlreadyExists
-	}
-	s.ramStorage.Put(key, val)
+
+	s.ramStorage.Put(key, models.Value{ReadOnly: opts.ReadOnly, Level: models.Level(gost.SafeDeref(opts.Level)), Value: val})
 
 	return nil
 }
 
-func (s *Storage) Get(key string) (string, error) {
+func (s *Storage) Get(key string) (models.Value, error) {
 	s.ramStorage.RLock()
 	defer s.ramStorage.RUnlock()
 
 	val, ok := s.ramStorage.Get(key)
 	if !ok {
-		return "", constants.ErrNotFound
+		return models.Value{}, constants.ErrNotFound
 	}
 
 	return val, nil
@@ -115,11 +115,22 @@ func (s *Storage) AttachToObject(dst, src string) error {
 		return err
 	}
 
-	if object2.IsAttached(object1.Name()) {
+	if object1.IsAttached(object2.Name()) {
 		return constants.ErrCircularAttachment
 	}
 
 	err = object1.AttachObject(object2)
+	if err != nil {
+		return err
+	}
+
+	info, err := s.GetObjectInfo(dst)
+	if err != nil {
+		return err
+	}
+
+	s.AddObjectInfo(fmt.Sprintf("%s.%s", dst, src), info)
+
 	return err
 }
 
@@ -178,6 +189,7 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 			val.RecreateObject()
 		}
 	}
+
 	return nil
 }
 
@@ -209,8 +221,8 @@ func (v *object) MarshalJSON() ([]byte, error) {
 		})
 
 		data = map[string]interface{}{
-			"name":   v.Name(),
-			"values": arr,
+			"name":  v.Name(),
+			"value": arr,
 		}
 	} else {
 		data = map[string]interface{}{

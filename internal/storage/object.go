@@ -64,7 +64,7 @@ func (v *object) IsAttached(name string) bool {
 }
 
 func (v *object) setAttached(attachedTo []string) {
-	v.attachedTo = attachedTo
+	v.attachedTo = append(v.attachedTo, attachedTo...)
 }
 
 func (v *object) AttachObject(src *object) (err error) {
@@ -73,15 +73,19 @@ func (v *object) AttachObject(src *object) (err error) {
 			src.setAttached(v.attachedTo)
 		}
 	}()
+
 	if v.values == nil {
 		v.values = swiss.NewMap[string, *object](10)
 		v.values.Put(src.Name(), src)
 		return nil
 	}
+
 	if v.values.Has(src.Name()) {
 		return nil
 	}
+
 	v.values.Put(src.Name(), src)
+
 	return nil
 }
 

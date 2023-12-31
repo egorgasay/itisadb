@@ -82,16 +82,17 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 		return 0, fmt.Errorf("can't create object: %w", err)
 	}
 
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteCreateObject(name)
-	}
-
 	info = models.ObjectInfo{
 		Server: _mainStorage,
 		Level:  opts.Level,
 	}
 
 	c.storage.AddObjectInfo(name, info)
+
+	if c.cfg.TransactionLogger.On {
+		c.tlogger.WriteCreateObject(name)
+		c.tlogger.WriteAddObjectInfo(name, info)
+	}
 
 	return _mainStorage, nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"io"
-	"modernc.org/strutil"
 	"os"
 	"strconv"
 	"strings"
@@ -14,12 +13,11 @@ import (
 
 var PATH = "transaction-logger"
 
-const MaxBufferSize = 20
 const MaxCOL = 100_000
 
 type limitedBuffer struct {
 	sb      strings.Builder
-	counter int16
+	counter int
 }
 
 func newLimitedBuffer() *limitedBuffer {
@@ -63,7 +61,7 @@ func (t *TransactionLogger) Run() {
 			op.counter++
 			t.currentCOL++
 
-			if op.counter == MaxBufferSize {
+			if op.counter >= t.cfg.BufferSize {
 				t.RLock()
 				_, err := t.file.WriteString(op.sb.String())
 				//t.file.Sync() // TODO: ???
@@ -116,15 +114,20 @@ func (t *TransactionLogger) readEventsFrom(r io.Reader, outEvent chan<- Event, o
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		action := scanner.Text()
-		decode, err := strutil.Base64Decode([]byte(action))
-		if err != nil {
-			outError <- fmt.Errorf("transaction log read failure: %w", err)
-			return
+
+		args := strings.Split(action, " ")
+		for len(args) < 4 {
+			args = append(args, "")
 		}
 
-		args := strings.Split(string(decode), " ")
-		for len(args) < 3 {
-			args = append(args, "")
+		for idx := range args[1:] {
+			realIDX := idx + 1
+			decode, err := b64.DecodeString(args[realIDX])
+			if err != nil {
+				outError <- fmt.Errorf("transaction log read failure: %w", err)
+				return
+			}
+			args[realIDX] = string(decode)
 		}
 
 		num, err := strconv.Atoi(args[0])
@@ -135,7 +138,8 @@ func (t *TransactionLogger) readEventsFrom(r io.Reader, outEvent chan<- Event, o
 
 		event.EventType = EventType(num)
 		event.Name = args[1]
-		event.Value = strings.TrimSpace(strings.Join(args[2:], " "))
+		event.Value = strings.TrimSpace(args[2])
+		event.Metadata = args[3]
 
 		outEvent <- event
 	}
@@ -154,7 +158,7 @@ func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
 		defer close(outEvent)
 		defer close(outError)
 
-		d, err := os.ReadDir(t.pathToDir)
+		d, err := os.ReadDir(t.cfg.BackupDirectory)
 		if err != nil {
 			outError <- fmt.Errorf("transaction log read failure: %w", err)
 			return
@@ -167,7 +171,7 @@ func (t *TransactionLogger) readEvents() (<-chan Event, <-chan error) {
 			}
 
 			func() {
-				file, err := os.Open(t.pathToDir + "/" + fmt.Sprintf("%d", i))
+				file, err := os.Open(t.cfg.BackupDirectory + "/" + fmt.Sprintf("%d", i))
 				if err != nil {
 					outError <- fmt.Errorf("transaction log read failure: %w", err)
 				}

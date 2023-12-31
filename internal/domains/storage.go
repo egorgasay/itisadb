@@ -13,7 +13,7 @@ type Storage interface {
 
 type CommonStorage interface {
 	Set(key string, val string, opts models.SetOptions) error
-	Get(key string) (string, error)
+	Get(key string) (models.Value, error)
 	DeleteIfExists(key string)
 	Delete(key string) error
 }

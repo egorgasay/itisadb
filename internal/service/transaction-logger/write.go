@@ -3,11 +3,16 @@ package transactionlogger
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
 
 func (t *TransactionLogger) WriteSet(key, value string, opts models.SetOptions) {
-	metadata := fmt.Sprintf("%t;%d;%d", opts.ReadOnly, opts.Server, opts.Level)
+	readOnly := 1
+	if !opts.ReadOnly {
+		readOnly = 0
+	}
+	metadata := fmt.Sprintf("%d;%d;%d", readOnly, gost.SafeDeref(opts.Server), opts.Level)
 	t.events <- Event{EventType: Set, Name: key, Value: value, Metadata: metadata}
 }
 
@@ -35,7 +40,7 @@ func (t *TransactionLogger) WriteDeleteAttr(object string, key string) {
 	t.events <- Event{EventType: DeleteAttr, Name: object + "." + key}
 }
 
-var b64 = base64.Encoding{}
+var b64 = base64.StdEncoding
 
 func (t *TransactionLogger) WriteCreateUser(user models.User) {
 	value := fmt.Sprintf("%t;%d", user.Active, user.Level)

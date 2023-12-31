@@ -37,7 +37,7 @@ func main() {
 	}
 
 	if cfg.TransactionLogger.On {
-		tl, err = transactionlogger.New()
+		tl, err = transactionlogger.New(cfg.TransactionLogger)
 		if err != nil {
 			lg.Fatal("failed to inizialise transaction logger: %v", zap.Error(err))
 		}
