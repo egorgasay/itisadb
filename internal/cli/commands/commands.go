@@ -85,7 +85,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 
 		switch strings.ToLower(args[0]) {
 		case object:
-			if len(args) < 2 {
+			if len(args) < 2 || len(args) > 4 {
 				return "", ErrWrongInput
 			}
 			name := args[1]
@@ -103,48 +103,23 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 				return false
 			}
 
-			if len(args) > 2 {
-				if checkIsLevel(args[2]) {
-					if args[2] == "S" {
+			for i := 2; i < len(args); i++ {
+				if checkIsLevel(args[i]) {
+					if args[i] == "S" {
 						lvl = secretLevel
-					} else if args[3] == "R" {
+					} else if args[i] == "R" {
 						lvl = restrictedLevel
 					} else {
-						return "", fmt.Errorf("unknown level: %s", args[3])
+						return "", fmt.Errorf("unknown level: %s", args[i])
 					}
 				} else {
-					serverStr := args[2]
+					serverStr := args[i]
 					serverInt, err := strconv.Atoi(serverStr)
 					if err != nil {
 						return "", err
 					}
 					server = int32(serverInt)
 				}
-			}
-
-			// TODO: refactor this
-
-			if len(args) > 3 {
-				if checkIsLevel(args[3]) {
-					if args[3] == "S" {
-						lvl = secretLevel
-					} else if args[3] == "R" {
-						lvl = restrictedLevel
-					} else {
-						return "", fmt.Errorf("unknown level: %s", args[3])
-					}
-				} else {
-					serverStr := args[3]
-					serverInt, err := strconv.Atoi(serverStr)
-					if err != nil {
-						return "", err
-					}
-					server = int32(serverInt)
-				}
-			}
-
-			if len(args) > 4 {
-				return "", ErrWrongInput
 			}
 
 			switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
