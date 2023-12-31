@@ -26,6 +26,12 @@ body {
   margin-bottom: 20px;
 }
 
+.logo-text {
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: -20px;
+}
+
 .input-field {
   display: block;
   width: auto;

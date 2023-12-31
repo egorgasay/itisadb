@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"github.com/egorgasay/gost"
 	"github.com/egorgasay/itisadb-go-sdk"
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"strconv"
 	"strings"
 )
@@ -90,7 +89,75 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 				return "", ErrWrongInput
 			}
 			name := args[1]
-			return c.newObject(ctx, name)
+
+			var server int32
+			var lvl int8
+
+			checkIsLevel := func(probablyLevel string) bool {
+				if probablyLevel == "S" || probablyLevel == "s" {
+					return true
+				}
+				if probablyLevel == "R" || probablyLevel == "r" {
+					return true
+				}
+				return false
+			}
+
+			if len(args) > 2 {
+				if checkIsLevel(args[2]) {
+					if args[2] == "S" {
+						lvl = secretLevel
+					} else if args[3] == "R" {
+						lvl = restrictedLevel
+					} else {
+						return "", fmt.Errorf("unknown level: %s", args[3])
+					}
+				} else {
+					serverStr := args[2]
+					serverInt, err := strconv.Atoi(serverStr)
+					if err != nil {
+						return "", err
+					}
+					server = int32(serverInt)
+				}
+			}
+
+			// TODO: refactor this
+
+			if len(args) > 3 {
+				if checkIsLevel(args[3]) {
+					if args[3] == "S" {
+						lvl = secretLevel
+					} else if args[3] == "R" {
+						lvl = restrictedLevel
+					} else {
+						return "", fmt.Errorf("unknown level: %s", args[3])
+					}
+				} else {
+					serverStr := args[3]
+					serverInt, err := strconv.Atoi(serverStr)
+					if err != nil {
+						return "", err
+					}
+					server = int32(serverInt)
+				}
+			}
+
+			if len(args) > 4 {
+				return "", ErrWrongInput
+			}
+
+			switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
+				Server: &server,
+				Level:  itisadb.Level(lvl),
+			}); r.Switch() {
+			case gost.IsOk:
+				return fmt.Sprintf("status: ok, object %s created", name), nil
+			case gost.IsErr:
+				return "", r.Error()
+			}
+
+			return "", ErrWrongInput
 		default:
 			return "", ErrWrongInput
 		}
@@ -151,15 +218,6 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, 
 	}
 
 	return "", ErrUnknownCMD
-}
-
-func (c *Commands) newObject(ctx context.Context, name string) (string, error) {
-	_, err := c.cl.Object(ctx, &api.ObjectRequest{Name: name})
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("status: ok, object %s created", name), nil
 }
 
 func (c *Commands) showObject(ctx context.Context, name string) (string, error) {
