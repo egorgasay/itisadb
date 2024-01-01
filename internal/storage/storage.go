@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	_ "github.com/egorgasay/dockerdb/v2"
 	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"

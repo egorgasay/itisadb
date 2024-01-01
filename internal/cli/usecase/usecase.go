@@ -43,7 +43,7 @@ func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string, lg 
 		log.Fatal(err)
 	}
 
-	cmds := commands.New(b, r.Unwrap())
+	cmds := commands.New(r.Unwrap())
 
 	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: map[string]string{"itisadb": "itisadb"}, logger: lg}
 }
@@ -52,18 +52,13 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 	uc.storage.SaveCommand(token, line)
 	split := strings.Split(line, " ")
 
-	res, err := uc.cmds.Do(withAuth(ctx, token), strings.ToLower(split[0]), split[1:]...)
-	if err != nil {
-		uc.logger.Warn(err.Error())
-		return res, err
+	res := uc.cmds.Do(withAuth(ctx, token), strings.ToLower(split[0]), split[1:]...)
+	if res.IsErr() {
+		uc.logger.Warn(res.Error().Error())
+		return "", res.Error()
 	}
 
-	//cmd, err := commands.ParseCommand(ctx, line)
-	//if err != nil {
-	//	return "", err
-	//}
-
-	return strings.Replace(strings.Replace(res, "\n", "<br/>", -1), "\t", "&emsp;", -1), nil
+	return strings.Replace(strings.Replace(res.Unwrap(), "\n", "<br/>", -1), "\t", "&emsp;", -1), nil
 }
 
 func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error {
@@ -73,9 +68,12 @@ func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error 
 
 	switch cmd.Action() {
 	case commands.Set:
-		//uc.sdk.SetOne(ctx, cmd.Args()[0], cmd.Args()[1], itisadb.SetOptions{
+		//args := cmd.Args()
+		//uc.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
 		//	Server:   &server,
 		//	ReadOnly: readonly == 1,
+		//	Unique:   cmd.Mode() == uniqueSetMode,
+		//	Level:    0,
 		//})
 		resp, err := uc.conn.Set(ctx, &api.SetRequest{
 			Key:   cmd.Args()[0],
