@@ -57,8 +57,8 @@ func (h *Handler) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	//	h.connect(ctx)
 	//case "/disconnect": // disconnect from balancer
 	//	h.disconnect(ctx)
-	//case "/servers": // servers info
-	//	h.servers(ctx)
+	//case "/balancer": // balancer info
+	//	h.balancer(ctx)
 	//}
 }
 
@@ -213,10 +213,10 @@ func (h *Handler) ServeHTTP(ctx *fasthttp.RequestCtx) {
 //	ctx.SetStatusCode(fasthttp.StatusOK)
 //}
 //
-//func (h *Handler) servers(ctx *fasthttp.RequestCtx) {
-//	servers := h.core.Servers()
+//func (h *Handler) balancer(ctx *fasthttp.RequestCtx) {
+//	balancer := h.core.Balancer()
 //	ctx.SetStatusCode(fasthttp.StatusOK)
-//	ctx.SetBody([]byte(strings.Join(servers, "<br>")))
+//	ctx.SetBody([]byte(strings.Join(balancer, "<br>")))
 //}
 //
 //func (h *Handler) ObjectToJSON(ctx *fasthttp.RequestCtx) {

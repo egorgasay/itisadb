@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"itisadb/internal/constants"
+	"itisadb/internal/domains"
 	"itisadb/internal/models"
-	"itisadb/internal/service/servers"
 	"itisadb/pkg"
 )
 
@@ -34,13 +34,13 @@ func (c *Core) object(ctx context.Context, userID int, name string, opts models.
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		var serv servers.Server
+		var serv domains.Server
 		var ok bool
 
 		if errNotFound {
-			serv, ok = c.servers.GetServer()
+			serv, ok = c.balancer.GetServer()
 		} else {
-			serv, ok = c.servers.GetServerByID(info.Server)
+			serv, ok = c.balancer.GetServerByID(info.Server)
 		}
 
 		if !ok {
@@ -117,7 +117,7 @@ func (c *Core) getFromObject(ctx context.Context, userID int, object, key string
 	if !c.useMainStorage(opts.Server) {
 		serverNumber := toServerNumber(opts.Server)
 
-		cl, ok := c.servers.GetServerByID(serverNumber)
+		cl, ok := c.balancer.GetServerByID(serverNumber)
 		if !ok || cl == nil {
 			return "", constants.ErrServerNotFound
 		}
@@ -160,7 +160,7 @@ func (c *Core) setToObject(ctx context.Context, userID int, object, key, val str
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return 0, constants.ErrServerNotFound
 		}
@@ -210,7 +210,7 @@ func (c *Core) ObjectToJSON(ctx context.Context, userID int, name string, opts m
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return "", constants.ErrServerNotFound
 		}
@@ -276,7 +276,7 @@ func (c *Core) size(ctx context.Context, userID int, name string, opts models.Si
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return 0, constants.ErrServerNotFound
 		}
@@ -328,7 +328,7 @@ func (c *Core) deleteObject(ctx context.Context, userID int, name string, opts m
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}
@@ -388,7 +388,7 @@ func (c *Core) attachToObject(ctx context.Context, userID int, dst, src string, 
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}
@@ -444,7 +444,7 @@ func (c *Core) deleteAttr(ctx context.Context, userID int, key, object string, o
 	}
 
 	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
+		cl, ok := c.balancer.GetServerByID(info.Server)
 		if !ok || cl == nil {
 			return constants.ErrServerNotFound
 		}

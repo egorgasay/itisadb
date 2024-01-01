@@ -1,4 +1,4 @@
-package servers
+package balancer
 
 import (
 	"context"
@@ -45,8 +45,8 @@ func (s *RemoteServer) DelOne(ctx context.Context, key string, opts ...itisadb.D
 	return s.sdk.DelOne(ctx, key, opts...)
 }
 
-func (s *RemoteServer) SetOne(ctx context.Context, key string, val string, opts ...itisadb.SetOptions) (res gost.Result[int32]) {
-	return s.sdk.SetOne(ctx, key, val, opts...)
+func (s *RemoteServer) SetOne(ctx context.Context, key string, val string, opts models.SetOptions) (res gost.Result[int32]) {
+	return s.sdk.SetOne(ctx, key, val, opts.ToSDK())
 }
 
 func (s *RemoteServer) RAM() models.RAM {
@@ -207,7 +207,7 @@ func (s *RemoteServer) SetToObject(ctx context.Context, object string, key strin
 	return res.Ok(gost.Nothing{})
 }
 
-//func (s *Servers) Set(ctx context.Context, userID int, server int32, key, val string, opts models.SetOptions) (int32, error) {
+//func (s *Balancer) Set(ctx context.Context, userID int, server int32, key, val string, opts models.SetOptions) (int32, error) {
 //	servOpt, ok := s.GetServerByID(server)
 //	if !ok {
 //		return 0, errors.New("server not found")

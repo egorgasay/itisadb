@@ -31,10 +31,10 @@ const (
 type Core struct {
 	logger *zap.Logger
 
-	servers domains.Servers
-	storage domains.Storage
-	tlogger domains.TransactionLogger
-	session domains.Session
+	balancer domains.Balancer
+	storage  domains.Storage
+	tlogger  domains.TransactionLogger
+	session  domains.Session
 
 	cfg config.Config
 
@@ -47,7 +47,7 @@ func New(
 	logger *zap.Logger,
 	storage domains.Storage,
 	tlogger domains.TransactionLogger,
-	servers domains.Servers,
+	servers domains.Balancer,
 	session domains.Session,
 ) (*Core, error) {
 	var err error
@@ -66,65 +66,54 @@ func New(
 	}
 
 	return &Core{
-		logger:  logger,
-		servers: servers,
-		storage: storage,
-		tlogger: tlogger,
-		session: session,
-		cfg:     cfg,
-		pool:    make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+		logger:   logger,
+		balancer: servers,
+		storage:  storage,
+		tlogger:  tlogger,
+		session:  session,
+		cfg:      cfg,
+		pool:     make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
 	}, nil
 }
 
 func toServerNumber(server *int32) int32 {
 	if server == nil {
-		return _mainStorage
+		return constants.MainStorageNumber
 	}
 
 	return *server
 }
 
-func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
-	if !c.useMainStorage(opts.Server) {
-		serverNumber := toServerNumber(opts.Server)
+func (c *Core) Set(ctx context.Context, userID int, key, value string, opts models.SetOptions) (val int32, err error) {
+	return val, c.withContext(ctx, func() error {
+		val, err = c.set(ctx, userID, key, value, opts)
+		return err
+	})
+}
 
-		if serverNumber == _setToAll {
-			failedServers := c.servers.SetToAll(ctx, key, val, opts)
-			if len(failedServers) != 0 {
-				return _setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
-			}
+func (c *Core) set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
+	serverNumber := toServerNumber(opts.Server)
 
-			return _setToAll, nil
+	if serverNumber == _setToAll {
+		failedServers := c.balancer.SetToAll(ctx, key, val, opts)
+		if len(failedServers) != 0 {
+			return _setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
 		}
 
-		cl, ok := c.servers.GetServerByID(serverNumber)
-		if !ok || cl == nil {
-			return 0, constants.ErrUnknownServer
-		}
-
-		err := cl.SetOne(context.Background(), key, val, opts.ToSDK()).Error()
-		if err != nil {
-			return 0, err
-		}
-
-		return cl.Number(), nil
+		return _setToAll, nil
 	}
 
-	v, err := c.storage.Get(key)
-	if err == nil && (opts.Unique || v.ReadOnly) {
-		return _mainStorage, constants.ErrAlreadyExists
+	cl, ok := c.balancer.GetServerByID(serverNumber)
+	if !ok || cl == nil {
+		return 0, constants.ErrUnknownServer
 	}
 
-	err = c.storage.Set(key, val, opts)
+	err := cl.SetOne(ctx, key, val, opts).Error()
 	if err != nil {
-		return _mainStorage, err
+		return 0, err
 	}
 
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteSet(key, val, opts)
-	}
-
-	return _mainStorage, nil
+	return cl.Number(), nil
 }
 
 func (c *Core) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val string, err error) {
@@ -136,7 +125,7 @@ func (c *Core) Get(ctx context.Context, userID int, key string, opts models.GetO
 
 func (c *Core) useMainStorage(server *int32) bool {
 	return !c.cfg.Balancer.On ||
-		c.servers.Len() == 0 ||
+		c.balancer.Len() == 0 ||
 		(server != nil && *server == _mainStorage)
 }
 
@@ -150,58 +139,46 @@ func (c *Core) getObjectInfo(object string) (models.ObjectInfo, error) {
 }
 
 func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetOptions) (string, error) {
-	if !c.useMainStorage(opts.Server) {
-		serverNumber := toServerNumber(opts.Server)
+	serverNumber := toServerNumber(opts.Server)
 
-		if serverNumber == _searchEverywhere {
-			v, err := c.servers.DeepSearch(ctx, key, opts)
-			if err != nil && errors.Is(err, constants.ErrNotFound) {
-				return "", constants.ErrNotFound
-			}
-			return v, err
-		} else if !c.servers.Exists(serverNumber) {
+	if serverNumber == _searchEverywhere {
+		v, err := c.balancer.DeepSearch(ctx, key, opts)
+		if err != nil && errors.Is(err, constants.ErrNotFound) {
 			return "", constants.ErrNotFound
 		}
-
-		cl, ok := c.servers.GetServerByID(serverNumber)
-		if !ok || cl == nil {
-			return "", constants.ErrUnknownServer
-		}
-
-		var res string
-		switch r := cl.GetOne(context.Background(), key, opts.ToSDK()); r.Switch() {
-		case gost.IsOk:
-			cl.ResetTries()
-			res = r.Unwrap()
-
-			return res, nil
-		case gost.IsErr:
-			c.logger.Warn(r.Error().Error())
-		}
-
-		cl.IncTries()
-
-		if cl.Tries() > 2 {
-			err := c.Disconnect(ctx, cl.Number())
-			if err != nil {
-				c.logger.Warn(err.Error())
-			}
-		}
-
+		return v, err
+	} else if !c.balancer.Exists(serverNumber) {
 		return "", constants.ErrNotFound
 	}
 
-	v, err := c.storage.Get(key)
-	if err != nil {
-		return "", err
+	cl, ok := c.balancer.GetServerByID(serverNumber)
+	if !ok || cl == nil {
+		return "", constants.ErrUnknownServer
 	}
 
-	return v.Value, nil
+	switch r := cl.GetOne(context.Background(), key, opts.ToSDK()); r.Switch() {
+	case gost.IsOk:
+		cl.ResetTries()
+		return r.Unwrap(), nil
+	case gost.IsErr:
+		c.logger.Warn(r.Error().Error())
+	}
+
+	cl.IncTries()
+
+	if cl.Tries() > 2 {
+		err := c.Disconnect(ctx, cl.Number())
+		if err != nil {
+			c.logger.Warn(err.Error())
+		}
+	}
+
+	return "", constants.ErrNotFound
 }
 
 func (c *Core) Connect(address string, available, total uint64) (int32, error) {
 	c.logger.Info("New request for connect from " + address)
-	number, err := c.servers.AddServer(address, available, total, c.servers.Len())
+	number, err := c.balancer.AddServer(address, available, total, c.balancer.Len())
 	if err != nil {
 		c.logger.Warn(err.Error())
 		return 0, err
@@ -212,13 +189,13 @@ func (c *Core) Connect(address string, available, total uint64) (int32, error) {
 
 func (c *Core) Disconnect(ctx context.Context, server int32) error {
 	return c.withContext(ctx, func() error {
-		c.servers.Disconnect(server)
+		c.balancer.Disconnect(server)
 		return nil
 	})
 }
 
 func (c *Core) Servers() []string {
-	return c.servers.GetServers()
+	return c.balancer.GetServers()
 }
 
 func (c *Core) withContext(ctx context.Context, fn func() error) (err error) {
@@ -254,14 +231,14 @@ func (c *Core) delete(ctx context.Context, userID int, key string, opts models.D
 		serverNumber := toServerNumber(opts.Server)
 
 		if serverNumber == _deleteFromAll {
-			atLeastOnce := c.servers.DelFromAll(ctx, key, opts)
+			atLeastOnce := c.balancer.DelFromAll(ctx, key, opts)
 			if !atLeastOnce {
 				return constants.ErrNotFound
 			}
 			return nil
 		}
 
-		cl, ok := c.servers.GetServerByID(serverNumber)
+		cl, ok := c.balancer.GetServerByID(serverNumber)
 		if !ok || cl == nil {
 			return constants.ErrUnknownServer
 		}

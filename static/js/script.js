@@ -26,7 +26,7 @@ window.onload = function () {
               "- ATTACH - Attaches the src object to the dst, <br>" +
               "<br>Advanced: <br>" +
               "- HISTORY - History of user actions, <br>" +
-              "- SERVERS - List of active servers with stats. ";
+              "- SERVERS - List of active balancer with stats. ";
         } else {
           switch (split[1].toLowerCase()) {
             case "set":
@@ -86,10 +86,10 @@ window.onload = function () {
       } else if (command === "справка") {
         output.innerHTML = "set ключ значение сервер(необязательно) - Устанавливает значение для ключа.<br>сервер > 0 - Сохранить на определенный сервер.<br> сервер = 0 (по умолчанию) - Автоматическое сохранение на менее загруженный сервер. <br>сервер = -1 - Прямое сохранение в базу данных на жестком диске.<br> сервер = -2 - Сохранение во всех экземплярах базы данных.<br>  сервер = -3 - Сохранение во всех экземплярах и базе данных на жестком диске. <br><br>get key ключ сервер(необязательно) - Получает значение из хранилища.<br>сервер > 0 - Поиск на определенном сервере. (скорость: быстрая)<br>сервер = 0 (по умолчанию) - глубокий поиск. (скорость: медленная)<br>сервер = -1 - поиск по базе данных на жестком диске. (скорость: средняя)<br><br>"
         + "new_object name - Создает объект с указанным именем.<br>object name set attr value - Устанавливает значение атрибута object.<br>object name get attr - Получает значение атрибута object.<br>show_object name - Отображает объект в виде карты.<br>attach dst src - Прикрепляет объект src к dst.<br><br>"
-         + "history - История действий пользователя.<br>servers - Список активных серверов со статистикой.";
+         + "history - История действий пользователя.<br>balancer - Список активных серверов со статистикой.";
       } else if (command === "history") {
         fetch("/history").then(response => response.json()).then(json => output.innerHTML = json.text);
-      } else if (command === "servers") {
+      } else if (command === "balancer") {
         fetch("/servers").then(response => response.json()).then(json => output.innerHTML = json.text);
       } else if (command === "exit") {
         console.log('Redirecting to /exit');

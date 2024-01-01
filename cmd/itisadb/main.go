@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
 	"itisadb/internal/domains"
+	"itisadb/internal/service/balancer"
 	"itisadb/internal/service/core"
 	"itisadb/internal/service/generator"
-	"itisadb/internal/service/servers"
 	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
+	"itisadb/internal/service/usecase"
 	"itisadb/internal/storage"
 	"log"
 	"os"
@@ -58,9 +60,17 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	s, err := servers.New()
+
+	var local = gost.None[domains.Server]()
+	if !cfg.Balancer.On || (cfg.Balancer.On && !cfg.Balancer.BalancerOnly) {
+		uc := usecase.NewUseCase(store, *cfg, tl)
+		ls := balancer.NewLocalServer(uc)
+		local = local.Some(ls)
+	}
+
+	s, err := balancer.New(local)
 	if err != nil {
-		lg.Fatal("failed to inizialise servers: %v", zap.Error(err))
+		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
 
 	gen := generator.New(lg)

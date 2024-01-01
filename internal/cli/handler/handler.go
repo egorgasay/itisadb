@@ -124,7 +124,7 @@ func (h *Handler) Servers(c echo.Context) error {
 
 	servers, err := h.logic.Servers(c.Request().Context(), cookie.Value)
 	if servers == "" {
-		servers = "no available servers"
+		servers = "no available balancer"
 	}
 
 	var t = schema.Response{Text: servers}

@@ -6,9 +6,9 @@ import (
 	"github.com/valyala/fasthttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	servers2 "itisadb/internal/balancer"
 	"itisadb/internal/handler/mocks/usecase"
-	servers2 "itisadb/internal/servers"
-	"itisadb/internal/service/servers"
+	"itisadb/internal/service/balancer"
 	"testing"
 )
 
@@ -1015,7 +1015,7 @@ func TestHandler_connect(t *testing.T) {
 			},
 			mockUseCase: func(c *mocks.MockIUseCase) {
 				c.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(int32(0), servers.ErrInternal)
+					Return(int32(0), balancer.ErrInternal)
 			},
 			rJSON:    `{"address":"127.0.0.1:897", "total":100, "available":100, "server":1}`,
 			wantCode: 500,

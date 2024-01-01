@@ -1,4 +1,4 @@
-package servers
+package balancer
 
 import (
 	"context"
@@ -128,7 +128,7 @@ func TestServers_AddClient(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 
-			s := &Servers{
+			s := &Balancer{
 				servers: map[int32]*RemoteServer{},
 				freeID:  1,
 				RWMutex: sync.RWMutex{},
@@ -279,7 +279,7 @@ func TestServers_DeepSearch(t *testing.T) {
 				serv.storage = cl
 			}
 
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -407,7 +407,7 @@ func TestServers_Disconnect(t *testing.T) {
 				s.storage = cl
 			}
 
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -489,7 +489,7 @@ func TestServers_Exists(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -583,7 +583,7 @@ func TestServers_GetClient(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -662,7 +662,7 @@ func TestServers_GetClientByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -734,7 +734,7 @@ func TestServers_GetServers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -793,7 +793,7 @@ func TestServers_Len(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
@@ -917,7 +917,7 @@ func TestServers_SetToAll(t *testing.T) {
 				s.storage = cl
 			}
 
-			s := &Servers{
+			s := &Balancer{
 				servers: tt.servers,
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},

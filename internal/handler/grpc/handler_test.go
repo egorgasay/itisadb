@@ -7,11 +7,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	servers2 "itisadb/internal/balancer"
 	"itisadb/internal/core"
 	"itisadb/internal/grpc-storage/storage"
 	mockusecase "itisadb/internal/handler/mocks/usecase"
-	servers2 "itisadb/internal/servers"
-	"itisadb/internal/service/servers"
+	"itisadb/internal/service/balancer"
 	api "itisadb/pkg/api/balancer"
 	"reflect"
 	"testing"
@@ -162,9 +162,9 @@ func TestHandler_Connect(t *testing.T) {
 			},
 			mockUseCase: func(*mockusecase.MockIUseCase) {
 				logicmock.EXPECT().Connect(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(int32(0), servers.ErrInternal)
+					Return(int32(0), balancer.ErrInternal)
 			},
-			wantErr: status.Error(codes.Internal, servers.ErrInternal.Error()),
+			wantErr: status.Error(codes.Internal, balancer.ErrInternal.Error()),
 		},
 	}
 	for _, tt := range tests {
@@ -840,11 +840,11 @@ func TestHandler_Servers(t *testing.T) {
 
 			got, err := h.Servers(tt.args.ctx, tt.args.request)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Servers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Balancer() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Servers() got = %v, want %v", got, tt.want)
+				t.Errorf("Balancer() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

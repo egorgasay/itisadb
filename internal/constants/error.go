@@ -3,6 +3,7 @@ package constants
 import (
 	"errors"
 	"fmt"
+	"github.com/egorgasay/gost"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 	ErrNoData        = errors.New("the value is not found")
 	ErrUnknownServer = errors.New("unknown server")
 
-	ErrAlreadyExists = errors.New("already exists")
+	ErrAlreadyExists = gost.NewError(0, 0, "already exists")
 	ErrUnavailable   = errors.New("server is unavailable")
 	ErrNotFound      = errors.New("not found")
 

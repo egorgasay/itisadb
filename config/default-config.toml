@@ -21,6 +21,9 @@ On = false
 # ]
 Servers = []
 
+# Balancing only mode.
+BalancingOnly = false
+
 # Mechanism for transaction logging.
 [TransactionLogger]
 On = true

@@ -72,7 +72,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 
 		switch savedTo := r.Unwrap(); savedTo {
 		case setToAll:
-			return res.Ok(fmt.Sprintf("status: ok, saved on all servers"))
+			return res.Ok(fmt.Sprintf("status: ok, saved on all balancer"))
 		default:
 			return res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
 		}

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/egorgasay/gost"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -31,13 +32,6 @@ func New(
 	return &Handler{core: logic, logger: l, session: session, conf: conf}
 }
 
-func safeDeref[T any](x *T) T {
-	if x == nil {
-		return *new(T)
-	}
-	return *x
-}
-
 func (h *Handler) userIDFromContext(ctx context.Context) int {
 	value := ctx.Value(constants.UserKey)
 	if value == nil {
@@ -57,8 +51,7 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.SetOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
-	if err != nil {
+	if err := copier.Copy(&opts, gost.SafeDeref(r.Options)); err != nil {
 		h.logger.Warn("failed to copy SetOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
 	}
@@ -77,7 +70,7 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.SetToObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy SetToObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -97,7 +90,7 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.GetOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy GetOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -117,7 +110,7 @@ func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.GetFromObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy GetFromObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -137,7 +130,7 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.DeleteOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy DeleteOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -155,7 +148,7 @@ func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectReque
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.AttachToObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy AttachToObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -173,7 +166,7 @@ func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) 
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.DeleteObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy DeleteObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -203,7 +196,7 @@ func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.Object
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.ObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy ObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -221,7 +214,7 @@ func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) 
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.ObjectToJSONOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy ObjectToJSONOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -241,7 +234,7 @@ func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.Is
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.IsObjectOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy IsObjectOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -261,7 +254,7 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.DeleteAttrOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy DeleteAttrOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -279,7 +272,7 @@ func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.Obje
 	userID := h.userIDFromContext(ctx)
 
 	opts := models.SizeOptions{}
-	err := copier.Copy(&opts, safeDeref(r.Options))
+	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
 	if err != nil {
 		h.logger.Warn("failed to copy SizeOptions", zap.Error(err))
 		return nil, converterr.ToGRPC(err)
@@ -325,7 +318,7 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*ap
 	userID := h.userIDFromContext(ctx)
 
 	user := models.User{}
-	err := copier.Copy(&user, safeDeref(r.User))
+	err := copier.Copy(&user, gost.SafeDeref(r.User))
 	if err != nil {
 		h.logger.Warn("failed to copy User", zap.Error(err))
 		return nil, converterr.ToGRPC(err)

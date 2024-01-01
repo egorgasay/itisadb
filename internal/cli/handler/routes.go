@@ -11,6 +11,6 @@ func (h *Handler) PublicRoutes(e *echo.Echo) {
 	e.GET("/exit", h.Exit)
 	e.GET("/act", h.Action)
 	e.GET("/history", h.History)
-	e.GET("/servers", h.Servers)
+	e.GET("/balancer", h.Servers)
 	e.HEAD("/", h.MainPage)
 }

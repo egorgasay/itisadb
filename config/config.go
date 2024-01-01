@@ -38,8 +38,9 @@ type WebAppConfig struct {
 }
 
 type BalancerConfig struct {
-	On      bool     `toml:"On"`
-	Servers []string `toml:"Servers"`
+	On           bool     `toml:"On"`
+	BalancerOnly bool     `toml:"BalancerOnly"`
+	Servers      []string `toml:"Servers"`
 }
 
 type SecurityConfig struct {
