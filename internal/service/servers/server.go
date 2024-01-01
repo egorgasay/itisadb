@@ -206,3 +206,12 @@ func (s *RemoteServer) SetToObject(ctx context.Context, object string, key strin
 
 	return res.Ok(gost.Nothing{})
 }
+
+//func (s *Servers) Set(ctx context.Context, userID int, server int32, key, val string, opts models.SetOptions) (int32, error) {
+//	servOpt, ok := s.GetServerByID(server)
+//	if !ok {
+//		return 0, errors.New("server not found")
+//	}
+//
+//	return servOpt.Set(ctx, userID, key, val, opts)
+//}

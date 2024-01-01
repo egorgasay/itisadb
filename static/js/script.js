@@ -30,118 +30,56 @@ window.onload = function () {
         } else {
           switch (split[1].toLowerCase()) {
             case "set":
-              output.innerHTML = "SET key \"value\" [ MODE - NX | RO | XX ] [ LEVEL - R | S ] [ SERVER - [0-9]+ ]  <br>" +
-                  "<br>" +
-                  "MODE - Defines the mode of the operation. <br>" +
-                  "- `NX` - If the key already exists, it won't be overwritten. <br>" +
-                  "- `RO` - If the key already exists, an error will be returned.<br>" +
-                  "- `XX` - If the key doesn't exist, it won't be created.<br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission. <br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation<br>" +
-                  "By default - NO encryption, NO ACL validation<br>" +
-                  "<br>" +
-                  "SERVER - Defines server number to use. <br>" +
-                  "- Automaticly saving to a less loaded server by default.";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
               break;
             case "get":
-              output.innerHTML = "GET key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  <br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation<br>" +
-                  "<br>" +
-                  "FROM - Defines server number to use.<br>" +
-                  "- `> 0` - Search on a specific server (speed: fast).  <br>" +
-                  "- `= 0` (default) - Deep search (speed: slow). ";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
               break;
             case "del":
-              output.innerHTML = "DEL key [ FROM - [0-9]+ ] [ LEVEL - D | R | L ]  <br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation<br>" +
-                  "<br>" +
-                  "FROM - Defines server number to use.<br>" +
-                  "- `> 0` - Search on a specific server (speed: fast).  <br>" +
-                  "- `= 0` (default) - Deep search (speed: slow). ";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
               break;
             case "seto":
-              output.innerHTML = "SETO name key \"value\" [ LEVEL - D | R | L ]<br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
               break;
             case "geto":
-              output.innerHTML = "GETO name key [ LEVEL - D | R | L ]<br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
               break;
             case "delo":
-              output.innerHTML = "DELO name key [ LEVEL - D | R | L ]<br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
               break;
             case "new":
               switch (split[2]) {
                 case "object":
-                  output.innerHTML = "NEW OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]<br>" +
-                      "<br>" +
-                      "LEVEL - Defines the level of permission.<br>" +
-                      "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                      "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                      "- `S` (Secret) - encryption, ACL validation<br>" +
-                      "<br>" +
-                      "ON - Defines server number to use. <br>" +
-                      "- Automaticly saving to a less loaded server by default.";
+                  console.log('Redirecting to /doc');
+                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-managment.html';
                   break;
               }
               break;
             case "delete":
               switch (split[2]) {
                 case "object":
-                  output.innerHTML = "DELETE OBJECT name [ ON - [0-9]+ ] [ LEVEL - D | R | L ]<br>" +
-                      "<br>" +
-                      "LEVEL - Defines the level of permission.<br>" +
-                      "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                      "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                      "- `S` (Secret) - encryption, ACL validation<br>" +
-                      "<br>" +
-                      "ON - Defines server number to use. <br>" +
-                      "- Automaticly saving to a less loaded server by default.";
+                  console.log('Redirecting to /doc');
+                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-managment.html';
                   break;
               }
               break;
             case "marshal":
               switch (split[2]) {
                 case "object":
-                  output.innerHTML = "MARSHAL OBJECT name [ LEVEL - D | R | L ]<br>" +
-                      "<br>" +
-                      "LEVEL - Defines the level of permission.<br>" +
-                      "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                      "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                      "- `S` (Secret) - encryption, ACL validation";
+                  console.log('Redirecting to /doc');
+                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/advanced-object-commands.html';
                   break;
               }
               break;
             case "attach":
-              output.innerHTML = "ATTACH dst [ LEVEL - D | R | L ] src [ LEVEL - D | R | L ]<br>" +
-                  "<br>" +
-                  "LEVEL - Defines the level of permission.<br>" +
-                  "- `D` (Default) - NO encryption, NO ACL validation<br>" +
-                  "- `R` (Restricted) - NO encryption, ACL validation<br>" +
-                  "- `S` (Secret) - encryption, ACL validation";
+              console.log('Redirecting to /doc');
+              window.location.href = 'https://itisa-doc.egorgasay.repl.co/advanced-object-commands.html';
               break;
           }
         }
@@ -159,6 +97,9 @@ window.onload = function () {
           document.cookie = c.trim().split("=")[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
         });
         window.location.href = '/exit';
+      } else if (command === "doc") {
+        console.log('Redirecting to /doc');
+        window.location.href = 'https://itisa-doc.egorgasay.repl.co/';
       } else {
         fetch("/act?action="+encodeURIComponent(this.value)).then(response => response.json()).then(json => output.innerHTML = json.text);
       }

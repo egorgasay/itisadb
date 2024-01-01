@@ -96,6 +96,7 @@ func (c *Core) Set(ctx context.Context, userID int, key, val string, opts models
 
 			return _setToAll, nil
 		}
+
 		cl, ok := c.servers.GetServerByID(serverNumber)
 		if !ok || cl == nil {
 			return 0, constants.ErrUnknownServer
