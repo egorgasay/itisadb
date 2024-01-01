@@ -72,9 +72,9 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 
 		switch savedTo := r.Unwrap(); savedTo {
 		case setToAll:
-			res.Ok(fmt.Sprintf("status: ok, saved on all servers"))
+			return res.Ok(fmt.Sprintf("status: ok, saved on all servers"))
 		default:
-			res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
+			return res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
 		}
 	case _newEl:
 		if len(args) < 1 {
