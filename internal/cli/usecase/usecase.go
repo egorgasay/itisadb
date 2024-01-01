@@ -45,7 +45,7 @@ func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string, lg 
 
 	cmds := commands.New(b, r.Unwrap())
 
-	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: make(map[string]string), logger: lg}
+	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: map[string]string{"itisadb": "itisadb"}, logger: lg}
 }
 
 func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) (string, error) {
@@ -115,8 +115,6 @@ func (uc *UseCase) Authenticate(ctx context.Context, username, password string) 
 	if err != nil {
 		return "", errors.Join(err, fmt.Errorf("failed to authenticate"))
 	}
-
-	// TODO: save token
 
 	uc.tokens[username] = resp.Token
 

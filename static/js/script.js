@@ -3,7 +3,7 @@ window.onload = function () {
   var output = document.querySelector(".message");
   name.focus();
   name.addEventListener("keyup", function (e) {
-    if (e.keyCode == 13 && name.value != "") {
+    if (e.keyCode === 13 && name.value != "") {
       var split = this.value.split(" ");
       var command = split[0];
       if (command === "help") {
@@ -145,15 +145,21 @@ window.onload = function () {
               break;
           }
         }
-      } else if (command == "справка") {
+      } else if (command === "справка") {
         output.innerHTML = "set ключ значение сервер(необязательно) - Устанавливает значение для ключа.<br>сервер > 0 - Сохранить на определенный сервер.<br> сервер = 0 (по умолчанию) - Автоматическое сохранение на менее загруженный сервер. <br>сервер = -1 - Прямое сохранение в базу данных на жестком диске.<br> сервер = -2 - Сохранение во всех экземплярах базы данных.<br>  сервер = -3 - Сохранение во всех экземплярах и базе данных на жестком диске. <br><br>get key ключ сервер(необязательно) - Получает значение из хранилища.<br>сервер > 0 - Поиск на определенном сервере. (скорость: быстрая)<br>сервер = 0 (по умолчанию) - глубокий поиск. (скорость: медленная)<br>сервер = -1 - поиск по базе данных на жестком диске. (скорость: средняя)<br><br>"
         + "new_object name - Создает объект с указанным именем.<br>object name set attr value - Устанавливает значение атрибута object.<br>object name get attr - Получает значение атрибута object.<br>show_object name - Отображает объект в виде карты.<br>attach dst src - Прикрепляет объект src к dst.<br><br>"
          + "history - История действий пользователя.<br>servers - Список активных серверов со статистикой.";
-         } else if (command == "history") {
+      } else if (command === "history") {
         fetch("/history").then(response => response.json()).then(json => output.innerHTML = json.text);
-      } else if (command == "servers") {
+      } else if (command === "servers") {
         fetch("/servers").then(response => response.json()).then(json => output.innerHTML = json.text);
-      }else {
+      } else if (command === "exit") {
+        console.log('Redirecting to /exit');
+        document.cookie.split(";").forEach(function(c) {
+          document.cookie = c.trim().split("=")[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+        });
+        window.location.href = '/exit';
+      } else {
         fetch("/act?action="+encodeURIComponent(this.value)).then(response => response.json()).then(json => output.innerHTML = json.text);
       }
     }

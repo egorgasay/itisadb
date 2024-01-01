@@ -74,7 +74,7 @@ func main() {
 	}
 
 	go runGRPC(ctx, lg, logic, appCFG.Security, appCFG.Network, ses)
-	go runWebCLI(ctx, cfg.WebApp, lg, cfg.Network.GRPC)
+	go runWebCLI(ctx, cfg.WebApp, cfg.Security, lg, cfg.Network.GRPC)
 
 	if cfg.Network.REST != "" {
 		go runREST(ctx, lg, logic, cfg.Network)

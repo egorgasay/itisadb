@@ -35,7 +35,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/maphash v0.0.0-20221220182448-74e1e1ea1577 // indirect
-	github.com/egorgasay/gost v0.0.5 // indirect
+	github.com/egorgasay/gost v0.0.6 // indirect
 	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20231231184311-b27f72fc3dea // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

@@ -2,52 +2,52 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/egorgasay/gost"
 	"github.com/egorgasay/itisadb-go-sdk"
-	api "github.com/egorgasay/itisadb-shared-proto/go"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"strconv"
 	"strings"
 )
 
 type Commands struct {
-	cl  api.ItisaDBClient
 	sdk *itisadb.Client
 }
 
-func New(cl api.ItisaDBClient, sdk *itisadb.Client) *Commands {
+func New(sdk *itisadb.Client) *Commands {
 	return &Commands{
-		cl:  cl,
 		sdk: sdk,
 	}
 }
 
-type Action string
-
-var ErrWrongInput = errors.New("wrong input")
-var ErrUnknownCMD = errors.New("unknown cmd")
-var ErrEmpty = errors.New("the value does not exist")
-var ErrUnknownServer = errors.New("the value does not exist")
-
 const (
-	get      = "get"
-	newEl    = "new"
-	object   = "object"
-	marshalo = "marshalo"
-	attach   = "attach"
-	seto     = "seto"
-	geto     = "geto"
-	delo     = "delo"
-	del      = "del"
-	deleteEl = "delete"
+	UnknownCode = iota
+	InvalidCode
 )
 
 const (
-	level = "level"
-	on    = "on"
+	UnknownExtCode = iota
+	InputExtCode
+	CmdExtCode
+)
+
+type Action string
+
+var (
+	ErrWrongInput = gost.NewError(InvalidCode, InputExtCode, "wrong input")
+	ErrUnknownCMD = gost.NewError(UnknownCode, CmdExtCode, "unknown cmd")
+)
+
+const (
+	_get      = "get"
+	_newEl    = "new"
+	_object   = "object"
+	_marshalo = "marshalo"
+	_attach   = "attach"
+	_seto     = "seto"
+	_geto     = "geto"
+	_delo     = "delo"
+	_del      = "del"
+	_deleteEl = "delete"
 )
 
 const (
@@ -55,229 +55,250 @@ const (
 	setToAll
 )
 
-func (c *Commands) Do(ctx context.Context, act string, args ...string) (string, error) {
+func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost.Result[string]) {
 	switch strings.ToLower(act) {
-	case get:
-		if len(args) < 1 {
-			return "", ErrWrongInput
-		}
-
-		var server = 0
-		if len(args) != 1 {
-			num, err := strconv.Atoi(args[len(args)-1])
-			if err == nil {
-				server = num
-			}
-		}
-
-		return c.get(ctx, args[0], int32(server))
+	case _get:
+		return c.get(ctx, args)
 	case Set:
 		cmd, err := ParseSet(args)
 		if err != nil {
-			return "", err
+			return res.ErrNew(InvalidCode, InputExtCode, err.Error())
 		}
 
-		return c.set(ctx, cmd)
-	case newEl:
+		r := c.set(ctx, cmd)
+		if r.IsErr() {
+			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
+		}
+
+		switch savedTo := r.Unwrap(); savedTo {
+		case setToAll:
+			res.Ok(fmt.Sprintf("status: ok, saved on all servers"))
+		default:
+			res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
+		}
+	case _newEl:
 		if len(args) < 1 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
 
 		switch strings.ToLower(args[0]) {
-		case object:
-			if len(args) < 2 || len(args) > 4 {
-				return "", ErrWrongInput
+		case _object:
+			r := c.newObject(ctx, args[1:])
+			if r.IsOk() {
+				return res.Ok(fmt.Sprintf("object %s created", r.Unwrap().Name()))
 			}
-			name := args[1]
-
-			var server int32
-			var lvl int8
-
-			checkIsLevel := func(probablyLevel string) bool {
-				if probablyLevel == "S" || probablyLevel == "s" {
-					return true
-				}
-				if probablyLevel == "R" || probablyLevel == "r" {
-					return true
-				}
-				return false
-			}
-
-			for i := 2; i < len(args); i++ {
-				if checkIsLevel(args[i]) {
-					if args[i] == "S" {
-						lvl = secretLevel
-					} else if args[i] == "R" {
-						lvl = restrictedLevel
-					} else {
-						return "", fmt.Errorf("unknown level: %s", args[i])
-					}
-				} else {
-					serverStr := args[i]
-					serverInt, err := strconv.Atoi(serverStr)
-					if err != nil {
-						return "", err
-					}
-					server = int32(serverInt)
-				}
-			}
-
-			switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
-				Server: &server,
-				Level:  itisadb.Level(lvl),
-			}); r.Switch() {
-			case gost.IsOk:
-				return fmt.Sprintf("status: ok, object %s created", name), nil
-			case gost.IsErr:
-				return "", r.Error()
-			}
-
-			return "", ErrWrongInput
+			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
 		default:
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
-	case seto:
+	case _seto:
 		sc, err := ParseSet(args[1:])
 		if err != nil {
-			return "", err
+			return res.ErrNew(InvalidCode, InputExtCode, err.Error())
 		}
-		return c.setObject(ctx, args[0], sc.key, sc.value)
-	case geto:
-		switch len(args) {
-		case 1:
-			return c.showObject(ctx, args[0])
-		case 2:
-			return c.getFromObject(ctx, args[0], args[1])
-		default:
-			return "", ErrWrongInput
+
+		if r := c.setObject(ctx, args[0], sc); r.IsOk() {
+			return res.Ok(fmt.Sprintf("status: ok, saved in object %s, on server #%d", args[0], r.Unwrap()))
+		} else {
+			return res.Err(r.Error())
 		}
-	case marshalo:
+	case _geto:
+		r := c.geto(ctx, args)
+		return r
+	case _marshalo:
 		if len(args) < 1 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
 		name := args[0]
-		return c.showObject(ctx, name)
-	case del:
+		r := c.showObject(ctx, name)
+		return r
+	case _del:
 		if len(args) < 1 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
+
 		name := args[0]
-		return c.del(ctx, name)
-	case delo:
+
+		var opts itisadb.DeleteOptions
+		if len(args) >= 2 {
+			serverInt, err := strconv.Atoi(args[1])
+			if err != nil {
+				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[1]))
+			}
+
+			serverI32 := int32(serverInt)
+			opts.Server = &serverI32
+		}
+
+		if r := c.sdk.DelOne(ctx, name, opts); r.IsOk() {
+			return res.Ok(fmt.Sprintf("status: ok, deleted %s", name))
+		} else {
+			return res.Err(r.Error())
+		}
+	case _delo:
 		if len(args) < 2 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
-		object := args[0]
+
+		var opts itisadb.ObjectOptions
+		if len(args) >= 2 {
+			serverInt, err := strconv.Atoi(args[1])
+			if err != nil {
+				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[1]))
+			}
+
+			serverI32 := int32(serverInt)
+			opts.Server = &serverI32
+		}
+
+		obj := args[0]
 		key := args[1]
-		return c.delo(ctx, object, key)
-	case deleteEl:
+
+		r := c.sdk.Object(ctx, obj, opts)
+		if r.IsErr() {
+			return res.Err(r.Error())
+		}
+
+		if r := r.Unwrap().DeleteKey(ctx, key); r.IsErr() {
+			return res.Err(r.Error())
+		}
+
+		return res.Ok(fmt.Sprintf("status: ok, deleted %s from %s", key, obj))
+	case _deleteEl:
 		if len(args) < 2 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
 
 		switch strings.ToLower(args[0]) {
-		case object:
+		case _object:
+			var aargs []string
+
 			object := args[1]
-			return c.deleteObject(ctx, object)
+			if len(args) >= 3 {
+				aargs = args[2:]
+			} else {
+				aargs = make([]string, 0)
+			}
+
+			r := c.deleteObject(ctx, object, aargs)
+			if r.IsErr() {
+				return res.Err(r.Error())
+			}
+			return res.Ok(fmt.Sprintf("status: ok, deleted %s", object))
 		}
-	case attach:
+	case _attach:
 		if len(args) < 2 {
-			return "", ErrWrongInput
+			return res.Err(ErrWrongInput)
 		}
+
 		dst := args[0]
 		src := args[1]
-		if err := c.attach(ctx, dst, src); err != nil {
-			return "", err
+
+		if r := c.attach(ctx, dst, src); r.IsErr() {
+			return res.Err(r.Error())
 		}
-		return fmt.Sprintf("status: ok, attached %s to %s", src, dst), nil
+
+		return res.Ok(fmt.Sprintf("status: ok, attached %s to %s", src, dst))
 	}
 
-	return "", ErrUnknownCMD
+	return res.Err(ErrUnknownCMD)
 }
 
-func (c *Commands) showObject(ctx context.Context, name string) (string, error) {
-	m, err := c.cl.ObjectToJSON(ctx, &api.ObjectToJSONRequest{Name: name})
-	if err != nil {
-		return "", err
+func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Result[*itisadb.Object]) {
+	if len(args) < 1 || len(args) > 3 {
+		return res.Err(ErrWrongInput)
 	}
 
-	return m.Object, nil
-}
+	name := args[1]
 
-func (c *Commands) object(ctx context.Context, act, name, key, value string) (string, error) {
-	switch act {
-	case seto:
-		return c.setObject(ctx, name, key, value)
-	case geto:
-		return c.getFromObject(ctx, name, key)
-	case marshalo:
-		return c.ObjectToJSON(ctx, name, key)
-	default:
-		return "", fmt.Errorf("unknown action")
+	var (
+		server int32
+		lvl    int8
+	)
+
+	for i := 2; i < len(args); i++ {
+		if args[i] == "S" || args[i] == "s" {
+			lvl = secretLevel
+		} else if args[i] == "R" || args[i] == "r" {
+			lvl = restrictedLevel
+		} else {
+			serverStr := args[i]
+
+			serverInt, err := strconv.Atoi(serverStr)
+			if err != nil {
+				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", serverStr))
+			}
+
+			server = int32(serverInt)
+		}
 	}
 
-}
-
-func (c *Commands) setObject(ctx context.Context, name, key, value string) (string, error) {
-	r, err := c.cl.SetToObject(ctx, &api.SetToObjectRequest{
-		Object: name,
-		Key:    key,
-		Value:  value,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("status: ok, saved in object %s, on server #%d", name, r.SavedTo), nil
-}
-
-func (c *Commands) ObjectToJSON(ctx context.Context, name, key string) (string, error) {
-	r, err := c.cl.GetFromObject(ctx, &api.GetFromObjectRequest{
-		Object: name,
-		Key:    key,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return r.Value, nil
-}
-
-func (c *Commands) get(ctx context.Context, key string, server int32) (string, error) {
-	switch r := c.sdk.GetOne(ctx, key, itisadb.GetOptions{Server: &server}); r.Switch() {
+	switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
+		Server: &server,
+		Level:  itisadb.Level(lvl),
+	}); r.Switch() {
 	case gost.IsOk:
-		return r.Unwrap(), nil
+		return res.Ok(r.Unwrap())
 	case gost.IsErr:
-		return "", fmt.Errorf(r.Error().Error())
+		return res.Err(r.Error())
 	}
 
-	return "", nil
+	return res.Err(ErrWrongInput)
 }
 
-func (c *Commands) attach(ctx context.Context, dst string, src string) error {
-	_, err := c.cl.AttachToObject(ctx, &api.AttachToObjectRequest{
-		Dst: dst,
-		Src: src,
-	})
-	if err != nil {
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
+func (c *Commands) geto(ctx context.Context, args []string) (res gost.Result[string]) {
+	switch len(args) {
+	case 1:
+		return c.showObject(ctx, args[0])
+	case 2:
+		return c.getFromObject(ctx, args[0], args[1])
+	default:
+		return res.Err(ErrWrongInput)
+	}
+}
 
-		if st.Code() == codes.NotFound {
-			return fmt.Errorf("object not found")
-		}
+func (c *Commands) showObject(ctx context.Context, name string) (res gost.Result[string]) {
+	if r := c.sdk.Object(ctx, name); r.IsOk() {
+		return r.Unwrap().JSON(ctx)
+	} else {
+		return res.Err(r.Error())
+	}
+}
 
-		if st.Code() == codes.Unavailable {
-			return fmt.Errorf("server not available")
-		}
-		return err
+func (c *Commands) setObject(ctx context.Context, object string, cmd SetCommand) (res gost.Result[int32]) {
+	if r := c.sdk.Object(ctx, object); r.IsOk() {
+		return r.Unwrap().Set(ctx, cmd.key, cmd.value)
+	} else {
+		return res.Err(r.Error())
+	}
+}
+
+func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[string]) {
+	if len(args) < 1 {
+		return res.Err(ErrWrongInput)
 	}
 
-	return nil
+	var server *int32
+	if len(args) != 1 {
+		num, err := strconv.Atoi(args[len(args)-1])
+		if err != nil {
+			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[len(args)-1]))
+		}
+		serverInt32 := int32(num)
+
+		server = &serverInt32
+	}
+
+	return c.sdk.GetOne(ctx, args[0], itisadb.GetOptions{Server: server})
+}
+
+func (c *Commands) attach(ctx context.Context, dst string, src string) (res gost.Result[gost.Nothing]) {
+	r := c.sdk.Object(ctx, dst)
+	if r.IsOk() {
+		return r.Unwrap().Attach(ctx, src)
+	} else {
+		return res.Err(r.Error())
+	}
 }
 
 func toServerNumber(server int32) *int32 {
@@ -288,76 +309,62 @@ func toServerNumber(server int32) *int32 {
 	return nil
 }
 
-func (c *Commands) set(ctx context.Context, cmd Command) (string, error) {
+func (c *Commands) set(ctx context.Context, cmd Command) (res gost.Result[int32]) {
 	args := cmd.Args()
 
 	if len(args) < 2 {
-		return "", ErrWrongInput
+		return res.Err(ErrWrongInput)
 	}
 
-	r := c.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
+	return c.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
 		Server:   toServerNumber(cmd.Server()),
 		ReadOnly: cmd.Mode() == readOnlySetMode,
 		Level:    itisadb.Level(cmd.Level()),
 		Unique:   cmd.Mode() == uniqueSetMode,
 	})
-
-	if err := r.Error(); err != nil {
-		return "", fmt.Errorf(err.Error())
-	}
-
-	resp := ""
-
-	switch savedTo := r.Unwrap(); savedTo {
-	case 0:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", savedTo)
-	case setToAll:
-		resp = fmt.Sprintf("status: ok, saved on all servers")
-	default:
-		resp = fmt.Sprintf("status: ok, saved on server #%d", savedTo)
-	}
-
-	return resp, nil
 }
 
-func (c *Commands) getFromObject(ctx context.Context, name string, key string) (string, error) {
-	r, err := c.cl.GetFromObject(ctx, &api.GetFromObjectRequest{
-		Object: name,
-		Key:    key,
-	})
+func (c *Commands) getFromObject(ctx context.Context, name string, key string, server ...string) (res gost.Result[string]) {
+	opts := itisadb.GetFromObjectOptions{}
 
-	if err != nil {
-		return "", err
+	if len(server) == 1 {
+		servInt, err := strconv.Atoi(server[0])
+		if err != nil {
+			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("invalid server number %s", server[0]))
+		}
+
+		serv := int32(servInt)
+		opts.Server = &serv
 	}
 
-	return r.Value, nil
+	if r := c.sdk.Object(ctx, name); r.IsOk() {
+		return r.Unwrap().Get(ctx, key, opts)
+	} else {
+		return res.Err(r.Error())
+	}
 }
 
-func (c *Commands) del(ctx context.Context, name string) (string, error) {
-	_, err := c.cl.Delete(ctx, &api.DeleteRequest{Key: name})
-	if err != nil {
-		return "", err
+func (c *Commands) deleteObject(ctx context.Context, object string, args []string) (res gost.Result[gost.Nothing]) {
+	if len(args) < 1 {
+		return res.Err(ErrWrongInput)
 	}
 
-	return fmt.Sprintf("status: ok, deleted key %s", name), nil
-}
-
-func (c *Commands) delo(ctx context.Context, object, key string) (string, error) {
-	_, err := c.cl.DeleteAttr(ctx, &api.DeleteAttrRequest{Key: key, Object: object})
-	if err != nil {
-		return "", err
+	var server *int32
+	{
+		num, err := strconv.Atoi(args[0])
+		if err != nil {
+			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[0]))
+		}
+		serverInt32 := int32(num)
+		server = &serverInt32
 	}
 
-	return fmt.Sprintf("status: ok, deleted object %s attribute %s", object, key), nil
-}
-
-func (c *Commands) deleteObject(ctx context.Context, object string) (string, error) {
-	_, err := c.cl.DeleteObject(ctx, &api.DeleteObjectRequest{Object: object})
-	if err != nil {
-		return "", err
+	r := c.sdk.Object(ctx, object, itisadb.ObjectOptions{Server: server})
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
-	return fmt.Sprintf("status: ok, deleted object %s", object), nil
+	return r.Unwrap().DeleteObject(ctx)
 }
 
 type Command interface {

@@ -1,0 +1,455 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ItisaDB</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="quick-start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li class="chapter-item expanded "><a href="base-commands.html"><strong aria-hidden="true">4.</strong> Base commands</a></li><li class="chapter-item expanded "><a href="objects.html"><strong aria-hidden="true">5.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="object-managment.html"><strong aria-hidden="true">5.1.</strong> Object management</a></li><li class="chapter-item expanded "><a href="object-commands.html"><strong aria-hidden="true">5.2.</strong> Object commands</a></li><li class="chapter-item expanded "><a href="advanced-object-commands.html"><strong aria-hidden="true">5.3.</strong> Advanced object commands</a></li></ol></li><li class="chapter-item expanded "><a href="transaction-logger.html"><strong aria-hidden="true">6.</strong> Transaction Logger</a></li><li class="chapter-item expanded "><a href="search-algorythm.html"><strong aria-hidden="true">7.</strong> Search algorithm</a></li><li class="chapter-item expanded "><a href="other.html"><strong aria-hidden="true">8.</strong> Other</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">ItisaDB</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="itisadb"><a class="header" href="#itisadb">ItisaDB <img src="https://img.shields.io/github/go-mod/go-version/egorgasay/grpc-storage" alt="GitHub go.mod Go version" /> <img src="https://img.shields.io/github/issues/egorgasay/grpc-storage" alt="GitHub issues" /> <img src="https://img.shields.io/badge/license-MIT-green" alt="License" /></a></h1>
+<p>This is a system consisting of several microservices (Memory Balancer, Storage, WebApplication), which is a distributed key-value database. There can be an unlimited number of Storage instances, they are connected to the Memory Balancer via gRPC, which distributes the load between them. You can connect to the Web Application (Echo) via the Web interface to enter the necessary data manually. The system is fault-tolerant, guarantees complete data recovery even after a power outage.</p>
+<p align="center" >
+<img src="https://github.com/egorgasay/itisadb/assets/102957432/2fe84aea-9068-4615-bb16-da94d8277aad"  width="1000" />
+</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h1>
+<h3 id="1-build-and-run"><a class="header" href="#1-build-and-run">1. Build and run</a></h3>
+<pre><code class="language-bash">go run cmd/itisadb/main.go
+</code></pre>
+<h3 id="2-use-itisadb-on-web"><a class="header" href="#2-use-itisadb-on-web">2. Use itisadb on web</a></h3>
+<p>Demo site: <a href="https://itisa.egorgasay.repl.co">itisadb.web</a></p>
+<h3 id="3-docker"><a class="header" href="#3-docker">3. Docker</a></h3>
+<p>Docker images: <a href="https://hub.docker.com/r/egorgasay/itisadb">itisadb</a></p>
+<p>Or you can build it from source:</p>
+<pre><code class="language-bash">docker build -t egorgasay/itisadb .
+docker run -it egorgasay/itisadb
+</code></pre>
+<h3 id="4-precompiled-binaries"><a class="header" href="#4-precompiled-binaries">4. Precompiled binaries</a></h3>
+<p>Binary: <a href="https://github.com/egorgasay/itisadb/releases">itisadb</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
+<p>Now you can only interact with database within following languages:</p>
+<ul>
+<li>Go - <a href="http://github.com/egorgasay/itisadb-go-sdk">itisadb-go-sdk</a></li>
+</ul>
+<p>You can also use itisadb on web:</p>
+<ul>
+<li><a href="https://itisa.egorgasay.repl.co">itisadb.web</a></li>
+</ul>
+<p>And you can develop your own SDK :)</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="basic-commands"><a class="header" href="#basic-commands">Basic commands</a></h1>
+<h3 id="set---sets-the-value-to-the-storage"><a class="header" href="#set---sets-the-value-to-the-storage">SET - Sets the value to the storage.</a></h3>
+<pre><code class="language-go">//              MODE                  LEVEL     SERVER
+SET key &quot;value&quot; [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]
+</code></pre>
+<p><code>MODE</code> - Defines the mode of the operation.</p>
+<ul>
+<li><code>UQ</code> - If the key already exists, an error will be returned.</li>
+<li><code>RO</code> - Mark the key as read-only and create it if it doesn't exist.</li>
+<li><code>NX</code> - If the key already exists, it won't be overwritten.</li>
+<li><code>XX</code> - If the key doesn't exist, it won't be created.</li>
+</ul>
+<p><code>LEVEL</code> - Defines the level of permission.</p>
+<ul>
+<li><code>R</code> (Restricted) - NO encryption, ACL validation</li>
+<li><code>S</code> (Secret) - encryption, ACL validation</li>
+<li>Empty - NO encryption, NO ACL validation</li>
+</ul>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Use a specific server.</li>
+<li><code>= 0</code> (default) - Automaticly saving to a less loaded server.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">SET key &quot;value&quot; UQ S 1
+</code></pre>
+<h3 id="get---gets-the-value-from-the-storage"><a class="header" href="#get---gets-the-value-from-the-storage">GET - Gets the value from the storage.</a></h3>
+<pre><code class="language-go">//      SERVER
+GET key [ [0-9]+ ]
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Search on a specific server (speed: fast).</li>
+<li><code>= 0</code> (default) - Deep search (speed: slow).</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">GET key
+</code></pre>
+<h3 id="del---deletes-the-key-value-pair-from-the-storage"><a class="header" href="#del---deletes-the-key-value-pair-from-the-storage">DEL - Deletes the key-value pair from the storage.</a></h3>
+<pre><code class="language-go">//      SERVER
+DEL key [ [0-9]+ ] 
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Search on a specific server (speed: fast).</li>
+<li><code>= 0</code> (default) - Deep search (speed: slow). </li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">DEL key
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="objects"><a class="header" href="#objects">Objects</a></h1>
+<p>Instead of the usual tables, a model close to object orientation is used here. Let's see all the concepts:</p>
+<ul>
+<li>An object is a kind of instance of a class. Each &quot;Object&quot; has attributes and can have nested &quot;Objects&quot;. </li>
+<li>When creating an &quot;Object&quot;, the server with the lowest load will be selected, but nested objects can only be created on its parent object server, this allows you to be sure that all data in one object is always available.</li>
+</ul>
+<img src="https://github.com/egorgasay/itisadb/assets/102957432/ad8cd23b-3b4a-49c9-895f-3917ead8a7c7"  width="1000" />
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-manipulation"><a class="header" href="#data-manipulation">Data manipulation</a></h1>
+<h3 id="new-object---creates-an-object-with-the-specified-name"><a class="header" href="#new-object---creates-an-object-with-the-specified-name">NEW OBJECT - Creates an object with the specified name.</a></h3>
+<pre><code class="language-go">//              LEVEL     SERVER
+NEW OBJECT name [ R | S ] [ [0-9]+ ] 
+</code></pre>
+<p><code>LEVEL</code> - Defines the level of permission.</p>
+<ul>
+<li><code>R</code> (Restricted) - NO encryption, ACL validation</li>
+<li><code>S</code> (Secret) - encryption, ACL validation</li>
+<li>Empty - NO encryption, NO ACL validation</li>
+</ul>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li>Automaticly saving to a less loaded server by default.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">NEW OBJECT obj R 6
+</code></pre>
+<h3 id="delete-object---deletes-the-object-with-the-specified-name"><a class="header" href="#delete-object---deletes-the-object-with-the-specified-name">DELETE OBJECT - Deletes the object with the specified name.</a></h3>
+<pre><code class="language-go">//                 SERVER
+DELETE OBJECT name [ [0-9]+ ] 
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li>Automaticly saving to a less loaded server by default.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">DELETE OBJECT obj
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="objects-commands"><a class="header" href="#objects-commands">Objects commands</a></h1>
+<h3 id="seto---sets-the-value-to-the-object"><a class="header" href="#seto---sets-the-value-to-the-object">SETO - Sets the value to the object.</a></h3>
+<pre><code class="language-go">//                    MODE                  LEVEL         SERVER
+SETO name key &quot;value&quot; [ RO | UQ | NX | XX ] [ D | R | L ] [ [0-9]+ ]
+</code></pre>
+<p><code>MODE</code> - Defines the mode of the operation.</p>
+<ul>
+<li><code>RO</code> - Mark the key as read-only and create it if it doesn't exist.</li>
+<li><code>UQ</code> - If the key already exists, an error will be returned.</li>
+<li><code>NX</code> - If the key already exists, it won't be overwritten.</li>
+<li><code>XX</code> - If the key doesn't exist, it won't be created.</li>
+</ul>
+<p><code>LEVEL</code> - Defines the level of permission.</p>
+<ul>
+<li><code>D</code> (Default) - NO encryption, NO ACL validation</li>
+<li><code>R</code> (Restricted) - NO encryption, ACL validation</li>
+<li><code>S</code> (Secret) - encryption, ACL validation</li>
+</ul>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Use a specific server.</li>
+<li><code>= 0</code> (default) - Automaticly saving to a less loaded server.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">SETO obj13 key52 &quot;value42&quot; UQ S 1
+</code></pre>
+<h3 id="geto---gets-the-value-from-the-object"><a class="header" href="#geto---gets-the-value-from-the-object">GETO - Gets the value from the object.</a></h3>
+<pre><code class="language-go">//            SERVER
+GETO name key [ [0-9]+ ]
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Search on a specific server (speed: fast).</li>
+<li><code>= 0</code> (default) - Deep search (speed: slow).</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">GETO obj13 key52
+</code></pre>
+<h3 id="delo---deletes-the-object-key"><a class="header" href="#delo---deletes-the-object-key">DELO - Deletes the object key.</a></h3>
+<pre><code class="language-go">//            SERVER
+DELO name key [ [0-9]+ ]
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Search on a specific server (speed: fast).</li>
+<li><code>= 0</code> (default) - Deep search (speed: slow).</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">DELO obj13 key52
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="advanced-object-commands"><a class="header" href="#advanced-object-commands">Advanced object commands</a></h1>
+<h3 id="marshal-object---displays-the-object-as-json"><a class="header" href="#marshal-object---displays-the-object-as-json">MARSHAL OBJECT - Displays the object as JSON.</a></h3>
+<pre><code class="language-go">//                  SERVER
+MARSHAL OBJECT name [ [0-9]+ ]
+</code></pre>
+<p><code>SERVER</code> - Defines server number to use.</p>
+<ul>
+<li><code>&gt; 0</code> - Search on a specific server (speed: fast).</li>
+<li><code>= 0</code> (default) - Deep search (speed: slow).</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-go">MARSHAL OBJECT qwe
+&lt;- {
+    &quot;name&quot;: &quot;qwe&quot;,
+    &quot;value&quot;: [
+        {
+            &quot;name&quot;: &quot;jkl&quot;,
+            &quot;value&quot;: &quot;opi&quot;
+        }
+    ]
+}
+</code></pre>
+<h3 id="attach---attaches-the-src-object-to-the-dst"><a class="header" href="#attach---attaches-the-src-object-to-the-dst">ATTACH - Attaches the src object to the dst.</a></h3>
+<pre><code class="language-go">ATTACH dst src
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-go">ATTACH obj53 obj56
+&lt;- OK
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="transaction-logger"><a class="header" href="#transaction-logger">Transaction Logger</a></h1>
+<p>Protection against data loss in case of various hardware problems is achieved by using Transaction Logger. Each operation in the background is written to disk and performed again when the server is turned on after a failure (in other cases this does not happen).</p>
+<pre><code class="language-table">operation | key | value
+</code></pre>
+<p>!!! DO NOT USE temporary directories for tlog_dir !!!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="unique-value-search-algorithm"><a class="header" href="#unique-value-search-algorithm">Unique value search algorithm:</a></h1>
+<p>By default, the value is saved to the minimally loaded server and returns its number to the Client. The client takes the dirty work of storing and using this number for subsequent accesses to this key. The search for instances occurs only when the -2 flag is specified and is performed in parallel goroutines.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="other"><a class="header" href="#other">Other</a></h1>
+<h3 id="history---history-of-user-actions"><a class="header" href="#history---history-of-user-actions">HISTORY - History of user actions.</a></h3>
+<p>Example:</p>
+<pre><code class="language-go">HISTORY
+&lt;-
+    SET X &quot;Y&quot;
+    GET X
+</code></pre>
+<h3 id="servers---list-of-active-servers-with-stats"><a class="header" href="#servers---list-of-active-servers-with-stats">SERVERS - List of active servers with stats.</a></h3>
+<p>Example:</p>
+<pre><code class="language-go">SERVERS
+&lt;- no available servers
+</code></pre>
+<h3 id="exit---exit-from-the-acount"><a class="header" href="#exit---exit-from-the-acount">EXIT - Exit from the acount.</a></h3>
+<pre><code class="language-go">EXIT
+&lt;- OK
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

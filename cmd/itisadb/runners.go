@@ -107,7 +107,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func runWebCLI(ctx context.Context, cfg config.WebAppConfig, l *zap.Logger, balancer string) {
+func runWebCLI(ctx context.Context, cfg config.WebAppConfig, securityConfig config.SecurityConfig, l *zap.Logger, balancer string) {
 	store := storage.New()
 	logic := usecase.New(cfg, store, balancer, l)
 
@@ -118,7 +118,7 @@ func runWebCLI(ctx context.Context, cfg config.WebAppConfig, l *zap.Logger, bala
 	}
 
 	e.Use(echo.WrapMiddleware(middleware.Recoverer))
-	h := handler.New(logic, l)
+	h := handler.New(logic, l, securityConfig)
 	t := &Template{
 		templates: template.Must(template.ParseGlob("templates/html/*.html")),
 	}

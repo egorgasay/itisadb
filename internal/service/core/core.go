@@ -54,15 +54,6 @@ func New(
 
 	_, err = storage.CreateUser(
 		models.User{
-			Login:    "",
-			Password: "",
-			Level:    constants.DefaultLevel,
-			Active:   cfg.Security.MandatoryAuthorization,
-		},
-	)
-
-	_, err = storage.CreateUser(
-		models.User{
 			Login:    "itisadb",
 			Password: "itisadb",
 			Level:    constants.SecretLevel,

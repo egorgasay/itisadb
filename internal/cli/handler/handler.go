@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"itisadb/config"
 	"itisadb/internal/cli/cookies"
 	"itisadb/internal/cli/schema"
 	"itisadb/internal/cli/usecase"
@@ -14,12 +15,13 @@ import (
 )
 
 type Handler struct {
-	logic *usecase.UseCase
+	logic    *usecase.UseCase
+	security config.SecurityConfig
 	*zap.Logger
 }
 
-func New(logic *usecase.UseCase, loggerInstance *zap.Logger) *Handler {
-	return &Handler{logic: logic, Logger: loggerInstance}
+func New(logic *usecase.UseCase, loggerInstance *zap.Logger, security config.SecurityConfig) *Handler {
+	return &Handler{logic: logic, Logger: loggerInstance, security: security}
 }
 
 func (h *Handler) MainPage(c echo.Context) error {
@@ -35,6 +37,11 @@ func (h *Handler) GetAuthPage(c echo.Context) error {
 	cookie, err := c.Cookie("session")
 	if err == nil && cookie != nil {
 		return c.Redirect(http.StatusMovedPermanently, "/")
+	}
+
+	if !h.security.On || !h.security.MandatoryAuthorization {
+		cookie = cookies.SetCookie("itisadb")
+		c.SetCookie(cookie)
 	}
 
 	return c.Render(http.StatusOK, "auth.html", nil)
@@ -149,7 +156,7 @@ func (h *Handler) Authenticate(c echo.Context) error {
 	password := c.FormValue("password")
 
 	token, err := h.logic.Authenticate(ctx, username, password)
-	if err != nil {
+	if err != nil && (h.security.On && h.security.MandatoryAuthorization) {
 		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 
@@ -157,4 +164,10 @@ func (h *Handler) Authenticate(c echo.Context) error {
 	c.SetCookie(cookie)
 
 	return c.Redirect(http.StatusMovedPermanently, "/")
+}
+
+func (h *Handler) Exit(c echo.Context) error {
+	// TODO: invalidate token on server
+	c.SetCookie(nil)
+	return c.Redirect(http.StatusMovedPermanently, "/auth")
 }
