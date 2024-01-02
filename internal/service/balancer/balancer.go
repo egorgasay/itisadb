@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Balancer struct {
@@ -24,7 +25,7 @@ type Balancer struct {
 }
 
 func New(local gost.Option[domains.Server]) (*Balancer, error) {
-	f, err := os.OpenFile("balancer", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +46,8 @@ func New(local gost.Option[domains.Server]) (*Balancer, error) {
 		poolCh:  make(chan struct{}, maxProc),
 	}
 
+	go servers.updateRAM()
+
 	scanner := bufio.NewScanner(f)
 	if !scanner.Scan() {
 		_, err = f.WriteString("1")
@@ -60,6 +63,34 @@ func New(local gost.Option[domains.Server]) (*Balancer, error) {
 	servers.freeID = int32(atoi)
 
 	return servers, nil
+}
+
+const _updateRAMInterval = 1 * time.Second
+
+func (s *Balancer) updateRAM() {
+	for {
+		for _, cl := range s.servers {
+			func() {
+				defer s.Unlock()
+				s.Lock()
+
+				ctx := context.Background()
+				ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
+				defer cancel()
+
+				if r := cl.RefreshRAM(ctxWithTimeout); r.IsErr() {
+					cl.IncTries()
+					if cl.Tries() > constants.MaxServerTries {
+						s.Lock()
+						delete(s.servers, cl.Number())
+						s.Unlock()
+					}
+				}
+			}()
+
+		}
+		time.Sleep(_updateRAMInterval)
+	}
 }
 
 func (s *Balancer) GetServer() (domains.Server, bool) {
@@ -154,11 +185,10 @@ func (s *Balancer) GetServers() []string {
 	s.RLock()
 	defer s.RUnlock()
 
-	var servers = make([]string, 0, 5)
+	var servers = make([]string, len(s.servers))
 	for _, cl := range s.servers {
 		r := cl.RAM()
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB",
-			cl.Number(), r.Available, r.Total))
+		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number(), r.Available, r.Total))
 	}
 
 	return servers
@@ -232,7 +262,7 @@ func (s *Balancer) SetToAll(ctx context.Context, key, val string, opts models.Se
 		defer wg.Done()
 		err := server.SetOne(ctx, key, val, opts).Error()
 		if err != nil {
-			if server.Tries() > 2 {
+			if server.Tries() > constants.MaxServerTries {
 				delete(s.servers, number)
 			}
 			server.IncTries()
@@ -268,9 +298,9 @@ func (s *Balancer) DelFromAll(ctx context.Context, key string, opts models.Delet
 
 	del := func(server domains.Server, number int32) {
 		defer wg.Done()
-		err := server.DelOne(ctx, key, itisadb.DeleteOptions{Server: &number}).Error()
+		err := server.DelOne(ctx, key, opts).Error()
 		if err != nil {
-			if server.Tries() > 2 {
+			if server.Tries() > constants.MaxServerTries {
 				delete(s.servers, number)
 			}
 			server.IncTries()

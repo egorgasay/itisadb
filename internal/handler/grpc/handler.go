@@ -181,7 +181,7 @@ func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) 
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	serverNum, err := h.core.Connect(request.GetAddress(), request.GetAvailable(), request.GetTotal())
+	serverNum, err := h.core.Connect(ctx, request.GetAddress(), request.GetAvailable(), request.GetTotal())
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -360,4 +360,18 @@ func (h *Handler) ChangeLevel(ctx context.Context, r *api.ChangeLevelRequest) (*
 	}
 
 	return &api.ChangeLevelResponse{}, nil
+}
+
+func (h *Handler) GetRam(ctx context.Context, r *api.GetRamRequest) (*api.GetRamResponse, error) {
+	res := h.core.CalculateRAM(ctx)
+	if res.IsErr() {
+		return nil, converterr.ToGRPC(res.Error())
+	}
+
+	ram := res.Unwrap()
+
+	return &api.GetRamResponse{Ram: &api.Ram{
+		Total:     ram.Total,
+		Available: ram.Available,
+	}}, nil
 }

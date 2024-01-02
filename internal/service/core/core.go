@@ -10,6 +10,7 @@ import (
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
+	"itisadb/pkg"
 	"runtime"
 	"sync"
 )
@@ -156,7 +157,7 @@ func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetO
 		return "", constants.ErrUnknownServer
 	}
 
-	switch r := cl.GetOne(context.Background(), key, opts.ToSDK()); r.Switch() {
+	switch r := cl.GetOne(context.Background(), key, opts); r.Switch() {
 	case gost.IsOk:
 		cl.ResetTries()
 		return r.Unwrap(), nil
@@ -176,15 +177,17 @@ func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetO
 	return "", constants.ErrNotFound
 }
 
-func (c *Core) Connect(address string, available, total uint64) (int32, error) {
+func (c *Core) Connect(ctx context.Context, address string, available, total uint64) (number int32, err error) {
 	c.logger.Info("New request for connect from " + address)
-	number, err := c.balancer.AddServer(address, available, total, c.balancer.Len())
-	if err != nil {
-		c.logger.Warn(err.Error())
-		return 0, err
-	}
+	return number, c.withContext(ctx, func() error {
+		number, err = c.balancer.AddServer(address, available, total, c.balancer.Len())
+		if err != nil {
+			c.logger.Warn(err.Error())
+			return err
+		}
 
-	return number, nil
+		return nil
+	})
 }
 
 func (c *Core) Disconnect(ctx context.Context, server int32) error {
@@ -227,37 +230,33 @@ func (c *Core) Delete(ctx context.Context, userID int, key string, opts models.D
 }
 
 func (c *Core) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error {
-	if !c.useMainStorage(opts.Server) {
-		serverNumber := toServerNumber(opts.Server)
+	serverNumber := toServerNumber(opts.Server)
 
-		if serverNumber == _deleteFromAll {
-			atLeastOnce := c.balancer.DelFromAll(ctx, key, opts)
-			if !atLeastOnce {
-				return constants.ErrNotFound
-			}
-			return nil
-		}
-
-		cl, ok := c.balancer.GetServerByID(serverNumber)
-		if !ok || cl == nil {
-			return constants.ErrUnknownServer
-		}
-
-		err := cl.DelOne(ctx, key, opts.ToSDK()).Error()
-		if err != nil {
-			return err
+	if serverNumber == _deleteFromAll {
+		atLeastOnce := c.balancer.DelFromAll(ctx, key, opts)
+		if !atLeastOnce {
+			return constants.ErrNotFound
 		}
 		return nil
 	}
 
-	if err := c.storage.Delete(key); err != nil {
-		c.logger.Warn("failed to delete", zap.Error(err))
+	cl, ok := c.balancer.GetServerByID(serverNumber)
+	if !ok || cl == nil {
+		return constants.ErrUnknownServer
+	}
+
+	err := cl.DelOne(ctx, key, opts).Error()
+	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteDelete(key)
+func (c *Core) CalculateRAM(_ context.Context) (res gost.Result[models.RAM]) {
+	res = pkg.CalcRAM()
+	if res.Error() != nil {
+		c.logger.Error("Failed to calculate RAM", zap.Error(res.Error()))
 	}
 
-	return nil
+	return res
 }

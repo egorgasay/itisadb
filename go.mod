@@ -8,7 +8,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/dolthub/swiss v0.2.1
 	github.com/egorgasay/gost v0.0.6
-	github.com/egorgasay/itisadb-go-sdk v0.10.0
+	github.com/egorgasay/itisadb-go-sdk v0.11.0
 	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20231231184311-b27f72fc3dea
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.0
@@ -29,13 +29,16 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/egorgasay/gotils v0.0.3 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect

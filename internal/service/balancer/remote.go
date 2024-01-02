@@ -11,7 +11,7 @@ import (
 
 // =============== server ====================== //
 
-func NewServer(cl *itisadb.Client, number int32) *RemoteServer {
+func NewRemoteServer(cl *itisadb.Client, number int32) *RemoteServer {
 	return &RemoteServer{
 		sdk:    cl,
 		number: number,
@@ -37,12 +37,12 @@ func (s *RemoteServer) Tries() uint32 {
 	return s.tries.Load()
 }
 
-func (s *RemoteServer) GetOne(ctx context.Context, key string, opts ...itisadb.GetOptions) (res gost.Result[string]) {
-	return s.sdk.GetOne(ctx, key, opts...)
+func (s *RemoteServer) GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[string]) {
+	return s.sdk.GetOne(ctx, key, opt.ToSDK())
 }
 
-func (s *RemoteServer) DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[gost.Nothing] {
-	return s.sdk.DelOne(ctx, key, opts...)
+func (s *RemoteServer) DelOne(ctx context.Context, key string, opt models.DeleteOptions) gost.Result[gost.Nothing] {
+	return s.sdk.DelOne(ctx, key, opt.ToSDK())
 }
 
 func (s *RemoteServer) SetOne(ctx context.Context, key string, val string, opts models.SetOptions) (res gost.Result[int32]) {
@@ -55,13 +55,18 @@ func (s *RemoteServer) RAM() models.RAM {
 	return s.ram
 }
 
-func (s *RemoteServer) SetRAM(ram models.RAM) {
+func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Nothing]) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if ram.Total == 0 {
-		return
+
+	r := itisadb.Internal.GetRAM(ctx, s.sdk)
+	if r.IsOk() {
+		s.ram = models.RAM(r.Unwrap())
+		return gost.Ok(gost.Nothing{})
 	}
-	s.ram = models.RAM{Total: ram.Total, Available: ram.Available}
+
+	return res.Err(r.Error())
+
 }
 
 //func (s *RemoteServer) Set(ctx context.Context, key, value string, opts models.SetOptions) error {
@@ -166,7 +171,7 @@ func (s *RemoteServer) ResetTries() {
 
 func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- string, once *sync.Once, _ models.GetOptions) {
 	r := s.sdk.GetOne(ctx, key)
-	if err := r.Error(); err != nil {
+	if r.IsErr() {
 		return
 	}
 
@@ -177,8 +182,8 @@ func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- string, 
 
 func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
 	r := s.sdk.Object(ctx, name, opts.ToSDK())
-	if err := r.Error(); err != nil {
-		return res.Err(err)
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	return res.Ok(gost.Nothing{})
@@ -186,8 +191,8 @@ func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.O
 
 func (s *RemoteServer) GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string]) {
 	r := s.sdk.Object(ctx, object)
-	if err := r.Error(); err != nil {
-		return res.Err(err)
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	return r.Unwrap().Get(ctx, key, opts.ToSDK())
@@ -195,13 +200,13 @@ func (s *RemoteServer) GetFromObject(ctx context.Context, object string, key str
 
 func (s *RemoteServer) SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
 	r := s.sdk.Object(ctx, object)
-	if err := r.Error(); err != nil {
-		return res.Err(err)
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	ro := r.Unwrap().Set(ctx, key, value, opts.ToSDK())
-	if err := ro.Error(); err != nil {
-		return res.Err(err)
+	if ro.IsErr() {
+		return res.Err(res.Error())
 	}
 
 	return res.Ok(gost.Nothing{})

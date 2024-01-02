@@ -77,7 +77,7 @@ func TestUseCase_Connect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = balancer.NewServer(sc, 1)
+			srv.serv = balancer.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -177,7 +177,7 @@ func TestUseCase_Delete(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
 
-			srv.serv = balancer.NewServer(sc, 1)
+			srv.serv = balancer.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -233,7 +233,7 @@ func TestUseCase_Disconnect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = balancer.NewServer(sc, 1)
+			srv.serv = balancer.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
@@ -341,7 +341,7 @@ func TestUseCase_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			s := serversmock.NewMockIServers(c)
-			srv.serv = balancer.NewServer(sc, 1)
+			srv.serv = balancer.NewRemoteServer(sc, 1)
 
 			tt.grpcStorageBehavior(sc)
 			tt.serversBehavior(s)
@@ -436,7 +436,7 @@ func TestUseCase_Set(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			s := serversmock.NewMockIServers(c)
-			srv.serv = balancer.NewServer(sc, 1)
+			srv.serv = balancer.NewRemoteServer(sc, 1)
 
 			tt.grpcStorageBehavior(sc)
 			tt.serversBehavior(s)

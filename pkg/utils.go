@@ -2,6 +2,9 @@ package pkg
 
 import (
 	"context"
+	"github.com/egorgasay/gost"
+	"github.com/shirou/gopsutil/mem"
+	"itisadb/internal/models"
 	"sync"
 )
 
@@ -55,4 +58,19 @@ func WithContext(ctx context.Context, fn func() error, pool chan struct{}, onSto
 		once.Do(done)
 		return ctx.Err()
 	}
+}
+
+func CalcRAM() (res gost.Result[models.RAM]) {
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return res.ErrNewUnknown(err.Error()) // TODO: ???
+	}
+
+	used := vmStat.Used / (1024 * 1024)
+	total := vmStat.Total / (1024 * 1024)
+
+	return res.Ok(models.RAM{
+		Total:     total,
+		Available: total - used,
+	})
 }

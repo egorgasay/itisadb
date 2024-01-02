@@ -3,14 +3,13 @@ package domains
 import (
 	"context"
 	"github.com/egorgasay/gost"
-	"github.com/egorgasay/itisadb-go-sdk"
 	"itisadb/internal/models"
 	"sync"
 )
 
 type Server interface {
 	RAM() models.RAM
-	SetRAM(ram models.RAM)
+	RefreshRAM(ctx context.Context) (res gost.Result[gost.Nothing])
 
 	Number() int32
 	Tries() uint32
@@ -23,8 +22,8 @@ type Server interface {
 }
 
 type appLogic interface {
-	GetOne(ctx context.Context, key string, opts ...itisadb.GetOptions) (res gost.Result[string])
-	DelOne(ctx context.Context, key string, opts ...itisadb.DeleteOptions) gost.Result[gost.Nothing]
+	GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[string])
+	DelOne(ctx context.Context, key string, opt models.DeleteOptions) gost.Result[gost.Nothing]
 	SetOne(ctx context.Context, key string, val string, opt models.SetOptions) (res gost.Result[int32])
 
 	NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing])

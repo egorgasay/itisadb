@@ -9,9 +9,9 @@ import (
 	"itisadb/internal/service/balancer"
 	"itisadb/internal/service/core"
 	"itisadb/internal/service/generator"
+	"itisadb/internal/service/logic"
 	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
-	"itisadb/internal/service/usecase"
 	"itisadb/internal/storage"
 	"log"
 	"os"
@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	lg, err := zap.NewProduction()
+	lg, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}
@@ -63,7 +63,7 @@ func main() {
 
 	var local = gost.None[domains.Server]()
 	if !cfg.Balancer.On || (cfg.Balancer.On && !cfg.Balancer.BalancerOnly) {
-		uc := usecase.NewUseCase(store, *cfg, tl)
+		uc := logic.NewLogic(store, *cfg, tl, lg)
 		ls := balancer.NewLocalServer(uc)
 		local = local.Some(ls)
 	}

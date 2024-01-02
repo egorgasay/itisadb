@@ -89,7 +89,7 @@ window.onload = function () {
          + "history - История действий пользователя.<br>balancer - Список активных серверов со статистикой.";
       } else if (command === "history") {
         fetch("/history").then(response => response.json()).then(json => output.innerHTML = json.text);
-      } else if (command === "balancer") {
+      } else if (command === "servers") {
         fetch("/servers").then(response => response.json()).then(json => output.innerHTML = json.text);
       } else if (command === "exit") {
         console.log('Redirecting to /exit');

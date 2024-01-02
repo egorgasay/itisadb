@@ -2,6 +2,7 @@ package domains
 
 import (
 	"context"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
 
@@ -21,7 +22,7 @@ type Core interface {
 	SetToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (int32, error)
 	DeleteAttr(ctx context.Context, userID int, attr, object string, opts models.DeleteAttrOptions) error
 
-	Connect(address string, available uint64, total uint64) (int32, error)
+	Connect(ctx context.Context, address string, available uint64, total uint64) (int32, error)
 	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
 
@@ -30,4 +31,5 @@ type Core interface {
 	DeleteUser(ctx context.Context, userID int, login string) error
 	ChangePassword(ctx context.Context, userID int, login, password string) error
 	ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error
+	CalculateRAM(ctx context.Context) (res gost.Result[models.RAM])
 }
