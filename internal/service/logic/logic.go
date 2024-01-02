@@ -2,6 +2,8 @@ package logic
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -74,9 +76,47 @@ func (l *Logic) SetOne(ctx context.Context, key string, val string, opt models.S
 	return res.Ok(constants.MainStorageNumber)
 }
 
-func (l *Logic) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
-	//TODO implement me
-	panic("implement me")
+func (l *Logic) earlyObjectNotFound(requested *int32, actual int32) bool {
+	if requested != nil {
+		return *requested != actual
+	}
+
+	return false
+}
+
+func (l *Logic) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.ResultN) {
+	info, err := l.storage.GetObjectInfo(name)
+	errNotFound := errors.Is(err, constants.ErrNotFound)
+
+	if err != nil && !errNotFound {
+		return 0, fmt.Errorf("can't get object info: %w", err)
+	}
+
+	if !errNotFound {
+		if info.Server != _mainStorage {
+			return 0, constants.ErrServerNotFound
+		}
+
+		return _mainStorage, nil
+	}
+
+	if err := l.storage.CreateObject(name, opts); err != nil {
+		return res.ErrNewUnknown(fmt.Sprintf("can't create object: %w", err)) // TODO: ??
+	}
+
+	info := models.ObjectInfo{
+		Server: constants.MainStorageNumber,
+		Level:  opts.Level,
+	}
+
+	l.storage.AddObjectInfo(name, info)
+
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteCreateObject(name)
+		l.tlogger.WriteAddObjectInfo(name, info)
+	}
+
+	return res.Ok()
 }
 
 func (l *Logic) SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {

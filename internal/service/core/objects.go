@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
@@ -19,82 +19,66 @@ func (c *Core) earlyObjectNotFound(requested *int32, actual int32) bool {
 }
 
 func (c *Core) Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (s int32, err error) {
-	return s, c.withContext(ctx, func() error {
-		s, err = c.object(ctx, userID, name, opts)
-		return err
-	})
-}
-
-func (c *Core) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
-	info, err := c.storage.GetObjectInfo(name)
-	errNotFound := errors.Is(err, constants.ErrNotFound)
-
-	if err != nil && !errNotFound {
-		return 0, fmt.Errorf("can't get object info: %w", err)
-	}
-
-	if !c.useMainStorage(opts.Server) {
-		var serv domains.Server
-		var ok bool
-
-		if errNotFound {
-			serv, ok = c.balancer.GetServer()
-		} else {
-			serv, ok = c.balancer.GetServerByID(info.Server)
-		}
-
-		if !ok {
-			return 0, constants.ErrServerNotFound
-		}
-
-		err := serv.NewObject(ctx, name, opts).Error()
-		if err != nil {
-			return 0, fmt.Errorf("can't create object: %w", err)
-		}
-
-		num := serv.Number()
-
-		info := models.ObjectInfo{
-			Server: num,
-			Level:  opts.Level,
-		}
-
-		if c.cfg.TransactionLogger.On {
-			c.tlogger.WriteAddObjectInfo(name, info)
-		}
-
-		c.storage.AddObjectInfo(name, info)
-	}
-
 	if !c.hasPermission(userID, opts.Level) {
 		return 0, constants.ErrForbidden
 	}
 
-	if !errNotFound {
-		if info.Server != _mainStorage {
-			return 0, constants.ErrServerNotFound
+	return s, c.withContext(ctx, func() error {
+		s, err = c.object(ctx, name, opts)
+		return err
+	})
+}
+
+func (c *Core) object(ctx context.Context, name string, opts models.ObjectOptions) (int32, error) {
+	if opts.Server == nil {
+		res := func() (opt gost.Option[models.ObjectInfo]) {
+			defer c.objectsInfo.WRelease()
+
+			info, ok := c.objectsInfo.WBorrow().Read()[name]
+			if !ok {
+				return opt.None()
+			}
+
+			return opt.Some(info)
+		}()
+
+		if res.IsSome() {
+			return res.Unwrap().Server, nil
 		}
-
-		return _mainStorage, nil
 	}
 
-	if err := c.storage.CreateObject(name, opts); err != nil {
-		return 0, fmt.Errorf("can't create object: %w", err)
+	var serv domains.Server
+	var ok bool
+
+	serv, ok = c.balancer.GetServerByID(toServerNumber(opts.Server))
+	if !ok {
+		return 0, constants.ErrServerNotFound
 	}
 
-	info = models.ObjectInfo{
-		Server: _mainStorage,
+	r := serv.NewObject(ctx, name, opts)
+	if r.IsErr() {
+		return 0, fmt.Errorf("can't create object: %w", r.Error())
+	}
+
+	num := serv.Number()
+
+	info := models.ObjectInfo{
+		Server: num,
 		Level:  opts.Level,
 	}
 
 	c.storage.AddObjectInfo(name, info)
 
+	func() {
+		defer c.objectsInfo.WRelease()
+		(*c.objectsInfo.WBorrow().Ref())[name] = info
+	}()
+
 	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteCreateObject(name)
 		c.tlogger.WriteAddObjectInfo(name, info)
 	}
 
-	return _mainStorage, nil
+	return num, nil
 }
 
 func (c *Core) GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (v string, err error) {

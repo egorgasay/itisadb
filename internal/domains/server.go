@@ -16,7 +16,7 @@ type Server interface {
 	IncTries()
 	ResetTries()
 
-	Find(ctx context.Context, key string, out chan<- string, once *sync.Once, opts models.GetOptions)
+	Find(ctx context.Context, key string, out chan<- models.Value, once *sync.Once, opts models.GetOptions)
 
 	appLogic
 }

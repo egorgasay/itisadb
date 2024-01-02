@@ -79,17 +79,23 @@ func (s *Balancer) updateRAM() {
 				defer cancel()
 
 				if r := cl.RefreshRAM(ctxWithTimeout); r.IsErr() {
-					cl.IncTries()
-					if cl.Tries() > constants.MaxServerTries {
-						s.Lock()
-						delete(s.servers, cl.Number())
-						s.Unlock()
-					}
+					s.OnServerError(cl, r.Error())
 				}
 			}()
 
 		}
 		time.Sleep(_updateRAMInterval)
+	}
+}
+
+func (s *Balancer) OnServerError(cl domains.Server, err *gost.Error) {
+	if err.BaseCode() != 0 {
+		return
+	}
+
+	cl.IncTries()
+	if cl.Tries() > constants.MaxServerTries {
+		s.Disconnect(cl.Number())
 	}
 }
 
@@ -194,14 +200,14 @@ func (s *Balancer) GetServers() []string {
 	return servers
 }
 
-func (s *Balancer) DeepSearch(ctx context.Context, key string, opts models.GetOptions) (string, error) {
+func (s *Balancer) DeepSearch(ctx context.Context, key string, opts models.GetOptions) (models.Value, error) {
 	s.RLock()
 	defer s.RUnlock()
 
 	ctxCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var out = make(chan string, 1)
+	var out = make(chan models.Value, 1)
 	defer close(out)
 
 	var wg sync.WaitGroup
@@ -230,13 +236,14 @@ func (s *Balancer) DeepSearch(ctx context.Context, key string, opts models.GetOp
 		cancel()
 		return v, nil
 	case <-allIsDone:
-		return "", constants.ErrNotFound
+		return models.Value{}, constants.ErrNotFound
 	}
 }
 
 func (s *Balancer) GetServerByID(number int32) (domains.Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
+
 	srv, ok := s.servers[number]
 	return srv, ok
 }
@@ -253,19 +260,13 @@ func (s *Balancer) SetToAll(ctx context.Context, key, val string, opts models.Se
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	s.RLock()
-	defer s.RUnlock()
-
 	wg.Add(len(s.servers))
 
 	set := func(server domains.Server, number int32) {
 		defer wg.Done()
-		err := server.SetOne(ctx, key, val, opts).Error()
-		if err != nil {
-			if server.Tries() > constants.MaxServerTries {
-				delete(s.servers, number)
-			}
-			server.IncTries()
+		if r := server.SetOne(ctx, key, val, opts); r.IsErr() {
+			s.OnServerError(server, r.Error())
+
 			mu.Lock()
 			failedServers = append(failedServers, number)
 			mu.Unlock()
@@ -288,24 +289,14 @@ func (s *Balancer) SetToAll(ctx context.Context, key, val string, opts models.Se
 }
 
 func (s *Balancer) DelFromAll(ctx context.Context, key string, opts models.DeleteOptions) (atLeastOnce bool) {
-	var mu sync.Mutex
 	var wg sync.WaitGroup
-
-	s.RLock()
-	defer s.RUnlock()
 
 	wg.Add(len(s.servers))
 
 	del := func(server domains.Server, number int32) {
 		defer wg.Done()
-		err := server.DelOne(ctx, key, opts).Error()
-		if err != nil {
-			if server.Tries() > constants.MaxServerTries {
-				delete(s.servers, number)
-			}
-			server.IncTries()
-			mu.Lock()
-			mu.Unlock()
+		if r := server.DelOne(ctx, key, opts); r.IsErr() {
+			s.OnServerError(server, r.Error())
 			return
 		}
 		atLeastOnce = true

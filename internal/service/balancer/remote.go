@@ -169,7 +169,7 @@ func (s *RemoteServer) ResetTries() {
 //	return err
 //}
 
-func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- string, once *sync.Once, _ models.GetOptions) {
+func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- models.Value, once *sync.Once, _ models.GetOptions) {
 	r := s.sdk.GetOne(ctx, key)
 	if r.IsErr() {
 		return

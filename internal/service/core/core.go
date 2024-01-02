@@ -40,6 +40,8 @@ type Core struct {
 	cfg config.Config
 
 	pool chan struct{} // TODO: ADD TO CONFIG
+
+	objectsInfo gost.RwLock[map[string]models.ObjectInfo]
 }
 
 func New(
@@ -86,13 +88,17 @@ func toServerNumber(server *int32) int32 {
 }
 
 func (c *Core) Set(ctx context.Context, userID int, key, value string, opts models.SetOptions) (val int32, err error) {
+	if !c.hasPermission(userID, models.Level(gost.SafeDeref(opts.Level))) {
+		return 0, constants.ErrForbidden
+	}
+
 	return val, c.withContext(ctx, func() error {
-		val, err = c.set(ctx, userID, key, value, opts)
+		val, err = c.set(ctx, key, value, opts)
 		return err
 	})
 }
 
-func (c *Core) set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
+func (c *Core) set(ctx context.Context, key, val string, opts models.SetOptions) (int32, error) {
 	serverNumber := toServerNumber(opts.Server)
 
 	if serverNumber == _setToAll {
@@ -117,11 +123,17 @@ func (c *Core) set(ctx context.Context, userID int, key, val string, opts models
 	return cl.Number(), nil
 }
 
-func (c *Core) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val string, err error) {
-	return val, c.withContext(ctx, func() error {
+func (c *Core) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val models.Value, err error) {
+	err := c.withContext(ctx, func() error {
 		val, err = c.get(ctx, userID, key, opts)
 		return err
 	})
+
+	if err != nil {
+		return models.Value{}, err
+	}
+
+	return val, nil
 }
 
 func (c *Core) useMainStorage(server *int32) bool {
@@ -139,13 +151,13 @@ func (c *Core) getObjectInfo(object string) (models.ObjectInfo, error) {
 	return info, nil
 }
 
-func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetOptions) (string, error) {
+func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error) {
 	serverNumber := toServerNumber(opts.Server)
 
 	if serverNumber == _searchEverywhere {
 		v, err := c.balancer.DeepSearch(ctx, key, opts)
 		if err != nil && errors.Is(err, constants.ErrNotFound) {
-			return "", constants.ErrNotFound
+			return models.Value{}, constants.ErrNotFound
 		}
 		return v, err
 	} else if !c.balancer.Exists(serverNumber) {
@@ -163,15 +175,7 @@ func (c *Core) get(ctx context.Context, userID int, key string, opts models.GetO
 		return r.Unwrap(), nil
 	case gost.IsErr:
 		c.logger.Warn(r.Error().Error())
-	}
-
-	cl.IncTries()
-
-	if cl.Tries() > 2 {
-		err := c.Disconnect(ctx, cl.Number())
-		if err != nil {
-			c.logger.Warn(err.Error())
-		}
+		c.balancer.OnServerError(serverNumber)
 	}
 
 	return "", constants.ErrNotFound
