@@ -1,4 +1,4 @@
-package core
+package balancer
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"itisadb/internal/models"
 )
 
-func (c *Core) Authenticate(ctx context.Context, login string, password string) (string, error) {
+func (c *Balancer) Authenticate(ctx context.Context, login string, password string) (string, error) {
 	token, err := c.session.AuthByPassword(ctx, login, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate: %w", err)
@@ -17,7 +17,7 @@ func (c *Core) Authenticate(ctx context.Context, login string, password string) 
 	return token, nil
 }
 
-func (c *Core) CreateUser(ctx context.Context, userID int, user models.User) error {
+func (c *Balancer) CreateUser(ctx context.Context, userID int, user models.User) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -42,7 +42,7 @@ func (c *Core) CreateUser(ctx context.Context, userID int, user models.User) err
 	return nil
 }
 
-func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
+func (c *Balancer) DeleteUser(ctx context.Context, userID int, login string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -72,7 +72,7 @@ func (c *Core) DeleteUser(ctx context.Context, userID int, login string) error {
 	return nil
 }
 
-func (c *Core) ChangePassword(ctx context.Context, userID int, login, password string) error {
+func (c *Balancer) ChangePassword(ctx context.Context, userID int, login, password string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -103,7 +103,7 @@ func (c *Core) ChangePassword(ctx context.Context, userID int, login, password s
 	return nil
 }
 
-func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error {
+func (c *Balancer) ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -134,7 +134,7 @@ func (c *Core) ChangeLevel(ctx context.Context, userID int, login string, level 
 	return nil
 }
 
-func (c *Core) hasPermission(userID int, level models.Level) bool {
+func (c *Balancer) hasPermission(userID int, level models.Level) bool {
 	// always ok when security is disabled
 	if !c.cfg.Security.On {
 		return true

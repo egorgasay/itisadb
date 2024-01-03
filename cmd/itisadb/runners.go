@@ -20,7 +20,7 @@ import (
 	"itisadb/internal/domains"
 	grpchandler "itisadb/internal/handler/grpc"
 	resthandler "itisadb/internal/handler/rest"
-	"itisadb/internal/service/core"
+	"itisadb/internal/service/balancer"
 	"itisadb/pkg"
 	"net"
 	"net/http"
@@ -66,7 +66,7 @@ func runGRPC(
 func runREST(
 	ctx context.Context,
 	l *zap.Logger,
-	logic *core.Core,
+	logic *balancer.Balancer,
 	cfg config.NetworkConfig,
 ) {
 	h := resthandler.New(logic)

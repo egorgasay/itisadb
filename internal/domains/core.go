@@ -7,7 +7,7 @@ import (
 )
 
 type Core interface {
-	Get(ctx context.Context, userID int, key string, opts models.GetOptions) (string, error)
+	Get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error)
 	Set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error)
 	Delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error
 

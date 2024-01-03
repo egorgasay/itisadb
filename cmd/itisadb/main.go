@@ -7,9 +7,9 @@ import (
 	"itisadb/config"
 	"itisadb/internal/domains"
 	"itisadb/internal/service/balancer"
-	"itisadb/internal/service/core"
 	"itisadb/internal/service/generator"
 	"itisadb/internal/service/logic"
+	"itisadb/internal/service/servers"
 	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
@@ -64,11 +64,11 @@ func main() {
 	var local = gost.None[domains.Server]()
 	if !cfg.Balancer.On || (cfg.Balancer.On && !cfg.Balancer.BalancerOnly) {
 		uc := logic.NewLogic(store, *cfg, tl, lg)
-		ls := balancer.NewLocalServer(uc)
+		ls := servers.NewLocalServer(uc)
 		local = local.Some(ls)
 	}
 
-	s, err := balancer.New(local)
+	s, err := servers.New(local)
 	if err != nil {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
@@ -78,7 +78,7 @@ func main() {
 
 	appCFG := *cfg
 
-	logic, err := core.New(ctx, appCFG, lg, store, tl, s, ses)
+	logic, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}

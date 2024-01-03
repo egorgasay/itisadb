@@ -1,4 +1,4 @@
-package core
+package balancer
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	servers2 "itisadb/internal/balancer"
-	"itisadb/internal/service/balancer"
-	serversmock "itisadb/internal/service/core/mocks/servers"
+	serversmock "itisadb/internal/service/balancer/mocks/servers"
+	"itisadb/internal/service/servers"
 	repo "itisadb/internal/storage"
 	"itisadb/pkg/api/storage"
 	"itisadb/pkg/logger"
@@ -22,7 +22,7 @@ type gStorageBehavior func(cl *storagemock.MockStorageClient)
 
 func TestUseCase_AttachToObject(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -103,14 +103,14 @@ func TestUseCase_AttachToObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test1": 1,
 					"test2": 2,
@@ -128,7 +128,7 @@ func TestUseCase_AttachToObject(t *testing.T) {
 
 func TestUseCase_DeleteAttr(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -209,14 +209,14 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -233,7 +233,7 @@ func TestUseCase_DeleteAttr(t *testing.T) {
 
 func TestUseCase_DeleteObject(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -310,14 +310,14 @@ func TestUseCase_DeleteObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -333,7 +333,7 @@ func TestUseCase_DeleteObject(t *testing.T) {
 
 func TestUseCase_GetFromObject(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -426,14 +426,14 @@ func TestUseCase_GetFromObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -455,7 +455,7 @@ func TestUseCase_GetFromObject(t *testing.T) {
 
 func TestUseCase_ObjectToJSON(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -539,14 +539,14 @@ func TestUseCase_ObjectToJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -568,7 +568,7 @@ func TestUseCase_ObjectToJSON(t *testing.T) {
 
 func TestUseCase_Object(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -642,15 +642,15 @@ func TestUseCase_Object(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				storage:  st,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				storage: st,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -671,7 +671,7 @@ func TestUseCase_Object(t *testing.T) {
 
 func TestUseCase_IsObject(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -713,12 +713,12 @@ func TestUseCase_IsObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 			s := serversmock.NewMockIServers(c)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -739,7 +739,7 @@ func TestUseCase_IsObject(t *testing.T) {
 
 func TestUseCase_SetToObject(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -835,14 +835,14 @@ func TestUseCase_SetToObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},
@@ -864,7 +864,7 @@ func TestUseCase_SetToObject(t *testing.T) {
 
 func TestUseCase_Size(t *testing.T) {
 	srv := struct {
-		serv *balancer.RemoteServer
+		serv *servers.RemoteServer
 	}{}
 
 	type args struct {
@@ -945,14 +945,14 @@ func TestUseCase_Size(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sc := storagemock.NewMockStorageClient(c)
 			tt.grpcStorageBehavior(sc)
-			srv.serv = balancer.NewRemoteServer(sc, 1)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
 			s := serversmock.NewMockIServers(c)
 			tt.serversBehavior(s)
 
-			uc := &Core{
-				balancer: s,
-				logger:   logger.New(loggerInstance),
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
 				objects: map[string]int32{
 					"test_object": 1,
 				},

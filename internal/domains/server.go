@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
-	"sync"
 )
 
 type Server interface {
@@ -16,24 +15,23 @@ type Server interface {
 	IncTries()
 	ResetTries()
 
-	Find(ctx context.Context, key string, out chan<- models.Value, once *sync.Once, opts models.GetOptions)
-
 	appLogic
 }
 
 type appLogic interface {
-	GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[string])
-	DelOne(ctx context.Context, key string, opt models.DeleteOptions) gost.Result[gost.Nothing]
-	SetOne(ctx context.Context, key string, val string, opt models.SetOptions) (res gost.Result[int32])
+	GetOne(ctx context.Context, userID int, key string, opt models.GetOptions) (res gost.Result[models.Value])
+	DelOne(ctx context.Context, userID int, key string, opt models.DeleteOptions) gost.Result[gost.Nothing]
+	SetOne(ctx context.Context, userID int, key string, val string, opt models.SetOptions) (res gost.Result[int32])
 
-	NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing])
-	SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing])
-	GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string])
+	NewObject(ctx context.Context, userID int, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing])
+	SetToObject(ctx context.Context, userID int, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing])
+	GetFromObject(ctx context.Context, userID int, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string])
+
+	ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (res gost.Result[string])
 }
 
 //Set(ctx context.Context, key string, value string, opts models.SetOptions) error
 //Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error)
-//ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (*api.ObjectToJSONResponse, error)
 //GetFromObject(ctx context.Context, name string, key string, opts models.GetFromObjectOptions) (*api.GetFromObjectResponse, error)
 //SetToObject(ctx context.Context, name string, key string, value string, opts models.SetToObjectOptions) error
 //NewObject(ctx context.Context, name string, opts models.ObjectOptions) error

@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate mockgen -destination=mocks/balancer/mock_servers.go -package=mocks . Servers
-type Balancer interface {
+type Servers interface {
 	GetServer() (Server, bool)
 	Len() int32
 	AddServer(address string, available uint64, total uint64, server int32) (int32, error)

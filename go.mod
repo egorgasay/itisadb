@@ -9,8 +9,8 @@ require (
 	github.com/dolthub/swiss v0.2.1
 	github.com/egorgasay/gost v0.0.8
 	github.com/egorgasay/gotils v0.0.3
-	github.com/egorgasay/itisadb-go-sdk v0.12.0
-	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20231231184311-b27f72fc3dea
+	github.com/egorgasay/itisadb-go-sdk v0.15.1
+	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240103130519-71d21ef26787
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/golang/mock v1.6.0
@@ -43,6 +43,6 @@ require (
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 )

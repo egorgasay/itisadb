@@ -33,30 +33,21 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				readOnly := split[0] == "1"
 				serverNumberStr := split[1]
 
-				serverNumberInt, err := strconv.Atoi(serverNumberStr)
+				serverNumber, err := strconv.Atoi(serverNumberStr)
 				if err != nil {
 					return fmt.Errorf("%w\n invalid server number %s, Name: %s", ErrCorruptedConfigFile, serverNumberStr, e.Name)
 				}
 
-				serverNumber := int32(serverNumberInt)
-
-				var snum *int32 = nil
-				if serverNumber != 0 {
-					snum = &serverNumber
-				}
-
 				levelStr := split[2]
-				levelInt, err := strconv.Atoi(levelStr)
+				level, err := strconv.Atoi(levelStr)
 				if err != nil {
 					return fmt.Errorf("%w\n invalid level %s, Name: %s", ErrCorruptedConfigFile, levelStr, e.Name)
 				}
 
-				level := int8(levelInt)
-
 				r.Set(e.Name, e.Value, models.SetOptions{
-					Server:   snum,
+					Server:   int32(serverNumber),
 					ReadOnly: readOnly,
-					Level:    &level,
+					Level:    models.Level(level),
 				})
 			case Delete:
 				r.Delete(e.Name)

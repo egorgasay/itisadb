@@ -1,9 +1,11 @@
 package models
 
-import "github.com/egorgasay/itisadb-go-sdk"
+import (
+	"github.com/egorgasay/itisadb-go-sdk"
+)
 
 type GetOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o GetOptions) ToSDK() itisadb.GetOptions {
@@ -13,10 +15,10 @@ func (o GetOptions) ToSDK() itisadb.GetOptions {
 }
 
 type SetOptions struct {
-	Server   *int32
+	Server   int32
 	ReadOnly bool
 	Unique   bool
-	Level    *int8 // TODO: handle?
+	Level    Level
 }
 
 func (o SetOptions) ToSDK() itisadb.SetOptions {
@@ -27,7 +29,7 @@ func (o SetOptions) ToSDK() itisadb.SetOptions {
 }
 
 type DeleteOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o DeleteOptions) ToSDK() itisadb.DeleteOptions {
@@ -37,6 +39,10 @@ func (o DeleteOptions) ToSDK() itisadb.DeleteOptions {
 }
 
 type Level byte
+
+func (l Level) ToSDK() itisadb.Level {
+	return itisadb.Level(l)
+}
 
 //func (l Level) Higher() Level {
 //	return max(l+1, constants.MinLevel)
@@ -55,7 +61,7 @@ type Level byte
 //}
 
 type ObjectOptions struct {
-	Server *int32
+	Server int32
 	Level  Level
 }
 
@@ -67,7 +73,7 @@ func (o ObjectOptions) ToSDK() itisadb.ObjectOptions {
 }
 
 type ObjectToJSONOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o ObjectToJSONOptions) ToSDK() itisadb.ObjectToJSONOptions {
@@ -77,7 +83,7 @@ func (o ObjectToJSONOptions) ToSDK() itisadb.ObjectToJSONOptions {
 }
 
 type DeleteObjectOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o DeleteObjectOptions) ToSDK() itisadb.DeleteObjectOptions {
@@ -87,7 +93,7 @@ func (o DeleteObjectOptions) ToSDK() itisadb.DeleteObjectOptions {
 }
 
 type IsObjectOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o IsObjectOptions) ToSDK() itisadb.IsObjectOptions {
@@ -97,7 +103,7 @@ func (o IsObjectOptions) ToSDK() itisadb.IsObjectOptions {
 }
 
 type SizeOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o SizeOptions) ToSDK() itisadb.SizeOptions {
@@ -107,7 +113,7 @@ func (o SizeOptions) ToSDK() itisadb.SizeOptions {
 }
 
 type AttachToObjectOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o AttachToObjectOptions) ToSDK() itisadb.AttachToObjectOptions {
@@ -117,7 +123,7 @@ func (o AttachToObjectOptions) ToSDK() itisadb.AttachToObjectOptions {
 }
 
 type SetToObjectOptions struct {
-	Server   *int32
+	Server   int32
 	ReadOnly bool
 }
 
@@ -129,8 +135,7 @@ func (o SetToObjectOptions) ToSDK() itisadb.SetToObjectOptions {
 }
 
 type GetFromObjectOptions struct {
-	Server *int32
-	Level  *Level //TODO:???
+	Server int32
 }
 
 func (o GetFromObjectOptions) ToSDK() itisadb.GetFromObjectOptions {
@@ -140,7 +145,7 @@ func (o GetFromObjectOptions) ToSDK() itisadb.GetFromObjectOptions {
 }
 
 type ConnectOptions struct {
-	Server *int32
+	Server int32
 }
 
 func (o ConnectOptions) ToSDK() itisadb.ConnectOptions {
@@ -150,14 +155,14 @@ func (o ConnectOptions) ToSDK() itisadb.ConnectOptions {
 }
 
 type DeleteAttrOptions struct {
-	Server *int32
+	Server int32
 }
 
-//func (o DeleteAttrOptions) ToSDK() itisadb.De {
-//	return itisadb.DeleteAttrOptions{
-//		Server: o.Server,
-//	}
-//}
+func (o DeleteAttrOptions) ToSDK() itisadb.DeleteKeyOptions {
+	return itisadb.DeleteKeyOptions{
+		Server: o.Server,
+	}
+}
 
 type CreateUserOptions struct {
 	Level Level

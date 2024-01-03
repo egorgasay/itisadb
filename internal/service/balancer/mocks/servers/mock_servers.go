@@ -6,7 +6,7 @@ package mocks
 
 import (
 	context "context"
-	"itisadb/internal/service/balancer"
+	"itisadb/internal/service/servers"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -97,10 +97,10 @@ func (mr *MockIServersMockRecorder) Exists(arg0 interface{}) *gomock.Call {
 }
 
 // GetServer mocks base method.
-func (m *MockIServers) GetServer() (*balancer.RemoteServer, bool) {
+func (m *MockIServers) GetServer() (*servers.RemoteServer, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetServer")
-	ret0, _ := ret[0].(*balancer.RemoteServer)
+	ret0, _ := ret[0].(*servers.RemoteServer)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -112,10 +112,10 @@ func (mr *MockIServersMockRecorder) GetServer() *gomock.Call {
 }
 
 // GetServerByID mocks base method.
-func (m *MockIServers) GetServerByID(arg0 int32) (*balancer.RemoteServer, bool) {
+func (m *MockIServers) GetServerByID(arg0 int32) (*servers.RemoteServer, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetServerByID", arg0)
-	ret0, _ := ret[0].(*balancer.RemoteServer)
+	ret0, _ := ret[0].(*servers.RemoteServer)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }

@@ -1,4 +1,4 @@
-package balancer
+package servers
 
 import (
 	"context"
@@ -37,8 +37,18 @@ func (s *RemoteServer) Tries() uint32 {
 	return s.tries.Load()
 }
 
-func (s *RemoteServer) GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[string]) {
-	return s.sdk.GetOne(ctx, key, opt.ToSDK())
+func (s *RemoteServer) GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[models.Value]) {
+	r := s.sdk.GetOne(ctx, key, opt.ToSDK())
+	if r.IsOk() {
+		val := r.Unwrap()
+		return res.Ok(models.Value{
+			ReadOnly: val.ReadOnly,
+			Level:    models.Level(val.Level),
+			Value:    val.Value,
+		})
+	}
+
+	return res.Err(r.Error())
 }
 
 func (s *RemoteServer) DelOne(ctx context.Context, key string, opt models.DeleteOptions) gost.Result[gost.Nothing] {
@@ -69,14 +79,6 @@ func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Not
 
 }
 
-//func (s *RemoteServer) Set(ctx context.Context, key, value string, opts models.SetOptions) error {
-//	_, err := s.client.Set(ctx, &api.SetRequest{
-//		Key:   key,
-//		Value: value,
-//	})
-//	return err
-//}
-//
 //func (s *RemoteServer) Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error) {
 //	r, err := s.client.Get(ctx, &api.GetRequest{Key: key})
 //	return r, err
@@ -168,17 +170,6 @@ func (s *RemoteServer) ResetTries() {
 //	})
 //	return err
 //}
-
-func (s *RemoteServer) Find(ctx context.Context, key string, out chan<- models.Value, once *sync.Once, _ models.GetOptions) {
-	r := s.sdk.GetOne(ctx, key)
-	if r.IsErr() {
-		return
-	}
-
-	once.Do(func() {
-		out <- r.Unwrap()
-	})
-}
 
 func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
 	r := s.sdk.Object(ctx, name, opts.ToSDK())

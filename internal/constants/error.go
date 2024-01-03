@@ -40,5 +40,5 @@ var (
 
 	ErrInvalidPassword = errors.New("invalid password")
 
-	ErrForbidden = errors.New("forbidden")
+	ErrForbidden = gost.NewError(0, 0, "forbidden")
 )

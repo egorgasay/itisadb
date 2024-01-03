@@ -2,102 +2,26 @@ package balancer
 
 import (
 	"context"
+	"errors"
 	"github.com/golang/mock/gomock"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"itisadb/pkg"
-	"itisadb/pkg/api/storage"
+	servers2 "itisadb/internal/balancer"
+	serversmock "itisadb/internal/service/balancer/mocks/servers"
+	"itisadb/internal/service/servers"
+	gstorage "itisadb/pkg/api/storage"
 	storagemock "itisadb/pkg/api/storage/gomocks"
-	"runtime"
+	"itisadb/pkg/logger"
 	"sync"
-	"sync/atomic"
 	"testing"
-	"time"
 )
 
-func TestServer_find(t *testing.T) {
-	type args struct {
-		ctx  context.Context
-		key  string
-		out  chan string
-		once *sync.Once
-	}
-	tests := []struct {
-		name         string
-		mockBehavior func(cl *storagemock.MockStorageClient)
-		want         string
-		wantErr      bool
-		args         args
-	}{
-		{
-			name: "ok",
-			args: args{
-				ctx:  context.Background(),
-				key:  "test",
-				out:  make(chan string),
-				once: &sync.Once{},
-			},
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{
-					Value: "value"}, nil)
-			},
-			want: "value",
-		},
-		{
-			name: "notFound",
-			args: args{
-				ctx:  context.Background(),
-				key:  "test34",
-				out:  make(chan string),
-				once: &sync.Once{},
-			},
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found"))
-			},
-			wantErr: true,
-		},
-	}
+func TestUseCase_Connect(t *testing.T) {
+	srv := struct {
+		serv *servers.RemoteServer
+	}{}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			tt.mockBehavior(cl)
-
-			ctx, cancel := context.WithTimeout(tt.args.ctx, 2*time.Second)
-			defer cancel()
-
-			s := &RemoteServer{
-				tries:   atomic.Uint32{},
-				storage: cl,
-				ram: RAM{
-					available: 100,
-					total:     100,
-				},
-				number: 1,
-				mu:     &sync.RWMutex{},
-			}
-
-			go s.find(ctx, tt.args.key, tt.args.out, tt.args.once)
-
-			select {
-			case <-ctx.Done():
-				if tt.wantErr {
-					return
-				}
-				t.Fatalf("timeout")
-			case got := <-tt.args.out:
-				if got != tt.want {
-					t.Errorf("RemoteServer.find() = %v, want %v", got, tt.want)
-				}
-			}
-		})
-	}
-}
-
-func TestServers_AddClient(t *testing.T) {
 	type args struct {
 		address   string
 		available uint64
@@ -105,828 +29,433 @@ func TestServers_AddClient(t *testing.T) {
 		server    int32
 	}
 	tests := []struct {
-		name         string
-		args         args
-		want         int32
-		mockBehavior func(cl *storagemock.MockStorageClient)
-		wantErr      bool
+		name                string
+		args                args
+		want                int32
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		wantErr             bool
 	}{
 		{
-			name: "ok",
+			name: "success",
 			args: args{
-				address:   "test",
-				available: 100,
-				total:     100,
+				address:   "localhost:8080",
+				available: 1,
+				total:     1,
 				server:    1,
 			},
-			want:    1,
-			wantErr: false,
+			want: 1,
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().AddServer(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(int32(1), nil)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+		},
+		{
+			name: "connectionError",
+			args: args{
+				address:   "localhost:8080",
+				available: 1,
+				total:     1,
+				server:    1,
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().AddServer(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(int32(0),
+					errors.New("connection error"))
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+			wantErr:             true,
 		},
 	}
+
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
+			sc := storagemock.NewMockStorageClient(c)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
-			s := &Balancer{
-				servers: map[int32]*RemoteServer{},
-				freeID:  1,
-				RWMutex: sync.RWMutex{},
+			s := serversmock.NewMockIServers(c)
+			tt.serversBehavior(s)
+
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				objects: map[string]int32{
+					"test_object": 1,
+				},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
-			got, err := s.AddServer(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
+			got, err := uc.Connect(tt.args.address, tt.args.available, tt.args.total, tt.args.server)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddServer() error = %v, wantCode %v", err, tt.wantErr)
+				t.Errorf("Connect() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("AddServer() got = %v, want %v", got, tt.want)
+				t.Errorf("Connect() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestServers_DeepSearch(t *testing.T) {
+func TestUseCase_Delete(t *testing.T) {
+	srv := struct {
+		serv *servers.RemoteServer
+	}{}
 	type args struct {
 		ctx context.Context
 		key string
+		num int32
 	}
 	tests := []struct {
-		name         string
-		args         args
-		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*RemoteServer
-		want         string
-		wantErr      bool
+		name                string
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		args                args
+		wantErr             bool
 	}{
 		{
-			name: "ok",
+			name: "success",
 			args: args{
 				ctx: context.Background(),
-				key: "test",
+				key: "test_key",
+				num: 1,
 			},
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(&storage.GetResponse{
-					Value: "value"}, nil).AnyTimes()
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 44,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 43,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
-			want: "value",
 		},
 		{
-			name: "notFound",
+			name: "serverNotFound",
 			args: args{
 				ctx: context.Background(),
-				key: "test",
+				key: "test_key",
+				num: 3,
 			},
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found")).AnyTimes()
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(nil, false)
 			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 23,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			wantErr: true,
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {},
+			wantErr:             true,
 		},
 		{
-			name: "badConnection",
+			name: "valueNotFound",
 			args: args{
 				ctx: context.Background(),
-				key: "test",
+				key: "test_key",
+				num: 1,
 			},
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).AnyTimes()
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
 			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 23,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil,
+					servers2.ErrNotFound)
 			},
 			wantErr: true,
 		},
 	}
-	pool := make(chan struct{}, runtime.GOMAXPROCS(0))
-	defer close(pool)
+
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			tt.mockBehavior(cl)
+			sc := storagemock.NewMockStorageClient(c)
+			tt.grpcStorageBehavior(sc)
 
-			for _, serv := range tt.servers {
-				serv.storage = cl
+			srv.serv = servers.NewRemoteServer(sc, 1)
+
+			s := serversmock.NewMockIServers(c)
+			tt.serversBehavior(s)
+
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				objects: map[string]int32{
+					"test_object": 1,
+				},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-				poolCh:  pool,
+			if err = uc.Delete(tt.args.ctx, tt.args.key, tt.args.num); (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUseCase_Disconnect(t *testing.T) {
+	srv := struct {
+		serv *servers.RemoteServer
+	}{}
+
+	type args struct {
+		number int32
+	}
+	tests := []struct {
+		name            string
+		serversBehavior serversBehavior
+		args            args
+	}{
+		{
+			name: "success",
+			args: args{
+				number: 1,
+			},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().Disconnect(gomock.Any()).Return()
+			},
+		},
+	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sc := storagemock.NewMockStorageClient(c)
+			srv.serv = servers.NewRemoteServer(sc, 1)
+
+			s := serversmock.NewMockIServers(c)
+			tt.serversBehavior(s)
+
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				objects: map[string]int32{
+					"test_object": 1,
+				},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
 
-			got, err := s.DeepSearch(tt.args.ctx, tt.args.key)
+			err = uc.Disconnect(ctx, tt.args.number)
+			if err != nil {
+				t.Errorf("Disconnect() error = %v", err)
+			}
+		})
+	}
+}
+
+func TestUseCase_Get(t *testing.T) {
+	srv := struct {
+		serv *servers.RemoteServer
+	}{}
+
+	type args struct {
+		ctx          context.Context
+		key          string
+		serverNumber int32
+	}
+	tests := []struct {
+		name                string
+		args                args
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		want                string
+		wantErr             bool
+	}{
+		{
+			name: "success",
+			args: args{
+				ctx:          context.Background(),
+				key:          "test_key",
+				serverNumber: 1,
+			},
+
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(
+					srv.serv, true)
+				cl.EXPECT().Len().Return(int32(1))
+				cl.EXPECT().Exists(gomock.Any()).Return(true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&gstorage.GetResponse{Value: "test_value"}, nil)
+			},
+			want: "test_value",
+		},
+		{
+			name: "clNotFoundAndPhysNotFound",
+			args: args{
+				ctx:          context.Background(),
+				key:          "test_key",
+				serverNumber: 4,
+			},
+
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().Len().Return(int32(1))
+				cl.EXPECT().Exists(gomock.Any()).Return(false)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+			},
+			wantErr: true,
+		},
+		{
+			name: "notFoundInGrpc",
+			args: args{
+				ctx:          context.Background(),
+				key:          "test_key",
+				serverNumber: 1,
+			},
+
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().Len().Return(int32(1))
+				cl.EXPECT().Exists(gomock.Any()).Return(true)
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(srv.serv, true)
+			},
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&gstorage.GetResponse{}, status.Error(codes.NotFound, "not found"))
+			},
+			wantErr: true,
+		},
+	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sc := storagemock.NewMockStorageClient(c)
+			s := serversmock.NewMockIServers(c)
+			srv.serv = servers.NewRemoteServer(sc, 1)
+
+			tt.grpcStorageBehavior(sc)
+			tt.serversBehavior(s)
+
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				objects: map[string]int32{
+					"test_object": 1,
+				},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
+			}
+
+			got, err := uc.Get(tt.args.ctx, tt.args.key, tt.args.serverNumber)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DeepSearch() error = %v, wantCode %v", err, tt.wantErr)
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("DeepSearch() got = %v, want %v", got, tt.want)
+				t.Errorf("Get() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestServers_Disconnect(t *testing.T) {
+func TestUseCase_Set(t *testing.T) {
+	srv := struct {
+		serv *servers.RemoteServer
+	}{}
 	type args struct {
-		number int32
+		ctx          context.Context
+		key          string
+		val          string
+		serverNumber int32
+		uniques      bool
 	}
 	tests := []struct {
-		name         string
-		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*RemoteServer
-		want         bool
-		args         args
+		name                string
+		serversBehavior     serversBehavior
+		grpcStorageBehavior gStorageBehavior
+		args                args
+		want                int32
+		wantErr             bool
 	}{
 		{
-			name: "ok",
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-			},
+			name: "success",
 			args: args{
-				number: 1,
+				ctx:          context.Background(),
+				key:          "test_key",
+				val:          "test_value",
+				serverNumber: 1,
+				uniques:      false,
 			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 32,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().GetServerByID(gomock.Any()).Return(
+					srv.serv, true)
+				cl.EXPECT().Len().Return(int32(1))
 			},
-			want: true,
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
+				cl.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
+					&gstorage.SetResponse{}, nil)
+			},
+			want: 0,
 		},
 		{
-			name: "badConnection",
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
-			},
+			name: "noServers",
 			args: args{
-				number: 1,
+				ctx:          context.Background(),
+				key:          "test_key",
+				val:          "test_value",
+				serverNumber: 1,
+				uniques:      false,
 			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 34,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
+
+			serversBehavior: func(cl *serversmock.MockIServers) {
+				cl.EXPECT().Len().Return(int32(0))
 			},
-			want: false,
-		},
-		{
-			name: "notFound",
-			mockBehavior: func(cl *storagemock.MockStorageClient) {
+			grpcStorageBehavior: func(cl *storagemock.MockStorageClient) {
 			},
-			args: args{
-				number: 333,
-			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 13,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: false,
+			wantErr: true,
 		},
 	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+	loggerInstance, err := zap.NewProduction()
+	if err != nil {
+		t.Fatalf("failed to inizialise logger: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			tt.mockBehavior(cl)
-			for _, s := range tt.servers {
-				s.storage = cl
-			}
+			sc := storagemock.NewMockStorageClient(c)
+			s := serversmock.NewMockIServers(c)
+			srv.serv = servers.NewRemoteServer(sc, 1)
 
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
+			tt.grpcStorageBehavior(sc)
+			tt.serversBehavior(s)
+			uc := &Balancer{
+				servers: s,
+				logger:  logger.New(loggerInstance),
+				objects: map[string]int32{
+					"test_object": 1,
+				},
+				mu:   sync.RWMutex{},
+				pool: make(chan struct{}, 30000),
 			}
-			s.Disconnect(tt.args.number)
-
-			if tt.want && s.Exists(tt.args.number) {
-				t.Errorf("Disconnect() error = %v, wantCode %v", s.Exists(tt.args.number), false)
-			}
-		})
-	}
-}
-
-func TestServers_Exists(t *testing.T) {
-	type args struct {
-		number int32
-	}
-	tests := []struct {
-		name         string
-		mockBehavior func(cl *storagemock.MockStorageClient)
-		servers      map[int32]*RemoteServer
-		args         args
-		want         bool
-	}{
-		{
-			name: "ok",
-			args: args{
-				number: 1,
-			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 55,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "notFound",
-			args: args{
-				number: 3,
-			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 11,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-			}
-			if got := s.Exists(tt.args.number); got != tt.want {
-				t.Errorf("Exists() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServers_GetClient(t *testing.T) {
-	tests := []struct {
-		name    string
-		servers map[int32]*RemoteServer
-		want    int32
-		wantRes bool
-	}{
-		{
-			name: "ok",
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 100,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want:    1,
-			wantRes: true,
-		},
-		{
-			name: "ok2",
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 33,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want:    3,
-			wantRes: true,
-		},
-		{
-			name:    "noClients",
-			servers: map[int32]*RemoteServer{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-			}
-			got, ok := s.GetServer()
-			if ok != tt.wantRes {
-				t.Errorf("GetServer() got1 = %v, want %v", ok, tt.wantRes)
+			got, err := uc.Set(tt.args.ctx, tt.args.key, tt.args.val, tt.args.serverNumber, tt.args.uniques)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			if !ok {
-				return
-			}
-
-			if got.number != tt.want {
-				t.Errorf("GetServer() got = %v, want %v", got.number, tt.want)
-			}
-		})
-	}
-}
-
-func TestServers_GetClientByID(t *testing.T) {
-	type args struct {
-		number int32
-	}
-	tests := []struct {
-		name    string
-		servers map[int32]*RemoteServer
-		args    args
-		want    int32
-		ok      bool
-	}{
-		{
-			name: "ok",
-			servers: map[int32]*RemoteServer{
-				1: {
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			args: args{
-				number: 1,
-			},
-			want: 1,
-			ok:   true,
-		},
-		{
-			name: "notFound",
-			servers: map[int32]*RemoteServer{
-				1: {
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			args: args{
-				number: 33,
-			},
-			ok: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-			}
-			got, ok := s.GetServerByID(tt.args.number)
-			if ok != tt.ok {
-				t.Errorf("GetServerByID() got1 = %v, want %v", ok, tt.ok)
-				return
-			} else if !ok {
-				return
-			}
-
-			if got.number != tt.want {
-				t.Errorf("GetServerByID() got = %v, want %v", got.number, tt.want)
-			}
-
-		})
-	}
-}
-
-func TestServers_GetServers(t *testing.T) {
-	tests := []struct {
-		name    string
-		servers map[int32]*RemoteServer
-		want    []string
-	}{
-		{
-			name: "ok",
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 33,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: []string{
-				"s#1 Avaliable: 33 MB, Total: 100 MB",
-				"s#2 Avaliable: 66 MB, Total: 100 MB",
-				"s#3 Avaliable: 77 MB, Total: 100 MB",
-			},
-		},
-		{
-			name:    "noServers",
-			servers: map[int32]*RemoteServer{},
-			want:    []string{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-			}
-			if got := s.GetServers(); !pkg.IsTheSameArray(got, tt.want) {
-				t.Errorf("GetServers() = \n%v,\nwant \n%v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServers_Len(t *testing.T) {
-	tests := []struct {
-		name    string
-		servers map[int32]*RemoteServer
-		want    int32
-	}{
-		{
-			name: "ok",
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 33,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: 3,
-		},
-		{
-			name:    "noServers",
-			servers: map[int32]*RemoteServer{},
-			want:    0,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-			}
-			if got := s.Len(); got != tt.want {
-				t.Errorf("Len() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServers_SetToAll(t *testing.T) {
-	type args struct {
-		ctx     context.Context
-		key     string
-		val     string
-		uniques bool
-	}
-	tests := []struct {
-		name         string
-		mockBehavior func(r *storagemock.MockStorageClient)
-		args         args
-		servers      map[int32]*RemoteServer
-		want         []int32
-	}{
-		{
-			name: "ok",
-			args: args{
-				ctx: context.Background(),
-				key: "key",
-				val: "val",
-			},
-			mockBehavior: func(r *storagemock.MockStorageClient) {
-				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, nil).Times(3)
-			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 33,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: []int32{},
-		},
-		{
-			name: "badConnection",
-			args: args{
-				ctx: context.Background(),
-				key: "key",
-				val: "val",
-			},
-			mockBehavior: func(r *storagemock.MockStorageClient) {
-				r.EXPECT().Set(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.Unavailable, "bad connection")).Times(3)
-			},
-			servers: map[int32]*RemoteServer{
-				1: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 33,
-						total:     100,
-					},
-					number: 1,
-					mu:     &sync.RWMutex{},
-				},
-				2: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 66,
-						total:     100,
-					},
-					number: 2,
-					mu:     &sync.RWMutex{},
-				},
-				3: {
-					tries: atomic.Uint32{},
-					ram: RAM{
-						available: 77,
-						total:     100,
-					},
-					number: 3,
-					mu:     &sync.RWMutex{},
-				},
-			},
-			want: []int32{1, 2, 3},
-		},
-	}
-
-	pool := make(chan struct{}, runtime.GOMAXPROCS(0))
-	defer close(pool)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-			cl := storagemock.NewMockStorageClient(c)
-			tt.mockBehavior(cl)
-			for _, s := range tt.servers {
-				s.storage = cl
-			}
-
-			s := &Balancer{
-				servers: tt.servers,
-				freeID:  int32(len(tt.servers) + 1),
-				RWMutex: sync.RWMutex{},
-				poolCh:  pool,
-			}
-
-			got := s.SetToAll(tt.args.ctx, tt.args.key, tt.args.val, tt.args.uniques)
-			if !pkg.IsTheSameArray(got, tt.want) {
-				t.Errorf("SetToAll() = %v, want %v", got, tt.want)
+			if got != tt.want {
+				t.Errorf("Set() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

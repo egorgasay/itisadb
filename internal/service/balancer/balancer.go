@@ -1,317 +1,282 @@
 package balancer
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/egorgasay/gost"
-	"github.com/egorgasay/itisadb-go-sdk"
-	"github.com/pkg/errors"
+	"go.uber.org/zap"
+	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
-	"os"
+	"itisadb/pkg"
 	"runtime"
-	"strconv"
 	"sync"
-	"time"
+)
+
+const (
+	_searchEverywhere = iota * -1
+	_setToAll
+)
+
+const (
+	_autoSelect  = 0
+	_mainStorage = 1
+)
+
+const (
+	_deleteFromAll = -1
 )
 
 type Balancer struct {
-	servers map[int32]domains.Server
-	poolCh  chan struct{}
-	freeID  int32
-	sync.RWMutex
+	logger *zap.Logger
+
+	servers domains.Servers
+	storage domains.Storage
+	tlogger domains.TransactionLogger
+	session domains.Session
+
+	cfg config.Config
+
+	pool chan struct{} // TODO: ADD TO CONFIG
+
+	objectServers gost.RwLock[map[string]int32]
+	keyServers    gost.RwLock[map[string]int32]
 }
 
-func New(local gost.Option[domains.Server]) (*Balancer, error) {
-	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
+func New(
+	ctx context.Context,
+	cfg config.Config,
+	logger *zap.Logger,
+	storage domains.Storage,
+	tlogger domains.TransactionLogger,
+	servers domains.Servers,
+	session domains.Session,
+) (*Balancer, error) {
+	var err error
+
+	_, err = storage.CreateUser(
+		models.User{
+			Login:    "itisadb",
+			Password: "itisadb",
+			Level:    constants.SecretLevel,
+			Active:   true,
+		},
+	)
+
+	if err != nil && !errors.Is(err, constants.ErrAlreadyExists) {
 		return nil, err
 	}
-	defer f.Close()
 
-	s := make(map[int32]domains.Server, 10)
+	return &Balancer{
+		logger:        logger,
+		servers:       servers,
+		storage:       storage,
+		tlogger:       tlogger,
+		session:       session,
+		cfg:           cfg,
+		pool:          make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+		objectServers: gost.NewRwLock(make(map[string]int32)),
+		keyServers:    gost.NewRwLock(make(map[string]int32)),
+	}, nil
+}
 
-	if local.IsSome() {
-		serv := local.Unwrap()
-		s[serv.Number()] = serv
+func toServerNumber(server *int32) int32 {
+	if server == nil {
+		return constants.MainStorageNumber
 	}
 
-	maxProc := runtime.GOMAXPROCS(0) * 100 // TODO: make it configurable
+	return *server
+}
 
-	servers := &Balancer{
-		servers: s,
-		freeID:  2,
-		poolCh:  make(chan struct{}, maxProc),
+func (c *Balancer) Set(ctx context.Context, userID int, key, value string, opts models.SetOptions) (val int32, err error) {
+	return val, c.withContext(ctx, func() error {
+		val, err = c.set(ctx, userID, key, value, opts)
+		return err
+	})
+}
+
+func (c *Balancer) set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
+	if opts.Server == _setToAll {
+		failedServers := c.servers.SetToAll(ctx, key, val, opts)
+		if len(failedServers) != 0 {
+			return _setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+		}
+
+		return _setToAll, nil
 	}
 
-	go servers.updateRAM()
-
-	scanner := bufio.NewScanner(f)
-	if !scanner.Scan() {
-		_, err = f.WriteString("1")
-		return servers, err
+	cl, ok := c.servers.GetServerByID(opts.Server)
+	if !ok || cl == nil {
+		return 0, constants.ErrUnknownServer
 	}
 
-	line := scanner.Text()
-	atoi, err := strconv.Atoi(line)
+	err := cl.SetOne(ctx, userID, key, val, opts).Error()
 	if err != nil {
-		return nil, fmt.Errorf("can't get the last used number: %w", err)
+		return 0, err
 	}
 
-	servers.freeID = int32(atoi)
-
-	return servers, nil
+	return cl.Number(), nil
 }
 
-const _updateRAMInterval = 1 * time.Second
+func (c *Balancer) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val models.Value, err error) {
+	return val, c.withContext(ctx, func() error {
+		val, err = c.get(ctx, userID, key, opts)
+		return err
+	})
+}
 
-func (s *Balancer) updateRAM() {
-	for {
-		for _, cl := range s.servers {
-			func() {
-				defer s.Unlock()
-				s.Lock()
+func (c *Balancer) useMainStorage(server int32) bool {
+	return !c.cfg.Balancer.On ||
+		c.servers.Len() == 0 ||
+		server == constants.MainStorageNumber
+}
 
-				ctx := context.Background()
-				ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
-				defer cancel()
+func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
+	info, err := c.storage.GetObjectInfo(object)
+	if err != nil {
+		return models.ObjectInfo{}, fmt.Errorf("can't get object info: %w", err)
+	}
 
-				if r := cl.RefreshRAM(ctxWithTimeout); r.IsErr() {
-					s.OnServerError(cl, r.Error())
-				}
-			}()
+	return info, nil
+}
 
+func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error) {
+	if opts.Server == _searchEverywhere {
+		v, err := c.servers.DeepSearch(ctx, key, opts)
+		if err != nil && errors.Is(err, constants.ErrNotFound) {
+			return models.Value{}, constants.ErrNotFound
 		}
-		time.Sleep(_updateRAMInterval)
-	}
-}
-
-func (s *Balancer) OnServerError(cl domains.Server, err *gost.Error) {
-	if err.BaseCode() != 0 {
-		return
+		return v, err
+	} else if !c.servers.Exists(opts.Server) {
+		return models.Value{}, constants.ErrNotFound
 	}
 
-	cl.IncTries()
-	if cl.Tries() > constants.MaxServerTries {
-		s.Disconnect(cl.Number())
-	}
-}
-
-func (s *Balancer) GetServer() (domains.Server, bool) {
-	s.RLock()
-	defer s.RUnlock()
-
-	best := 0.0
-	var serverNumber int32 = 0
-
-	for num, cl := range s.servers {
-		r := cl.RAM()
-		if val := float64(r.Available) / float64(r.Total) * 100; val > best {
-			serverNumber = num
-			best = val
-		}
+	cl, ok := c.servers.GetServerByID(opts.Server)
+	if !ok || cl == nil {
+		return models.Value{}, constants.ErrUnknownServer
 	}
 
-	cl, ok := s.servers[serverNumber]
-	return cl, ok
-}
-
-func (s *Balancer) Len() int32 {
-	s.RLock()
-	defer s.RUnlock()
-	return int32(len(s.servers))
-}
-
-var ErrInternal = errors.New("internal error")
-
-func (s *Balancer) AddServer(address string, available, total uint64, server int32) (int32, error) {
-	s.Lock()
-	defer s.Unlock()
-
-	if server == 0 {
-		server = s.freeID
-		s.freeID++
-	}
-
-	ctx := context.Background()
-
-	var cl *itisadb.Client
-
-	switch r := itisadb.New(ctx, address); r.Switch() { /* TODO: add creds? */
+	switch r := cl.GetOne(context.Background(), key, opts); r.Switch() {
 	case gost.IsOk:
-		cl = r.Unwrap()
+		cl.ResetTries()
+		return r.Unwrap(), nil
 	case gost.IsErr:
-		return 0, r.Error()
+		err := r.Error()
+		c.logger.Warn(err.Error())
+		c.servers.OnServerError(cl, err)
 	}
 
-	// add test connection
+	return models.Value{}, constants.ErrNotFound
+}
 
-	var stClient = &RemoteServer{
-		sdk: cl,
-		ram: models.RAM{Available: available, Total: total},
-		mu:  &sync.RWMutex{},
-	}
-
-	if server != 0 {
-		stClient.number = server
-		if server > s.freeID {
-			s.freeID = server + 1
+func (c *Balancer) Connect(ctx context.Context, address string, available, total uint64) (number int32, err error) {
+	c.logger.Info("New request for connect from " + address)
+	return number, c.withContext(ctx, func() error {
+		number, err = c.servers.AddServer(address, available, total, c.servers.Len())
+		if err != nil {
+			c.logger.Warn(err.Error())
+			return err
 		}
-	} else {
-		stClient.number = s.freeID
-		s.freeID++
-	}
 
-	// saving last id
-	f, err := os.OpenFile("balancer", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		return 0, errors.Wrapf(ErrInternal, "can't open file: balancer, %v", err.Error())
-	}
-	defer f.Close()
-
-	_, err = f.WriteString(fmt.Sprintf("%d\n", s.freeID))
-	if err != nil {
-		return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
-	}
-
-	s.servers[stClient.number] = stClient
-
-	return stClient.number, nil
+		return nil
+	})
 }
 
-func (s *Balancer) Disconnect(number int32) {
-	s.Lock()
-	defer s.Unlock()
-	delete(s.servers, number)
+func (c *Balancer) Disconnect(ctx context.Context, server int32) error {
+	return c.withContext(ctx, func() error {
+		c.servers.Disconnect(server)
+		return nil
+	})
 }
 
-func (s *Balancer) GetServers() []string {
-	s.RLock()
-	defer s.RUnlock()
-
-	var servers = make([]string, len(s.servers))
-	for _, cl := range s.servers {
-		r := cl.RAM()
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number(), r.Available, r.Total))
-	}
-
-	return servers
+func (c *Balancer) Servers() []string {
+	return c.servers.GetServers()
 }
 
-func (s *Balancer) DeepSearch(ctx context.Context, key string, opts models.GetOptions) (models.Value, error) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *Balancer) withContext(ctx context.Context, fn func() error) (err error) {
+	ch := make(chan struct{})
 
-	ctxCancel, cancel := context.WithCancel(ctx)
-	defer cancel()
+	once := sync.Once{}
+	done := func() { close(ch) }
 
-	var out = make(chan models.Value, 1)
-	defer close(out)
-
-	var wg sync.WaitGroup
-	wg.Add(len(s.servers))
-
-	var once sync.Once
-	for _, cl := range s.servers {
-		c := cl
-		s.poolCh <- struct{}{}
-		go func() {
-			c.Find(ctxCancel, key, out, &once, opts)
-			<-s.poolCh
-			wg.Done()
-		}()
-	}
-
-	allIsDone := make(chan struct{})
-
+	c.pool <- struct{}{}
 	go func() {
-		wg.Wait()
-		close(allIsDone)
+		err = fn()
+		once.Do(done)
+		<-c.pool
 	}()
 
 	select {
-	case v := <-out:
-		cancel()
-		return v, nil
-	case <-allIsDone:
-		return models.Value{}, constants.ErrNotFound
+	case <-ch:
+		return err
+	case <-ctx.Done():
+		once.Do(done)
+		return ctx.Err()
 	}
 }
 
-func (s *Balancer) GetServerByID(number int32) (domains.Server, bool) {
-	s.RLock()
-	defer s.RUnlock()
-
-	srv, ok := s.servers[number]
-	return srv, ok
+func (c *Balancer) Delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) (err error) {
+	return c.withContext(ctx, func() error {
+		return c.delete(ctx, userID, key, opts)
+	})
 }
 
-func (s *Balancer) Exists(number int32) bool {
-	s.RLock()
-	defer s.RUnlock()
-	_, ok := s.servers[number]
-	return ok
-}
-
-func (s *Balancer) SetToAll(ctx context.Context, key, val string, opts models.SetOptions) []int32 {
-	var failedServers = make([]int32, 0)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-
-	wg.Add(len(s.servers))
-
-	set := func(server domains.Server, number int32) {
-		defer wg.Done()
-		if r := server.SetOne(ctx, key, val, opts); r.IsErr() {
-			s.OnServerError(server, r.Error())
-
-			mu.Lock()
-			failedServers = append(failedServers, number)
-			mu.Unlock()
-			return
+func (c *Balancer) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error {
+	if opts.Server == _deleteFromAll {
+		atLeastOnce := c.servers.DelFromAll(ctx, key, opts)
+		if !atLeastOnce {
+			return constants.ErrNotFound
 		}
-
-		server.ResetTries()
+		return nil
 	}
 
-	for n, serv := range s.servers {
-		s.poolCh <- struct{}{}
-		go func(serv domains.Server, n int32) {
-			set(serv, n)
-			<-s.poolCh
-		}(serv, n)
+	cl, ok := c.servers.GetServerByID(opts.Server)
+	if !ok || cl == nil {
+		return constants.ErrUnknownServer
 	}
-	wg.Wait()
 
-	return failedServers
+	err := cl.DelOne(ctx, key, opts).Error()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Balancer) DelFromAll(ctx context.Context, key string, opts models.DeleteOptions) (atLeastOnce bool) {
-	var wg sync.WaitGroup
-
-	wg.Add(len(s.servers))
-
-	del := func(server domains.Server, number int32) {
-		defer wg.Done()
-		if r := server.DelOne(ctx, key, opts); r.IsErr() {
-			s.OnServerError(server, r.Error())
-			return
-		}
-		atLeastOnce = true
-
-		server.ResetTries()
+func (c *Balancer) CalculateRAM(_ context.Context) (res gost.Result[models.RAM]) {
+	res = pkg.CalcRAM()
+	if res.Error() != nil {
+		c.logger.Error("Failed to calculate RAM", zap.Error(res.Error()))
 	}
 
-	for n, serv := range s.servers {
-		s.poolCh <- struct{}{}
-		go func(serv domains.Server, n int32) {
-			del(serv, n)
-			<-s.poolCh
-		}(serv, n)
-	}
-	wg.Wait()
-
-	return atLeastOnce
+	return res
 }
+
+//func (c *Balancer) earlyObjectNotFound(name string, server int32) bool {
+//	return c.earlyNotFound(c.cfg.Balancer.On, &c.objectServers, name, server)
+//}
+//
+//func (c *Balancer) earlyKetNotFound(name string, server int32) bool {
+//	return c.earlyNotFound(c.cfg.Balancer.On, &c.keyServers, name, server)
+//}
+//
+//type RLocker interface {
+//	RBorrow() gost.Arc[*map[string]int32, map[string]int32]
+//	Release()
+//}
+//
+//func (c *Balancer) earlyNotFound(isBalancer bool, locker RLocker, name string, server int32) bool {
+//	if !isBalancer {
+//		return false
+//	}
+//
+//	defer locker.Release()
+//
+//	objServer, ok := (locker.RBorrow().Read())[name]
+//	if !ok {
+//		return false
+//	}
+//
+//	return objServer != server
+//}

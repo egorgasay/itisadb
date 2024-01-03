@@ -26,7 +26,7 @@ type ObjectsStorage interface {
 	CreateObject(name string, opts models.ObjectOptions) (err error)
 	DeleteObject(name string) error
 	SetToObject(name string, key string, value string, opts models.SetToObjectOptions) error
-	GetFromObject(name string, key string) (string, error)
+	GetFromObject(name string, key string) (string, error) // TODO: impl -> models.Value
 
 	/*
 	   PRO operations with objects
