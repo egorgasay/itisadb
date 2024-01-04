@@ -588,7 +588,7 @@ func TestServers_GetClient(t *testing.T) {
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
 			}
-			got, ok := s.GetServer()
+			got, ok := s.getServer()
 			if ok != tt.wantRes {
 				t.Errorf("GetServer() got1 = %v, want %v", ok, tt.wantRes)
 				return
@@ -667,7 +667,7 @@ func TestServers_GetClientByID(t *testing.T) {
 				freeID:  int32(len(tt.servers) + 1),
 				RWMutex: sync.RWMutex{},
 			}
-			got, ok := s.GetServerByID(tt.args.number)
+			got, ok := s.GetServer(tt.args.number)
 			if ok != tt.ok {
 				t.Errorf("GetServerByID() got1 = %v, want %v", ok, tt.ok)
 				return

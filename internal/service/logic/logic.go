@@ -164,3 +164,115 @@ func (l *Logic) GetFromObject(_ context.Context, userID int, object, key string,
 
 	return res.Ok(v)
 }
+
+func (l *Logic) ObjectToJSON(_ context.Context, userID int, object string, _ models.ObjectToJSONOptions) (res gost.Result[string]) {
+	info, err := l.storage.GetObjectInfo(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if !l.hasPermission(userID, info.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	v, err := l.storage.ObjectToJSON(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	return res.Ok(v)
+}
+
+func (l *Logic) ObjectSize(_ context.Context, userID int, object string, _ models.SizeOptions) (res gost.Result[uint64]) {
+	info, err := l.storage.GetObjectInfo(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if !l.hasPermission(userID, info.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	v, err := l.storage.Size(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	return res.Ok(v)
+}
+
+func (l *Logic) DeleteObject(_ context.Context, userID int, object string, _ models.DeleteObjectOptions) (res gost.ResultN) {
+	info, err := l.storage.GetObjectInfo(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if !l.hasPermission(userID, info.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	err = l.storage.DeleteObject(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	l.storage.DeleteObjectInfo(object)
+
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteDeleteObject(object)
+		l.tlogger.WriteDeleteObjectInfo(object)
+	}
+
+	return res.Ok()
+}
+
+func (l *Logic) AttachToObject(_ context.Context, userID int, dst, src string, _ models.AttachToObjectOptions) (res gost.ResultN) {
+	infoDst, err := l.storage.GetObjectInfo(dst)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	infoSrc, err := l.storage.GetObjectInfo(src)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if !l.hasPermission(userID, infoDst.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	if !l.hasPermission(userID, infoSrc.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	if err := l.storage.AttachToObject(dst, src); err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteAttach(dst, src)
+	}
+
+	return res.Ok()
+}
+
+func (l *Logic) ObjectDeleteKey(_ context.Context, userID int, object, key string, _ models.DeleteAttrOptions) (res gost.ResultN) {
+	info, err := l.storage.GetObjectInfo(object)
+	if err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if !l.hasPermission(userID, info.Level) {
+		return res.Err(constants.ErrForbidden)
+	}
+
+	if err := l.storage.DeleteAttr(object, key); err != nil {
+		return res.ErrNew(0, 0, err.Error())
+	}
+
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteDeleteAttr(object, key)
+	}
+
+	return res.Ok()
+}

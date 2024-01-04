@@ -25,13 +25,21 @@ type ramStorage struct {
 }
 
 type objects struct {
-	*swiss.Map[string, *object]
+	*swiss.Map[string, something]
 	*sync.RWMutex
 }
 
 type users struct {
 	*swiss.Map[int, models.User]
 	*sync.RWMutex
+}
+
+type something interface {
+	Object() gost.Option[*object]
+	IsObject() bool
+
+	Value() gost.Option[string]
+	IsValue() bool
 }
 
 type objectsInfo struct {
@@ -43,7 +51,7 @@ func New() (*Storage, error) {
 	st := &Storage{
 		objectsInfo: objectsInfo{Map: swiss.NewMap[string, models.ObjectInfo](10_000), RWMutex: &sync.RWMutex{}},
 		ramStorage:  ramStorage{Map: swiss.NewMap[string, models.Value](10_000_000), RWMutex: &sync.RWMutex{}},
-		objects:     objects{Map: swiss.NewMap[string, *object](100_000), RWMutex: &sync.RWMutex{}},
+		objects:     objects{Map: swiss.NewMap[string, something](100_000), RWMutex: &sync.RWMutex{}},
 		users:       users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
@@ -54,7 +62,7 @@ func (s *Storage) Set(key, val string, opts models.SetOptions) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
 
-	s.ramStorage.Put(key, models.Value{ReadOnly: opts.ReadOnly, Level: models.Level(gost.SafeDeref(opts.Level)), Value: val})
+	s.ramStorage.Put(key, models.Value{ReadOnly: opts.ReadOnly, Level: opts.Level, Value: val})
 
 	return nil
 }
@@ -172,20 +180,31 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 		return constants.ErrEmptyObjectName
 	}
 
-	val, ok := s.objects.Get(path[0])
-	if !ok || val.IsEmpty() {
-		val = NewObject(path[0], nil)
-		s.objects.Put(path[0], val)
+	var val *object
+
+	some, ok := s.objects.Get(path[0])
+	if !ok { // TODO: || val.IsEmpty() {
+		some = NewObject(path[0], nil)
+		s.objects.Put(path[0], some)
+	} else {
+		switch o := some.Object(); o.IsSome() {
+		case true:
+			val = o.Unwrap()
+		default:
+			return constants.ErrSomethingExists
+		}
 	}
 
 	path = path[1:]
 
 	for _, objectName := range path {
-		val = val.NextOrCreate(objectName)
-		if !val.IsObject() {
+		switch o := val.NextOrCreate(objectName).Object(); o.IsSome() {
+		case true:
+			if val = o.Unwrap(); val.IsEmpty() {
+				val.RecreateObject()
+			}
+		default:
 			return constants.ErrSomethingExists
-		} else if val.IsEmpty() {
-			val.RecreateObject()
 		}
 	}
 
@@ -211,7 +230,7 @@ func (v *object) MarshalJSON() ([]byte, error) {
 	var data map[string]interface{}
 
 	if v.values != nil {
-		v.values.Iter(func(k string, v *object) bool {
+		v.values.Iter(func(k string, v something) bool {
 			if v != nil {
 				arr = append(arr, v)
 			}
@@ -226,7 +245,7 @@ func (v *object) MarshalJSON() ([]byte, error) {
 	} else {
 		data = map[string]interface{}{
 			"name":  v.Name(),
-			"value": v.value,
+			"value": v.values,
 		}
 	}
 
@@ -240,7 +259,12 @@ func (s *Storage) findObject(name string) (*object, error) {
 		return nil, constants.ErrObjectNotFound
 	}
 
-	val, ok := s.objects.Get(path[0])
+	var (
+		val something
+		ok  bool
+	)
+
+	val, ok = s.objects.Get(path[0])
 	if !ok {
 		return nil, constants.ErrObjectNotFound
 	}
@@ -248,9 +272,9 @@ func (s *Storage) findObject(name string) (*object, error) {
 	path = path[1:]
 
 	for _, objectName := range path {
-		switch val.IsObject() {
+		switch o := val.Object(); o.IsSome() {
 		case true:
-			val, ok = val.Object(objectName)
+			val, ok = o.Unwrap().GetValue(objectName)
 			if !ok {
 				return nil, constants.ErrObjectNotFound
 			}
@@ -259,11 +283,14 @@ func (s *Storage) findObject(name string) (*object, error) {
 		}
 	}
 
-	if !val.IsObject() || val.IsEmpty() {
+	// TODO: || val.IsEmpty()  ???
+
+	switch o := val.Object(); o.IsSome() {
+	case true:
+		return o.Unwrap(), nil
+	default:
 		return nil, constants.ErrObjectNotFound
 	}
-
-	return val, nil
 }
 
 // Size returns the size of the object
@@ -317,7 +344,12 @@ func (s *Storage) DeleteAttr(name, key string) error {
 		return err
 	}
 
-	return object.Delete(key)
+	switch o := object.Object(); o.IsSome() {
+	case true:
+		return o.Unwrap().Delete(key)
+	default:
+		return constants.ErrNotFound
+	}
 }
 
 func (s *Storage) GetUserLevel(id int) (models.Level, error) {

@@ -51,7 +51,7 @@ func (c *Balancer) object(ctx context.Context, userID int, name string, opts mod
 	var serv domains.Server
 	var ok bool
 
-	serv, ok = c.servers.GetServerByID(opts.Server)
+	serv, ok = c.servers.GetServer(opts.Server)
 	if !ok {
 		return 0, constants.ErrServerNotFound
 	}
@@ -74,7 +74,16 @@ func (c *Balancer) GetFromObject(ctx context.Context, userID int, object, key st
 }
 
 func (c *Balancer) getFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (string, error) {
-	cl, ok := c.servers.GetServerByID(opts.Server)
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return "", constants.ErrObjectNotFound
+		}
+
+		opts.Server = res.Unwrap()
+	}
+
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return "", constants.ErrServerNotFound
 	}
@@ -94,12 +103,16 @@ func (c *Balancer) SetToObject(ctx context.Context, userID int, object, key, val
 }
 
 func (c *Balancer) setToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (int32, error) {
-	res := c.getObjectServer(object)
-	if res.IsNone() {
-		return 0, constants.ErrObjectNotFound
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return 0, constants.ErrObjectNotFound
+		}
+
+		opts.Server = res.Unwrap()
 	}
 
-	cl, ok := c.servers.GetServerByID(res.Unwrap())
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return 0, constants.ErrServerNotFound
 	}
@@ -112,18 +125,27 @@ func (c *Balancer) setToObject(ctx context.Context, userID int, object, key, val
 	return cl.Number(), nil
 }
 
-func (c *Balancer) ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (string, error) {
-	cl, ok := c.servers.GetServerByID(opts.Server)
+func (c *Balancer) ObjectToJSON(ctx context.Context, userID int, object string, opts models.ObjectToJSONOptions) (string, error) {
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return "", constants.ErrObjectNotFound
+		}
+
+		opts.Server = res.Unwrap()
+	}
+
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return "", constants.ErrServerNotFound
 	}
 
-	res := cl.ObjectToJSON(ctx, name, opts)
-	if res.IsErr() {
-		return "", res.Error()
+	resObj := cl.ObjectToJSON(ctx, userID, object, opts)
+	if resObj.IsErr() {
+		return "", resObj.Error()
 	}
 
-	return res.Unwrap(), nil
+	return resObj.Unwrap(), nil
 }
 
 func (c *Balancer) IsObject(ctx context.Context, userID int, name string, opts models.IsObjectOptions) (bool, error) {
@@ -141,104 +163,55 @@ func (c *Balancer) Size(ctx context.Context, userID int, name string, opts model
 	})
 }
 
-func (c *Balancer) size(ctx context.Context, userID int, name string, opts models.SizeOptions) (uint64, error) {
+func (c *Balancer) size(ctx context.Context, userID int, object string, opts models.SizeOptions) (uint64, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
 
-	info, err := c.storage.GetObjectInfo(name)
-	if err != nil {
-		return 0, fmt.Errorf("can't get object info: %w", err)
-	}
-
-	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
-		if !ok || cl == nil {
-			return 0, constants.ErrServerNotFound
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return 0, constants.ErrObjectNotFound
 		}
 
-		//res, err := cl.Size(ctx, name, opts)
-		//if err != nil {
-		//	return 0, err 	TODO:
-		//}
-		//
-		//return res.Size, nil
-
-		return 0, nil // TODO:
+		opts.Server = res.Unwrap()
 	}
 
-	if info.Server != _mainStorage {
+	cl, ok := c.servers.GetServer(opts.Server)
+	if !ok || cl == nil {
 		return 0, constants.ErrServerNotFound
 	}
 
-	if !c.hasPermission(userID, info.Level) {
-		return 0, constants.ErrForbidden
-	}
-
-	size, err := c.storage.Size(name)
-	if err != nil {
-		return 0, err
-	}
-
-	return size, nil
+	res := cl.ObjectSize(ctx, userID, object, opts)
+	return res.UnwrapOrDefault(), res.Error()
 }
 
-func (c *Balancer) DeleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error {
+func (c *Balancer) DeleteObject(ctx context.Context, userID int, object string, opts models.DeleteObjectOptions) error {
 	return c.withContext(ctx, func() error {
-		return c.deleteObject(ctx, userID, name, opts)
+		return c.deleteObject(ctx, userID, object, opts)
 	})
 }
 
-func (c *Balancer) deleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error {
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-
-	info, err := c.storage.GetObjectInfo(name)
-	if err != nil {
-		return fmt.Errorf("can't get object info: %w", err)
-	}
-
-	if c.earlyObjectNotFound(opts.Server, info.Server) {
-		return constants.ErrServerNotFound
-	}
-
-	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
-		if !ok || cl == nil {
-			return constants.ErrServerNotFound
+func (c *Balancer) deleteObject(ctx context.Context, userID int, object string, opts models.DeleteObjectOptions) error {
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return constants.ErrObjectNotFound
 		}
 
-		//err = cl.DelOne(ctx, name, opts.ToSDK()).Error()
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//c.storage.DeleteObjectInfo(name)
-		//
-		//return nil
-
-		return nil
+		opts.Server = res.Unwrap()
 	}
 
-	if info.Server != _mainStorage {
+	cl, ok := c.servers.GetServer(opts.Server)
+	if !ok || cl == nil {
 		return constants.ErrServerNotFound
 	}
 
-	if !c.hasPermission(userID, info.Level) {
-		return constants.ErrForbidden
+	if r := cl.DeleteObject(ctx, userID, object, opts); r.IsErr() {
+		return fmt.Errorf("can't delete object: %w", r.Error())
 	}
 
-	err = c.storage.DeleteObject(name)
-	if err != nil {
-		return err
-	}
-
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteDeleteObject(name)
-	}
-
-	c.storage.DeleteObjectInfo(name)
+	c.delObjectServer(object)
 
 	return nil
 }
@@ -254,100 +227,63 @@ func (c *Balancer) attachToObject(ctx context.Context, userID int, dst, src stri
 		return ctx.Err()
 	}
 
-	info, err := c.storage.GetObjectInfo(src)
-	if err != nil {
-		return fmt.Errorf("can't get object info: %w", err)
-	}
-
-	if c.earlyObjectNotFound(opts.Server, info.Server) {
-		return constants.ErrServerNotFound
-	}
-
-	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
-		if !ok || cl == nil {
-			return constants.ErrServerNotFound
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(dst)
+		if res.IsNone() {
+			return fmt.Errorf("can't get dst object server: %w", constants.ErrObjectNotFound)
 		}
 
-		//err = cl.AttachToObject(ctx, dst, src, opts)
-		//if err != nil {
-		//	return err
-		//} TODO:
-		//
-		//return nil
+		server1 := res.Unwrap()
 
-		return nil // TODO:
+		res = c.getObjectServer(src)
+		if res.IsNone() {
+			return fmt.Errorf("can't get src object server: %w", constants.ErrObjectNotFound)
+		}
+
+		server2 := res.Unwrap()
+
+		if server1 != server2 {
+			return fmt.Errorf("can't attach to objects from different servers: %w", constants.ErrForbidden)
+		}
+
+		opts.Server = server1
 	}
 
-	if info.Server != _mainStorage {
+	cl, ok := c.servers.GetServer(opts.Server)
+	if !ok || cl == nil {
 		return constants.ErrServerNotFound
 	}
 
-	if !c.hasPermission(userID, info.Level) {
-		return constants.ErrForbidden
-	}
-
-	err = c.storage.AttachToObject(dst, src)
-	if err != nil {
-		return err
-	}
-
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteAttach(dst, src)
-	}
-
-	return nil
+	return cl.AttachToObject(ctx, userID, dst, src, opts).Error().WrapNotNilMsg("can't attach to object")
 }
 
 func (c *Balancer) DeleteAttr(ctx context.Context, userID int, key string, object string, opts models.DeleteAttrOptions) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	return c.withContext(ctx, func() error {
 		return c.deleteAttr(ctx, userID, key, object, opts)
 	})
 }
 
 func (c *Balancer) deleteAttr(ctx context.Context, userID int, key, object string, opts models.DeleteAttrOptions) error {
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-
-	info, err := c.storage.GetObjectInfo(object)
-	if err != nil {
-		return fmt.Errorf("can't get object info: %w", err)
-	}
-
-	if c.earlyObjectNotFound(opts.Server, info.Server) {
-		return constants.ErrServerNotFound
-	}
-
-	if !c.useMainStorage(opts.Server) {
-		cl, ok := c.servers.GetServerByID(info.Server)
-		if !ok || cl == nil {
-			return constants.ErrServerNotFound
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getObjectServer(object)
+		if res.IsNone() {
+			return constants.ErrObjectNotFound
 		}
 
-		//err = cl.DeleteAttr(ctx, key, object, opts)
-		//if err != nil {
-		//	return err
-		//} TODO:
-
-		return nil
+		opts.Server = res.Unwrap()
 	}
 
-	if info.Server != _mainStorage {
+	cl, ok := c.servers.GetServer(opts.Server)
+	if !ok || cl == nil {
 		return constants.ErrServerNotFound
 	}
 
-	if !c.hasPermission(userID, info.Level) {
-		return constants.ErrForbidden
-	}
-
-	err = c.storage.DeleteAttr(object, key)
-	if err != nil {
-		return err
-	}
-
-	if c.cfg.TransactionLogger.On {
-		c.tlogger.WriteDeleteAttr(object, key)
+	if r := cl.ObjectDeleteKey(ctx, userID, key, object, opts); r.IsErr() {
+		return fmt.Errorf("can't delete attr: %w", r.Error())
 	}
 
 	return nil

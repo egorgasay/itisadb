@@ -100,7 +100,7 @@ func (s *Servers) OnServerError(cl domains.Server, err *gost.Error) {
 	}
 }
 
-func (s *Servers) GetServer() (domains.Server, bool) {
+func (s *Servers) getServer() (domains.Server, bool) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -254,7 +254,11 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 	}
 }
 
-func (s *Servers) GetServerByID(number int32) (domains.Server, bool) {
+func (s *Servers) GetServer(number int32) (domains.Server, bool) {
+	if number == constants.AutoServerNumber {
+		return s.getServer()
+	}
+
 	s.RLock()
 	defer s.RUnlock()
 

@@ -2,14 +2,14 @@ package storage
 
 import (
 	"github.com/dolthub/swiss"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/pkg"
 )
 
 type object struct {
-	value      string
 	name       string
-	values     *swiss.Map[string, *object]
+	values     *swiss.Map[string, something]
 	attachedTo []string
 }
 
@@ -18,15 +18,26 @@ func NewObject(name string, attachedTo []string) *object {
 		attachedTo = []string{name}
 	}
 	return &object{
-		values:     swiss.NewMap[string, *object](10),
+		values:     swiss.NewMap[string, something](10),
 		attachedTo: attachedTo,
 		name:       name,
 	}
 }
 
-func (v *object) GetValue() (val string) {
-	val = v.value
-	return val
+func (v *object) Object() gost.Option[*object] {
+	return gost.Some(v)
+}
+
+func (v *object) Value() (opt gost.Option[string]) {
+	return opt.None()
+}
+
+func (v *object) IsValue() bool {
+	return false
+}
+
+func (v *object) IsObject() bool {
+	return true
 }
 
 func (v *object) Name() string {
@@ -43,15 +54,16 @@ func (v *object) Get(name string) (string, error) {
 		return "", constants.ErrNotFound
 	}
 
-	return val.GetValue(), nil
+	switch some := val.Value(); some.IsSome() {
+	case true:
+		return some.Unwrap(), nil
+	default:
+		return "", constants.ErrSomethingExists
+	}
 }
 
 func (v *object) Size() int {
 	return v.values.Count()
-}
-
-func (v *object) IsObject() bool {
-	return v.values != nil
 }
 
 func (v *object) IsAttached(name string) bool {
@@ -75,7 +87,7 @@ func (v *object) AttachObject(src *object) (err error) {
 	}()
 
 	if v.values == nil {
-		v.values = swiss.NewMap[string, *object](10)
+		v.values = swiss.NewMap[string, something](10)
 		v.values.Put(src.Name(), src)
 		return nil
 	}
@@ -89,11 +101,11 @@ func (v *object) AttachObject(src *object) (err error) {
 	return nil
 }
 
-func (v *object) Iter(f func(k string, v *object) bool) {
+func (v *object) Iter(f func(k string, v something) bool) {
 	v.values.Iter(f)
 }
 
-func (v *object) NextOrCreate(name string) *object {
+func (v *object) NextOrCreate(name string) something {
 	val, ok := v.values.Get(name)
 	if !ok {
 		blank := NewObject(name, v.attachedTo)
@@ -104,22 +116,9 @@ func (v *object) NextOrCreate(name string) *object {
 	return val
 }
 
-func (v *object) Object(name string) (*object, bool) {
-	val, ok := v.values.Get(name)
-	if !ok {
-		return nil, false
-	}
-
-	return val, true
-}
-
-func (v *object) SetValueUnique(val string) error {
-	if v.values.Has(val) {
-		return constants.ErrAlreadyExists
-	}
-
-	v.value = val
-	return nil
+func (v *object) GetValue(key string) (something, bool) {
+	val, ok := v.values.Get(key)
+	return val, ok
 }
 
 func (v *object) Delete(key string) error {
@@ -132,13 +131,12 @@ func (v *object) Delete(key string) error {
 }
 
 func (v *object) RecreateObject() {
-	v.values = swiss.NewMap[string, *object](10)
+	v.values = swiss.NewMap[string, something](10)
 }
 
-func (v *object) Set(key string, value string) {
-	v.values.Put(key, &object{
-		value: value,
-		name:  key,
+func (v *object) Set(key string, val string) {
+	v.values.Put(key, &value{
+		value: val,
 	})
 }
 

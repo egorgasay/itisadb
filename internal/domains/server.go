@@ -24,10 +24,14 @@ type appLogic interface {
 	SetOne(ctx context.Context, userID int, key string, val string, opt models.SetOptions) (res gost.Result[int32])
 
 	NewObject(ctx context.Context, userID int, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing])
-	SetToObject(ctx context.Context, userID int, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing])
-	GetFromObject(ctx context.Context, userID int, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string])
+	SetToObject(ctx context.Context, userID int, object, key, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing])
+	GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (res gost.Result[string])
 
-	ObjectToJSON(ctx context.Context, name string, opts models.ObjectToJSONOptions) (res gost.Result[string])
+	ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (res gost.Result[string])
+	ObjectSize(ctx context.Context, userID int, object string, opts models.SizeOptions) (res gost.Result[uint64])
+	DeleteObject(ctx context.Context, userID int, object string, opts models.DeleteObjectOptions) gost.ResultN
+	AttachToObject(ctx context.Context, userID int, dst, src string, opts models.AttachToObjectOptions) gost.ResultN
+	ObjectDeleteKey(ctx context.Context, userID int, object, key string, opts models.DeleteAttrOptions) gost.ResultN
 }
 
 //Set(ctx context.Context, key string, value string, opts models.SetOptions) error

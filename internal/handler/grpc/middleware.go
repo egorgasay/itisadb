@@ -25,5 +25,11 @@ func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grp
 
 	ctx = context.WithValue(ctx, "userID", uint(userID))
 
-	return handler(ctx, req)
+	res, err := handler(ctx, req)
+	if err != nil {
+		h.logger.Error("Failed to perform request", zap.String("method", info.FullMethod), zap.Error(err))
+		return nil, err
+	}
+
+	return res, nil
 }

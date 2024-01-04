@@ -5,3 +5,8 @@ type Value struct {
 	Level    Level
 	Value    string
 }
+
+type OValue struct {
+	ReadOnly bool
+	Value    string
+}
