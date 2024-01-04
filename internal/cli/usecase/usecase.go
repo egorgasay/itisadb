@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/egorgasay/itisadb-go-sdk"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 	"itisadb/config"
-	"log"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -79,7 +80,7 @@ func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error 
 			Key:   cmd.Args()[0],
 			Value: cmd.Args()[1],
 			Options: &api.SetRequest_Options{
-				Server:   &server,
+				Server:   server,
 				ReadOnly: readonly == 1, // TODO: fix
 				Level:    api.Level(level),
 			},

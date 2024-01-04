@@ -2,11 +2,13 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/egorgasay/gost"
-	"github.com/egorgasay/itisadb-go-sdk"
 	"strconv"
 	"strings"
+
+	"github.com/egorgasay/gost"
+	"github.com/egorgasay/itisadb-go-sdk"
 )
 
 type Commands struct {
@@ -58,7 +60,17 @@ const (
 func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost.Result[string]) {
 	switch strings.ToLower(act) {
 	case _get:
-		return c.get(ctx, args)
+		r := c.get(ctx, args)
+		if r.IsErr() {
+			return res.Err(r.Error())
+		}
+
+		b, err := json.MarshalIndent(r.Unwrap(), "&ensp;", "&ensp;") // TODO: redo
+		if err != nil {
+			return res.ErrNew(0, 0, fmt.Sprintf("cannot marshal: %s", err.Error()))
+		}
+
+		return res.Ok(string(b))
 	case Set:
 		cmd, err := ParseSet(args)
 		if err != nil {
@@ -121,13 +133,12 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 
 		var opts itisadb.DeleteOptions
 		if len(args) >= 2 {
-			serverInt, err := strconv.Atoi(args[1])
+			server, err := strconv.Atoi(args[1])
 			if err != nil {
 				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[1]))
 			}
 
-			serverI32 := int32(serverInt)
-			opts.Server = &serverI32
+			opts.Server = int32(server)
 		}
 
 		if r := c.sdk.DelOne(ctx, name, opts); r.IsOk() {
@@ -142,13 +153,12 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 
 		var opts itisadb.ObjectOptions
 		if len(args) >= 2 {
-			serverInt, err := strconv.Atoi(args[1])
+			server, err := strconv.Atoi(args[1])
 			if err != nil {
 				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[1]))
 			}
 
-			serverI32 := int32(serverInt)
-			opts.Server = &serverI32
+			opts.Server = int32(server)
 		}
 
 		obj := args[0]
@@ -234,7 +244,7 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 	}
 
 	switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
-		Server: &server,
+		Server: server,
 		Level:  itisadb.Level(lvl),
 	}); r.Switch() {
 	case gost.IsOk:
@@ -273,20 +283,19 @@ func (c *Commands) setObject(ctx context.Context, object string, cmd SetCommand)
 	}
 }
 
-func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[string]) {
+func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[itisadb.Value]) {
 	if len(args) < 1 {
 		return res.Err(ErrWrongInput)
 	}
 
-	var server *int32
+	var server int32
 	if len(args) != 1 {
 		num, err := strconv.Atoi(args[len(args)-1])
 		if err != nil {
 			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[len(args)-1]))
 		}
-		serverInt32 := int32(num)
 
-		server = &serverInt32
+		server = int32(num)
 	}
 
 	return c.sdk.GetOne(ctx, args[0], itisadb.GetOptions{Server: server})
@@ -317,7 +326,7 @@ func (c *Commands) set(ctx context.Context, cmd Command) (res gost.Result[int32]
 	}
 
 	return c.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
-		Server:   toServerNumber(cmd.Server()),
+		Server:   cmd.Server(),
 		ReadOnly: cmd.Mode() == readOnlySetMode,
 		Level:    itisadb.Level(cmd.Level()),
 		Unique:   cmd.Mode() == uniqueSetMode,
@@ -333,8 +342,7 @@ func (c *Commands) getFromObject(ctx context.Context, name string, key string, s
 			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("invalid server number %s", server[0]))
 		}
 
-		serv := int32(servInt)
-		opts.Server = &serv
+		opts.Server = int32(servInt)
 	}
 
 	if r := c.sdk.Object(ctx, name); r.IsOk() {
@@ -349,14 +357,13 @@ func (c *Commands) deleteObject(ctx context.Context, object string, args []strin
 		return res.Err(ErrWrongInput)
 	}
 
-	var server *int32
+	var server int32
 	{
 		num, err := strconv.Atoi(args[0])
 		if err != nil {
 			return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[0]))
 		}
-		serverInt32 := int32(num)
-		server = &serverInt32
+		server = int32(num)
 	}
 
 	r := c.sdk.Object(ctx, object, itisadb.ObjectOptions{Server: server})

@@ -2,6 +2,8 @@ package grpc
 
 import (
 	"context"
+	"strings"
+
 	"github.com/egorgasay/gost"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -12,7 +14,6 @@ import (
 	"itisadb/internal/models"
 
 	api "github.com/egorgasay/itisadb-shared-proto/go"
-	"strings"
 )
 
 type Handler struct {
@@ -96,13 +97,15 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 		return nil, converterr.ToGRPC(err)
 	}
 
-	value, err := h.core.Get(ctx, userID, r.Key, opts)
+	res, err := h.core.Get(ctx, userID, r.Key, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
 
 	return &api.GetResponse{
-		Value: value,
+		Value:    res.Value,
+		ReadOnly: res.ReadOnly,
+		Level:    api.Level(res.Level),
 	}, nil
 }
 

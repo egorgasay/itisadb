@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+
 	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
@@ -21,11 +22,9 @@ func NewLocalServer(uc *logic.Logic) *LocalServer {
 	}
 }
 
-func (s *LocalServer) Tries() uint32 {
-	return 0
-}
+func (s *LocalServer) Tries() uint32 { return 0 }
 
-func (s *LocalServer) IncTries() {}
+func (s *LocalServer) IncTries() uint32 { return 0 }
 
 func (s *LocalServer) ResetTries() {}
 

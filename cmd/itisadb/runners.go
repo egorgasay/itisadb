@@ -4,15 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
+	"net"
+	"net/http"
+
 	"github.com/brpaz/echozap"
+	"github.com/egorgasay/gost"
 	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"github.com/go-chi/chi/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"html/template"
-	"io"
 	"itisadb/config"
 	"itisadb/internal/cli/handler"
 	"itisadb/internal/cli/storage"
@@ -21,9 +25,6 @@ import (
 	grpchandler "itisadb/internal/handler/grpc"
 	resthandler "itisadb/internal/handler/rest"
 	"itisadb/internal/service/balancer"
-	"itisadb/pkg"
-	"net"
-	"net/http"
 )
 
 func runGRPC(
@@ -45,7 +46,7 @@ func runGRPC(
 	}
 	api.RegisterItisaDBServer(grpcServer, h)
 
-	err = pkg.WithContext(ctx, func() error {
+	err = gost.WithContextPool(ctx, func() error {
 		l.Info("Starting GRPC", zap.String("address", networkCFG.GRPC))
 		err = grpcServer.Serve(lis)
 		if err != nil {
@@ -75,7 +76,7 @@ func runREST(
 		l.Fatal("failed to listen: %v", zap.Error(err))
 	}
 
-	err = pkg.WithContext(ctx, func() error {
+	err = gost.WithContextPool(ctx, func() error {
 		l.Info("Starting FastHTTP %s", zap.String("address", cfg.REST))
 		if err := fasthttp.Serve(lis, h.ServeHTTP); err != nil {
 			return fmt.Errorf("error in REST Serve: %w", err)
@@ -134,7 +135,7 @@ func runWebCLI(ctx context.Context, cfg config.WebAppConfig, securityConfig conf
 		return
 	}
 
-	err = pkg.WithContext(ctx, func() error {
+	err = gost.WithContextPool(ctx, func() error {
 		l.Info("Starting CLI HTTP server", zap.String("address", cfg.Host))
 		err = http.Serve(lis, e)
 		if err != nil {

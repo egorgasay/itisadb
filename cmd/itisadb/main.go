@@ -2,6 +2,12 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -13,11 +19,6 @@ import (
 	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -68,7 +69,7 @@ func main() {
 		local = local.Some(ls)
 	}
 
-	s, err := servers.New(local)
+	s, err := servers.New(local, lg)
 	if err != nil {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}

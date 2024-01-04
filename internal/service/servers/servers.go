@@ -4,6 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"runtime"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/egorgasay/gost"
 	"github.com/egorgasay/itisadb-go-sdk"
 	"github.com/pkg/errors"
@@ -11,12 +17,6 @@ import (
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
-	"itisadb/pkg"
-	"os"
-	"runtime"
-	"strconv"
-	"sync"
-	"time"
 )
 
 type Servers struct {
@@ -141,12 +141,7 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 
 	// add test connection
 
-	var stClient = &RemoteServer{
-		sdk:     cl,
-		ram:     models.RAM{Available: available, Total: total},
-		mu:      &sync.RWMutex{},
-		control: s,
-	}
+	var stClient = NewRemoteServer(cl, server, s)
 
 	if server != 0 {
 		stClient.number = server
@@ -220,13 +215,13 @@ func (s *Servers) DeepSearch(ctx context.Context, userID int, key string, opts m
 	for _, cl := range s.servers {
 		c := cl
 
-		go pkg.WithContext(ctx, func() error {
+		go gost.WithContextPool(ctx, func() error {
 			defer wg.Done()
 
 			r := c.GetOne(ctxCancel, userID, key, opts)
 			if r.IsErr() {
 				if !errors.Is(r.Error(), constants.ErrNotFound) {
-					s.logger.Error("can't DeepSearch", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
+					// s.logger.Error("can't DeepSearch", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
 				}
 
 				return nil
@@ -234,7 +229,7 @@ func (s *Servers) DeepSearch(ctx context.Context, userID int, key string, opts m
 
 			finished(r.Unwrap(), cl.Number())
 			return nil
-		}, s.poolCh, nil)
+		}, s.poolCh)
 	}
 
 	allIsDone := make(chan struct{})

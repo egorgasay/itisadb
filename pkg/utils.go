@@ -1,11 +1,9 @@
 package pkg
 
 import (
-	"context"
 	"github.com/egorgasay/gost"
 	"github.com/shirou/gopsutil/mem"
 	"itisadb/internal/models"
-	"sync"
 )
 
 func IsTheSameArray[T comparable](a, b []T) bool {
@@ -34,30 +32,6 @@ func SafeDeref[T any](t *T) T {
 		return *new(T)
 	}
 	return *t
-}
-
-func WithContext(ctx context.Context, fn func() error, pool chan struct{}, onStop func()) (err error) {
-	ch := make(chan struct{})
-
-	defer onStop()
-
-	once := sync.Once{}
-	done := func() { close(ch) }
-
-	pool <- struct{}{}
-	go func() {
-		err = fn()
-		once.Do(done)
-		<-pool
-	}()
-
-	select {
-	case <-ch:
-		return err
-	case <-ctx.Done():
-		once.Do(done)
-		return ctx.Err()
-	}
 }
 
 func CalcRAM() (res gost.Result[models.RAM]) {

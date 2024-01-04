@@ -2,6 +2,7 @@ package domains
 
 import (
 	"context"
+
 	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
@@ -12,7 +13,7 @@ type Server interface {
 
 	Number() int32
 	Tries() uint32
-	IncTries()
+	IncTries() uint32
 	ResetTries()
 
 	appLogic

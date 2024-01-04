@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
+	"sync"
+
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -11,8 +14,6 @@ import (
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
 	"itisadb/pkg"
-	"runtime"
-	"sync"
 )
 
 type Balancer struct {
@@ -150,7 +151,6 @@ func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.
 		return r.Unwrap(), nil
 	default:
 		err := r.Error()
-		c.servers.OnServerError(cl, err)
 		return models.Value{}, err
 	}
 }

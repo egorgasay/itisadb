@@ -3,7 +3,7 @@ package transactionlogger
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/egorgasay/gost"
+
 	"itisadb/internal/models"
 )
 
@@ -12,7 +12,7 @@ func (t *TransactionLogger) WriteSet(key, value string, opts models.SetOptions) 
 	if !opts.ReadOnly {
 		readOnly = 0
 	}
-	metadata := fmt.Sprintf("%d;%d;%d", readOnly, gost.SafeDeref(opts.Server), opts.Level)
+	metadata := fmt.Sprintf("%d;%d", readOnly, opts.Level)
 	t.events <- Event{EventType: Set, Name: key, Value: value, Metadata: metadata}
 }
 

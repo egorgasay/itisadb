@@ -2,10 +2,11 @@ package transactionlogger
 
 import (
 	"fmt"
-	"itisadb/internal/domains"
-	"itisadb/internal/models"
 	"strconv"
 	"strings"
+
+	"itisadb/internal/domains"
+	"itisadb/internal/models"
 )
 
 var ErrCorruptedConfigFile = fmt.Errorf("corrupted config file")
@@ -26,26 +27,19 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 			case Set:
 				split := strings.Split(e.Metadata, ";")
 
-				if len(split) < 3 {
+				if len(split) < 2 {
 					return fmt.Errorf("%w\n invalid metadata %s, Name: %s", ErrCorruptedConfigFile, e.Metadata, e.Name)
 				}
 
 				readOnly := split[0] == "1"
-				serverNumberStr := split[1]
 
-				serverNumber, err := strconv.Atoi(serverNumberStr)
-				if err != nil {
-					return fmt.Errorf("%w\n invalid server number %s, Name: %s", ErrCorruptedConfigFile, serverNumberStr, e.Name)
-				}
-
-				levelStr := split[2]
+				levelStr := split[1]
 				level, err := strconv.Atoi(levelStr)
 				if err != nil {
 					return fmt.Errorf("%w\n invalid level %s, Name: %s", ErrCorruptedConfigFile, levelStr, e.Name)
 				}
 
 				r.Set(e.Name, e.Value, models.SetOptions{
-					Server:   int32(serverNumber),
 					ReadOnly: readOnly,
 					Level:    models.Level(level),
 				})

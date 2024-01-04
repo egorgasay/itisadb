@@ -7,7 +7,7 @@ require (
 	github.com/brpaz/echozap v1.1.3
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/dolthub/swiss v0.2.1
-	github.com/egorgasay/gost v0.0.10
+	github.com/egorgasay/gost v0.0.13
 	github.com/egorgasay/gotils v0.0.3
 	github.com/egorgasay/itisadb-go-sdk v0.15.1
 	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240103130519-71d21ef26787
