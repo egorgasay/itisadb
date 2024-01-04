@@ -10,10 +10,6 @@ import (
 )
 
 func (c *Balancer) Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (s int32, err error) {
-	if !c.hasPermission(userID, opts.Level) {
-		return 0, constants.ErrForbidden
-	}
-
 	return s, c.withContext(ctx, func() error {
 		s, err = c.object(ctx, userID, name, opts)
 		return err
@@ -39,6 +35,27 @@ func (c *Balancer) getObjectServer(object string) (opt gost.Option[int32]) {
 func (c *Balancer) delObjectServer(object string) {
 	defer c.objectServers.WRelease()
 	delete(c.objectServers.WBorrow().Read(), object)
+}
+
+func (c *Balancer) addKeyServer(key string, server int32) {
+	defer c.keyServers.WRelease()
+	(*c.keyServers.WBorrow().Ref())[key] = server
+}
+
+func (c *Balancer) getKeyServer(key string) (opt gost.Option[int32]) {
+	defer c.keyServers.Release()
+
+	server, ok := c.keyServers.RBorrow().Read()[key]
+	if !ok {
+		return opt.None()
+	}
+
+	return opt.Some(server)
+}
+
+func (c *Balancer) delKeyServer(key string) {
+	defer c.keyServers.WRelease()
+	delete(c.keyServers.WBorrow().Read(), key)
 }
 
 func (c *Balancer) object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error) {
@@ -164,10 +181,6 @@ func (c *Balancer) Size(ctx context.Context, userID int, name string, opts model
 }
 
 func (c *Balancer) size(ctx context.Context, userID int, object string, opts models.SizeOptions) (uint64, error) {
-	if ctx.Err() != nil {
-		return 0, ctx.Err()
-	}
-
 	if opts.Server == constants.AutoServerNumber {
 		res := c.getObjectServer(object)
 		if res.IsNone() {

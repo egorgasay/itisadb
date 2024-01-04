@@ -12,10 +12,15 @@ type Servers interface {
 	AddServer(address string, available uint64, total uint64, server int32) (int32, error)
 	Disconnect(number int32)
 	GetServers() []string
-	DeepSearch(ctx context.Context, key string, opts models.GetOptions) (models.Value, error)
 	GetServer(number int32) (Server, bool)
 	Exists(number int32) bool
-	SetToAll(ctx context.Context, key string, val string, opts models.SetOptions) []int32
-	DelFromAll(ctx context.Context, key string, opts models.DeleteOptions) (atLeastOnce bool)
-	OnServerError(cl Server, err *gost.Error)
+
+	// TODO: may be we should use Iter instead, because Servers != buisness logic
+	SetToAll(ctx context.Context, userID int, key string, val string, opts models.SetOptions) []int32
+
+	// TODO: may be we should use Iter instead, because Servers != buisness logic
+	DelFromAll(ctx context.Context, userID int, key string, opts models.DeleteOptions) (atLeastOnce bool)
+
+	// TODO: may be we should use Iter instead, because Servers != buisness logic
+	DeepSearch(ctx context.Context, userID int, key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]])
 }

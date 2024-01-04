@@ -15,20 +15,6 @@ import (
 	"sync"
 )
 
-const (
-	_searchEverywhere = iota * -1
-	_setToAll
-)
-
-const (
-	_autoSelect  = 0
-	_mainStorage = 1
-)
-
-const (
-	_deleteFromAll = -1
-)
-
 type Balancer struct {
 	logger *zap.Logger
 
@@ -98,16 +84,16 @@ func (c *Balancer) Set(ctx context.Context, userID int, key, value string, opts 
 }
 
 func (c *Balancer) set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
-	if opts.Server == _setToAll {
-		failedServers := c.servers.SetToAll(ctx, key, val, opts)
+	if opts.Server == constants.SetToAllServers {
+		failedServers := c.servers.SetToAll(ctx, userID, key, val, opts)
 		if len(failedServers) != 0 {
-			return _setToAll, fmt.Errorf("some servers wouldn't get values: %v", failedServers)
+			return opts.Server, fmt.Errorf("some servers failed: %v", failedServers)
 		}
 
-		return _setToAll, nil
+		return opts.Server, nil
 	}
 
-	cl, ok := c.servers.GetServerByID(opts.Server)
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return 0, constants.ErrUnknownServer
 	}
@@ -127,12 +113,6 @@ func (c *Balancer) Get(ctx context.Context, userID int, key string, opts models.
 	})
 }
 
-func (c *Balancer) useMainStorage(server int32) bool {
-	return !c.cfg.Balancer.On ||
-		c.servers.Len() == 0 ||
-		server == constants.MainStorageNumber
-}
-
 func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
 	info, err := c.storage.GetObjectInfo(object)
 	if err != nil {
@@ -143,32 +123,36 @@ func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
 }
 
 func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error) {
-	if opts.Server == _searchEverywhere {
-		v, err := c.servers.DeepSearch(ctx, key, opts)
-		if err != nil && errors.Is(err, constants.ErrNotFound) {
-			return models.Value{}, constants.ErrNotFound
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getKeyServer(key)
+		if res.IsNone() {
+			if r := c.servers.DeepSearch(ctx, userID, key, opts); r.IsErr() {
+				return models.Value{}, fmt.Errorf("can't get key after deep search: %w", r.Error())
+			} else {
+				res := r.Unwrap()
+				c.addKeyServer(key, res.Left)
+
+				return res.Right, nil
+			}
 		}
-		return v, err
-	} else if !c.servers.Exists(opts.Server) {
-		return models.Value{}, constants.ErrNotFound
+
+		opts.Server = res.Unwrap()
 	}
 
-	cl, ok := c.servers.GetServerByID(opts.Server)
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return models.Value{}, constants.ErrUnknownServer
 	}
 
-	switch r := cl.GetOne(context.Background(), key, opts); r.Switch() {
-	case gost.IsOk:
+	switch r := cl.GetOne(ctx, userID, key, opts); r.IsOk() {
+	case true:
 		cl.ResetTries()
 		return r.Unwrap(), nil
-	case gost.IsErr:
+	default:
 		err := r.Error()
-		c.logger.Warn(err.Error())
 		c.servers.OnServerError(cl, err)
+		return models.Value{}, err
 	}
-
-	return models.Value{}, constants.ErrNotFound
 }
 
 func (c *Balancer) Connect(ctx context.Context, address string, available, total uint64) (number int32, err error) {
@@ -223,25 +207,42 @@ func (c *Balancer) Delete(ctx context.Context, userID int, key string, opts mode
 	})
 }
 
-func (c *Balancer) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error {
-	if opts.Server == _deleteFromAll {
-		atLeastOnce := c.servers.DelFromAll(ctx, key, opts)
+func (c *Balancer) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) (err error) {
+	if opts.Server == constants.DeleteFromAllServers {
+		atLeastOnce := c.servers.DelFromAll(ctx, userID, key, opts)
 		if !atLeastOnce {
 			return constants.ErrNotFound
 		}
 		return nil
+	} else if opts.Server == constants.AutoServerNumber {
+		switch res := c.getKeyServer(key); res.IsSome() {
+		case true:
+			opts.Server = res.Unwrap()
+			defer func() {
+				if err != nil {
+					c.delKeyServer(key)
+				}
+			}()
+		default:
+			if r := c.servers.DeepSearch(ctx, userID, key, models.GetOptions{}); r.IsErr() {
+				return fmt.Errorf("can't delete key after deep search: %w", r.Error())
+			} else {
+				opts.Server = r.Unwrap().Left
+			}
+		}
 	}
 
-	cl, ok := c.servers.GetServerByID(opts.Server)
+	cl, ok := c.servers.GetServer(opts.Server)
 	if !ok || cl == nil {
 		return constants.ErrUnknownServer
 	}
 
-	err := cl.DelOne(ctx, key, opts).Error()
-	if err != nil {
-		return err
+	switch r := cl.DelOne(ctx, userID, key, opts); r.IsOk() {
+	case true:
+		return nil
+	default:
+		return fmt.Errorf("can't delete key: %w", r.Error())
 	}
-	return nil
 }
 
 func (c *Balancer) CalculateRAM(_ context.Context) (res gost.Result[models.RAM]) {

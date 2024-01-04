@@ -7,6 +7,7 @@ import (
 	"github.com/egorgasay/gost"
 	"github.com/egorgasay/itisadb-go-sdk"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
@@ -22,10 +23,11 @@ type Servers struct {
 	servers map[int32]domains.Server
 	poolCh  chan struct{}
 	freeID  int32
+	logger  *zap.Logger
 	sync.RWMutex
 }
 
-func New(local gost.Option[domains.Server]) (*Servers, error) {
+func New(local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error) {
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
@@ -45,6 +47,7 @@ func New(local gost.Option[domains.Server]) (*Servers, error) {
 		servers: s,
 		freeID:  2,
 		poolCh:  make(chan struct{}, maxProc),
+		logger:  logger,
 	}
 
 	go servers.updateRAM()
@@ -80,23 +83,12 @@ func (s *Servers) updateRAM() {
 				defer cancel()
 
 				if r := cl.RefreshRAM(ctxWithTimeout); r.IsErr() {
-					s.OnServerError(cl, r.Error())
+					s.logger.Error("can't refresh RAM", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
 				}
 			}()
 
 		}
 		time.Sleep(_updateRAMInterval)
-	}
-}
-
-func (s *Servers) OnServerError(cl domains.Server, err *gost.Error) {
-	if err.BaseCode() != 0 {
-		return
-	}
-
-	cl.IncTries()
-	if cl.Tries() > constants.MaxServerTries {
-		s.Disconnect(cl.Number())
 	}
 }
 
@@ -150,9 +142,10 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	// add test connection
 
 	var stClient = &RemoteServer{
-		sdk: cl,
-		ram: models.RAM{Available: available, Total: total},
-		mu:  &sync.RWMutex{},
+		sdk:     cl,
+		ram:     models.RAM{Available: available, Total: total},
+		mu:      &sync.RWMutex{},
+		control: s,
 	}
 
 	if server != 0 {
@@ -201,7 +194,7 @@ func (s *Servers) GetServers() []string {
 	return servers
 }
 
-func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOptions) (models.Value, error) {
+func (s *Servers) DeepSearch(ctx context.Context, userID int, key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]]) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -211,9 +204,12 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 	var out = make(chan models.Value)
 	var once sync.Once
 
-	var finished = func(v models.Value) {
+	var found int32
+
+	var finished = func(v models.Value, server int32) {
 		once.Do(func() {
 			defer close(out)
+			found = server
 			out <- v
 		})
 	}
@@ -227,13 +223,16 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 		go pkg.WithContext(ctx, func() error {
 			defer wg.Done()
 
-			r := c.GetOne(ctxCancel, key, opts)
+			r := c.GetOne(ctxCancel, userID, key, opts)
 			if r.IsErr() {
-				s.OnServerError(c, r.Error())
+				if !errors.Is(r.Error(), constants.ErrNotFound) {
+					s.logger.Error("can't DeepSearch", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
+				}
+
 				return nil
 			}
 
-			finished(r.Unwrap())
+			finished(r.Unwrap(), cl.Number())
 			return nil
 		}, s.poolCh, nil)
 	}
@@ -248,9 +247,9 @@ func (s *Servers) DeepSearch(ctx context.Context, key string, opts models.GetOpt
 	select {
 	case v := <-out:
 		cancel()
-		return v, nil
+		return res.Ok(gost.Pair[int32, models.Value]{Left: found, Right: v})
 	case <-allIsDone:
-		return models.Value{}, constants.ErrNotFound
+		return res.Err(constants.ErrNotFound)
 	}
 }
 
@@ -273,7 +272,7 @@ func (s *Servers) Exists(number int32) bool {
 	return ok
 }
 
-func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.SetOptions) []int32 {
+func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opts models.SetOptions) []int32 {
 	var failedServers = make([]int32, 0)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -282,8 +281,8 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.Set
 
 	set := func(server domains.Server, number int32) {
 		defer wg.Done()
-		if r := server.SetOne(ctx, key, val, opts); r.IsErr() {
-			s.OnServerError(server, r.Error())
+		if r := server.SetOne(ctx, userID, key, val, opts); r.IsErr() {
+			s.logger.Error("can't SetToAll", zap.Int32("server", number), zap.Error(r.Error()))
 
 			mu.Lock()
 			failedServers = append(failedServers, number)
@@ -306,15 +305,18 @@ func (s *Servers) SetToAll(ctx context.Context, key, val string, opts models.Set
 	return failedServers
 }
 
-func (s *Servers) DelFromAll(ctx context.Context, key string, opts models.DeleteOptions) (atLeastOnce bool) {
+func (s *Servers) DelFromAll(ctx context.Context, userID int, key string, opts models.DeleteOptions) (atLeastOnce bool) {
 	var wg sync.WaitGroup
 
 	wg.Add(len(s.servers))
 
 	del := func(server domains.Server, number int32) {
 		defer wg.Done()
-		if r := server.DelOne(ctx, key, opts); r.IsErr() {
-			s.OnServerError(server, r.Error())
+		if r := server.DelOne(ctx, userID, key, opts); r.IsErr() {
+			if !errors.Is(r.Error(), constants.ErrNotFound) {
+				s.logger.Error("can't DelFromAll", zap.Int32("server", number), zap.Error(r.Error()))
+			}
+
 			return
 		}
 		atLeastOnce = true

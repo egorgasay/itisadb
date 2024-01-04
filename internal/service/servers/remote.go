@@ -2,11 +2,13 @@ package servers
 
 import (
 	"context"
-	"github.com/egorgasay/gost"
-	"github.com/egorgasay/itisadb-go-sdk"
-	"itisadb/internal/models"
 	"sync"
 	"sync/atomic"
+
+	"github.com/egorgasay/gost"
+	"github.com/egorgasay/itisadb-go-sdk"
+	"itisadb/internal/constants"
+	"itisadb/internal/models"
 )
 
 // =============== server ====================== //
@@ -21,10 +23,11 @@ func NewRemoteServer(cl *itisadb.Client, number int32) *RemoteServer {
 }
 
 type RemoteServer struct {
-	tries  atomic.Uint32
-	ram    models.RAM
-	number int32
-	mu     *sync.RWMutex
+	tries   atomic.Uint32
+	ram     models.RAM
+	number  int32
+	mu      *sync.RWMutex
+	control interface{ Disconnect(int32) }
 
 	sdk *itisadb.Client
 }
@@ -37,18 +40,29 @@ func (s *RemoteServer) Tries() uint32 {
 	return s.tries.Load()
 }
 
+func (rs *RemoteServer) OnServerError(err *gost.Error) {
+	if err.BaseCode() != 0 {
+		return
+	}
+
+	if rs.IncTries() > constants.MaxServerTries {
+		rs.control.Disconnect(rs.Number())
+	}
+}
+
 func (s *RemoteServer) GetOne(ctx context.Context, key string, opt models.GetOptions) (res gost.Result[models.Value]) {
-	r := s.sdk.GetOne(ctx, key, opt.ToSDK())
-	if r.IsOk() {
+	switch r := s.sdk.GetOne(ctx, key, opt.ToSDK()); r.IsOk() {
+	case true:
 		val := r.Unwrap()
 		return res.Ok(models.Value{
 			ReadOnly: val.ReadOnly,
 			Level:    models.Level(val.Level),
 			Value:    val.Value,
 		})
+	default:
+		s.OnServerError(r.Error())
+		return res.Err(r.Error())
 	}
-
-	return res.Err(r.Error())
 }
 
 func (s *RemoteServer) DelOne(ctx context.Context, key string, opt models.DeleteOptions) gost.Result[gost.Nothing] {
@@ -69,14 +83,14 @@ func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Not
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	r := itisadb.Internal.GetRAM(ctx, s.sdk)
-	if r.IsOk() {
+	switch r := itisadb.Internal.GetRAM(ctx, s.sdk); r.IsOk() {
+	case true:
 		s.ram = models.RAM(r.Unwrap())
 		return gost.Ok(gost.Nothing{})
+	default:
+		s.OnServerError(r.Error())
+		return res.Err(r.Error())
 	}
-
-	return res.Err(r.Error())
-
 }
 
 //func (s *RemoteServer) Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error) {
@@ -155,8 +169,8 @@ func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Not
 //	return s.tries.Load()
 //}
 
-func (s *RemoteServer) IncTries() {
-	s.tries.Add(1)
+func (s *RemoteServer) IncTries() int32 {
+	return int32(s.tries.Add(1))
 }
 
 func (s *RemoteServer) ResetTries() {
@@ -172,21 +186,29 @@ func (s *RemoteServer) ResetTries() {
 //}
 
 func (s *RemoteServer) NewObject(ctx context.Context, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
-	r := s.sdk.Object(ctx, name, opts.ToSDK())
-	if r.IsErr() {
+	switch r := s.sdk.Object(ctx, name, opts.ToSDK()); r.IsOk() {
+	case true:
+		return res.Ok(gost.Nothing{})
+	default:
+		s.OnServerError(r.Error())
 		return res.Err(r.Error())
 	}
-
-	return res.Ok(gost.Nothing{})
 }
 
 func (s *RemoteServer) GetFromObject(ctx context.Context, object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string]) {
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
+	defer s.OnServerError(res.Error())
 
-	return r.Unwrap().Get(ctx, key, opts.ToSDK())
+	switch r := s.sdk.Object(ctx, object); r.IsOk() {
+	case true:
+		switch r := r.Unwrap().Get(ctx, key, opts.ToSDK()); r.IsOk() {
+		case true:
+			return res.Ok(r.Unwrap())
+		default:
+			return res.Err(r.Error().WrapfNotNilMsg("error while searching %s.%s", object, key))
+		}
+	default:
+		return res.Err(r.Error().WrapfNotNilMsg("error while searching %s.%s", object, key))
+	}
 }
 
 func (s *RemoteServer) SetToObject(ctx context.Context, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
