@@ -44,6 +44,19 @@ func (l Level) ToSDK() itisadb.Level {
 	return itisadb.Level(l)
 }
 
+func (l Level) String() string {
+	switch itisadb.Level(l) {
+	case itisadb.DefaultLevel:
+		return "Default"
+	case itisadb.RestrictedLevel:
+		return "Restricted"
+	case itisadb.SecretLevel:
+		return "Secret"
+	}
+
+	return "Unknown"
+}
+
 //func (l Level) Higher() Level {
 //	return max(l+1, constants.MinLevel)
 //}

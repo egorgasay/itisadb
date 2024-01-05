@@ -219,14 +219,14 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 		return res.Err(ErrWrongInput)
 	}
 
-	name := args[1]
+	name := args[0]
 
 	var (
 		server int32
 		lvl    int8
 	)
 
-	for i := 2; i < len(args); i++ {
+	for i := 1; i < len(args); i++ {
 		if args[i] == "S" || args[i] == "s" {
 			lvl = secretLevel
 		} else if args[i] == "R" || args[i] == "r" {

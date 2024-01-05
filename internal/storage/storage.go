@@ -3,11 +3,12 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"sync"
+
 	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
-	"strings"
-	"sync"
 
 	"github.com/dolthub/swiss"
 )
@@ -175,7 +176,7 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
-	path := strings.Split(name, ".")
+	path := strings.Split(name, constants.ObjectSeparator)
 	if name == "" || len(path) == 0 {
 		return constants.ErrEmptyObjectName
 	}
@@ -184,7 +185,7 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 
 	some, ok := s.objects.Get(path[0])
 	if !ok { // TODO: || val.IsEmpty() {
-		some = NewObject(path[0], nil)
+		some = NewObject(path[0], nil, opts.Level)
 		s.objects.Put(path[0], some)
 	} else {
 		switch o := some.Object(); o.IsSome() {
@@ -198,7 +199,7 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 	path = path[1:]
 
 	for _, objectName := range path {
-		switch o := val.NextOrCreate(objectName).Object(); o.IsSome() {
+		switch o := val.NextOrCreate(objectName, opts.Level).Object(); o.IsSome() {
 		case true:
 			if val = o.Unwrap(); val.IsEmpty() {
 				val.RecreateObject()
@@ -223,33 +224,6 @@ func (s *Storage) ObjectToJSON(name string) (string, error) {
 
 	en, err := json.MarshalIndent(obj, "", "\t")
 	return string(en), err
-}
-
-func (v *object) MarshalJSON() ([]byte, error) {
-	arr := make([]any, 0, 100)
-	var data map[string]interface{}
-
-	if v.values != nil {
-		v.values.Iter(func(k string, v something) bool {
-			if v != nil {
-				arr = append(arr, v)
-			}
-
-			return false
-		})
-
-		data = map[string]interface{}{
-			"name":  v.Name(),
-			"value": arr,
-		}
-	} else {
-		data = map[string]interface{}{
-			"name":  v.Name(),
-			"value": v.values,
-		}
-	}
-
-	return json.MarshalIndent(data, "", "\t")
 }
 
 func (s *Storage) findObject(name string) (*object, error) {

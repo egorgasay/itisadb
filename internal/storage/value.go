@@ -1,12 +1,23 @@
 package storage
 
 import (
+	"encoding/json"
+
 	"github.com/egorgasay/gost"
 )
 
 type value struct {
 	value    string
 	readOnly bool
+}
+
+func (v value) MarshalJSON() ([]byte, error) {
+	var data = make(map[string]interface{})
+
+	data["value"] = v.value
+	data["read_only"] = v.readOnly
+
+	return json.Marshal(data)
 }
 
 func NewValue(val string, readOnly bool) *value {

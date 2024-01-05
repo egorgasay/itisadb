@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"encoding/json"
+
 	"github.com/dolthub/swiss"
 	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
+	"itisadb/internal/models"
 	"itisadb/pkg"
 )
 
@@ -11,16 +14,19 @@ type object struct {
 	name       string
 	values     *swiss.Map[string, something]
 	attachedTo []string
+	level      models.Level
 }
 
-func NewObject(name string, attachedTo []string) *object {
+func NewObject(name string, attachedTo []string, level models.Level) *object {
 	if attachedTo == nil {
 		attachedTo = []string{name}
 	}
+
 	return &object{
 		values:     swiss.NewMap[string, something](10),
 		attachedTo: attachedTo,
 		name:       name,
+		level:      level,
 	}
 }
 
@@ -105,10 +111,10 @@ func (v *object) Iter(f func(k string, v something) bool) {
 	v.values.Iter(f)
 }
 
-func (v *object) NextOrCreate(name string) something {
+func (v *object) NextOrCreate(name string, level models.Level) something {
 	val, ok := v.values.Get(name)
 	if !ok {
-		blank := NewObject(name, v.attachedTo)
+		blank := NewObject(name, v.attachedTo, level)
 		v.values.Put(name, blank)
 		return blank
 	}
@@ -142,4 +148,25 @@ func (v *object) Set(key string, val string) {
 
 func (v *object) Has(key string) bool {
 	return v.values.Has(key)
+}
+func (v *object) MarshalJSON() ([]byte, error) {
+	arr := make([]something, 0, 100)
+	var data map[string]interface{}
+
+	v.values.Iter(func(k string, v something) bool {
+		if v != nil {
+			arr = append(arr, v)
+		}
+
+		return false
+	})
+
+	data = map[string]interface{}{
+		"name":        v.name,
+		"level":       v.level.String(),
+		"attached_to": v.attachedTo,
+		"values":      arr,
+	}
+
+	return json.MarshalIndent(data, "", "\t")
 }
