@@ -3,6 +3,7 @@ package balancer
 import (
 	"context"
 	"fmt"
+
 	"go.uber.org/zap"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
@@ -35,7 +36,7 @@ func (c *Balancer) CreateUser(ctx context.Context, userID int, user models.User)
 		return err
 	}
 
-	if c.cfg.TransactionLogger.On {
+	if c.cfg.TransactionLogger.On { // TODO: ???
 		c.tlogger.WriteCreateUser(user)
 	}
 
@@ -65,7 +66,7 @@ func (c *Balancer) DeleteUser(ctx context.Context, userID int, login string) err
 		return err
 	}
 
-	if c.cfg.TransactionLogger.On {
+	if c.cfg.TransactionLogger.On { // TODO: ???
 		c.tlogger.WriteDeleteUser(login)
 	}
 
@@ -96,7 +97,7 @@ func (c *Balancer) ChangePassword(ctx context.Context, userID int, login, passwo
 		return err
 	}
 
-	if c.cfg.TransactionLogger.On {
+	if c.cfg.TransactionLogger.On { // TODO: ???
 		c.tlogger.WriteCreateUser(targetUser)
 	}
 
@@ -127,7 +128,7 @@ func (c *Balancer) ChangeLevel(ctx context.Context, userID int, login string, le
 		return err
 	}
 
-	if c.cfg.TransactionLogger.On {
+	if c.cfg.TransactionLogger.On { // TODO: ???
 		c.tlogger.WriteCreateUser(targetUser)
 	}
 

@@ -30,7 +30,7 @@ import (
 func runGRPC(
 	ctx context.Context,
 	l *zap.Logger,
-	logic domains.Core,
+	logic domains.Balancer,
 	securityCFG config.SecurityConfig,
 	networkCFG config.NetworkConfig,
 	session domains.Session,

@@ -56,6 +56,15 @@ func New(
 		return nil, err
 	}
 
+	for _, server := range cfg.Balancer.Servers {
+		s, err := servers.AddServer(server)
+		if err != nil {
+			logger.Error("Failed to add server", zap.String("server", server), zap.Error(err))
+		} else {
+			logger.Info("Added server", zap.Int32("server", s))
+		}
+	}
+
 	return &Balancer{
 		logger:        logger,
 		servers:       servers,
@@ -147,18 +156,16 @@ func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.
 
 	switch r := cl.GetOne(ctx, userID, key, opts); r.IsOk() {
 	case true:
-		cl.ResetTries()
 		return r.Unwrap(), nil
 	default:
-		err := r.Error()
-		return models.Value{}, err
+		return models.Value{}, r.Error()
 	}
 }
 
 func (c *Balancer) Connect(ctx context.Context, address string, available, total uint64) (number int32, err error) {
 	c.logger.Info("New request for connect from " + address)
 	return number, c.withContext(ctx, func() error {
-		number, err = c.servers.AddServer(address, available, total, c.servers.Len())
+		number, err = c.servers.AddServer(address)
 		if err != nil {
 			c.logger.Warn(err.Error())
 			return err
@@ -176,7 +183,7 @@ func (c *Balancer) Disconnect(ctx context.Context, server int32) error {
 }
 
 func (c *Balancer) Servers() []string {
-	return c.servers.GetServers()
+	return c.servers.GetServersInfo()
 }
 
 func (c *Balancer) withContext(ctx context.Context, fn func() error) (err error) {
@@ -253,31 +260,3 @@ func (c *Balancer) CalculateRAM(_ context.Context) (res gost.Result[models.RAM])
 
 	return res
 }
-
-//func (c *Balancer) earlyObjectNotFound(name string, server int32) bool {
-//	return c.earlyNotFound(c.cfg.Balancer.On, &c.objectServers, name, server)
-//}
-//
-//func (c *Balancer) earlyKetNotFound(name string, server int32) bool {
-//	return c.earlyNotFound(c.cfg.Balancer.On, &c.keyServers, name, server)
-//}
-//
-//type RLocker interface {
-//	RBorrow() gost.Arc[*map[string]int32, map[string]int32]
-//	Release()
-//}
-//
-//func (c *Balancer) earlyNotFound(isBalancer bool, locker RLocker, name string, server int32) bool {
-//	if !isBalancer {
-//		return false
-//	}
-//
-//	defer locker.Release()
-//
-//	objServer, ok := (locker.RBorrow().Read())[name]
-//	if !ok {
-//		return false
-//	}
-//
-//	return objServer != server
-//}

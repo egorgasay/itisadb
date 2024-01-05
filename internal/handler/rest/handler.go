@@ -2,15 +2,16 @@ package rest
 
 import (
 	"encoding/json"
+
 	"github.com/valyala/fasthttp"
 	"itisadb/internal/domains"
 )
 
 type Handler struct {
-	core domains.Core
+	core domains.Balancer
 }
 
-func New(logic domains.Core) *Handler {
+func New(logic domains.Balancer) *Handler {
 	return &Handler{core: logic}
 }
 

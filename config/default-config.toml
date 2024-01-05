@@ -19,7 +19,9 @@ On = false
 # 	"127.0.0.1:8889",
 # 	"127.0.0.1:8890",
 # ]
-Servers = []
+Servers = [
+    "127.0.0.1:8889",
+]
 
 # Balancing only mode.
 BalancingOnly = false

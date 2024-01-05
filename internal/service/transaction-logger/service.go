@@ -2,11 +2,12 @@ package transactionlogger
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-	"itisadb/config"
 	"os"
 	"strconv"
 	"sync"
+
+	"go.uber.org/zap"
+	"itisadb/config"
 )
 
 type EventType byte
@@ -50,11 +51,15 @@ type TransactionLogger struct {
 }
 
 func New(cfg config.TransactionLoggerConfig) (*TransactionLogger, error) {
-	if err := os.MkdirAll(PATH, 0755); err != nil {
+	if cfg.BackupDirectory == "" {
+		cfg.BackupDirectory = DefaultPath
+	}
+
+	if err := os.MkdirAll(cfg.BackupDirectory, 0755); err != nil {
 		return nil, err
 	}
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(cfg.BackupDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +81,7 @@ func New(cfg config.TransactionLoggerConfig) (*TransactionLogger, error) {
 		maxNumber = 1
 	}
 
-	filename := fmt.Sprint(PATH, "/", maxNumber)
+	filename := fmt.Sprint(cfg.BackupDirectory, "/", maxNumber)
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err

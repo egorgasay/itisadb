@@ -18,14 +18,14 @@ import (
 
 type Handler struct {
 	api.UnimplementedItisaDBServer
-	core    domains.Core
+	core    domains.Balancer
 	logger  *zap.Logger
 	session domains.Session
 	conf    config.SecurityConfig
 }
 
 func New(
-	logic domains.Core,
+	logic domains.Balancer,
 	l *zap.Logger,
 	session domains.Session,
 	conf config.SecurityConfig,

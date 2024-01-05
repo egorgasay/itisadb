@@ -100,6 +100,10 @@ func (s *Servers) getServer() (domains.Server, bool) {
 	var serverNumber int32 = 0
 
 	for num, cl := range s.servers {
+		if cl.IsOffline() {
+			continue
+		}
+
 		r := cl.RAM()
 		if val := float64(r.Available) / float64(r.Total) * 100; val > best {
 			serverNumber = num
@@ -119,14 +123,12 @@ func (s *Servers) Len() int32 {
 
 var ErrInternal = errors.New("internal error")
 
-func (s *Servers) AddServer(address string, available, total uint64, server int32) (int32, error) {
+func (s *Servers) AddServer(address string, force bool) (int32, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	if server == 0 {
-		server = s.freeID
-		s.freeID++
-	}
+	server := s.freeID
+	s.freeID++
 
 	ctx := context.Background()
 
@@ -136,25 +138,19 @@ func (s *Servers) AddServer(address string, available, total uint64, server int3
 	case gost.IsOk:
 		cl = r.Unwrap()
 	case gost.IsErr:
-		return 0, r.Error()
+		if !force {
+			return 0, r.Error()
+		}
+
+		s.logger.Error("can't connect to server", zap.String("server", address), zap.Error(r.Error()))
 	}
 
 	// add test connection
 
-	var stClient = NewRemoteServer(cl, server, s)
-
-	if server != 0 {
-		stClient.number = server
-		if server > s.freeID {
-			s.freeID = server + 1
-		}
-	} else {
-		stClient.number = s.freeID
-		s.freeID++
-	}
+	var stClient = NewRemoteServer(cl, server)
 
 	// saving last id
-	f, err := os.OpenFile("balancer", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return 0, errors.Wrapf(ErrInternal, "can't open file: balancer, %v", err.Error())
 	}
@@ -180,10 +176,17 @@ func (s *Servers) GetServers() []string {
 	s.RLock()
 	defer s.RUnlock()
 
-	var servers = make([]string, len(s.servers))
+	var servers = make([]string, 0, len(s.servers))
 	for _, cl := range s.servers {
-		r := cl.RAM()
-		servers = append(servers, fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number(), r.Available, r.Total))
+		var res string
+		if cl.IsOffline() {
+			res = fmt.Sprintf("s#%d Offline", cl.Number())
+		} else {
+			r := cl.RAM()
+			res = fmt.Sprintf("s#%d Avaliable: %d MB, Total: %d MB", cl.Number(), r.Available, r.Total)
+		}
+
+		servers = append(servers, res)
 	}
 
 	return servers
@@ -284,8 +287,6 @@ func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opt
 			mu.Unlock()
 			return
 		}
-
-		server.ResetTries()
 	}
 
 	for n, serv := range s.servers {
@@ -315,8 +316,6 @@ func (s *Servers) DelFromAll(ctx context.Context, userID int, key string, opts m
 			return
 		}
 		atLeastOnce = true
-
-		server.ResetTries()
 	}
 
 	for n, serv := range s.servers {

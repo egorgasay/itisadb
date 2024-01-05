@@ -2,25 +2,35 @@ package domains
 
 import (
 	"context"
+
 	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
 
-//go:generate mockgen -destination=mocks/balancer/mock_servers.go -package=mocks . Servers
-type Servers interface {
-	Len() int32
-	AddServer(address string, available uint64, total uint64, server int32) (int32, error)
-	Disconnect(number int32)
-	GetServers() []string
-	GetServer(number int32) (Server, bool)
-	Exists(number int32) bool
+type Balancer interface {
+	Get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error)
+	Set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error)
+	Delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) error
 
-	// TODO: may be we should use Iter instead, because Servers != buisness logic
-	SetToAll(ctx context.Context, userID int, key string, val string, opts models.SetOptions) []int32
+	Object(ctx context.Context, userID int, name string, opts models.ObjectOptions) (int32, error)
+	ObjectToJSON(ctx context.Context, userID int, name string, opts models.ObjectToJSONOptions) (string, error)
+	DeleteObject(ctx context.Context, userID int, name string, opts models.DeleteObjectOptions) error
+	IsObject(ctx context.Context, userID int, name string, opts models.IsObjectOptions) (bool, error)
+	Size(ctx context.Context, userID int, name string, opts models.SizeOptions) (uint64, error)
+	AttachToObject(ctx context.Context, userID int, dst, src string, opts models.AttachToObjectOptions) error
 
-	// TODO: may be we should use Iter instead, because Servers != buisness logic
-	DelFromAll(ctx context.Context, userID int, key string, opts models.DeleteOptions) (atLeastOnce bool)
+	GetFromObject(ctx context.Context, userID int, object, key string, opts models.GetFromObjectOptions) (string, error)
+	SetToObject(ctx context.Context, userID int, object, key, val string, opts models.SetToObjectOptions) (int32, error)
+	DeleteAttr(ctx context.Context, userID int, attr, object string, opts models.DeleteAttrOptions) error
 
-	// TODO: may be we should use Iter instead, because Servers != buisness logic
-	DeepSearch(ctx context.Context, userID int, key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]])
+	Connect(ctx context.Context, address string, available uint64, total uint64) (int32, error)
+	Disconnect(ctx context.Context, number int32) error
+	Servers() []string
+
+	Authenticate(ctx context.Context, login, password string) (string, error)
+	CreateUser(ctx context.Context, userID int, user models.User) error
+	DeleteUser(ctx context.Context, userID int, login string) error
+	ChangePassword(ctx context.Context, userID int, login, password string) error
+	ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error
+	CalculateRAM(ctx context.Context) (res gost.Result[models.RAM])
 }

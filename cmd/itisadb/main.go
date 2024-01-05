@@ -32,12 +32,12 @@ func main() {
 		lg.Fatal("failed to inizialise config: %v", zap.Error(err))
 	}
 
-	var tl domains.TransactionLogger
-
 	store, err := storage.New()
 	if err != nil {
 		lg.Fatal("failed to inizialise storage: %v", zap.String("error", err.Error()))
 	}
+
+	var tl domains.TransactionLogger
 
 	if cfg.TransactionLogger.On {
 		tl, err = transactionlogger.New(cfg.TransactionLogger)

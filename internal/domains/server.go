@@ -10,11 +10,8 @@ import (
 type Server interface {
 	RAM() models.RAM
 	RefreshRAM(ctx context.Context) (res gost.Result[gost.Nothing])
-
 	Number() int32
-	Tries() uint32
-	IncTries() uint32
-	ResetTries()
+	IsOffline() bool
 
 	appLogic
 }
@@ -34,14 +31,3 @@ type appLogic interface {
 	AttachToObject(ctx context.Context, userID int, dst, src string, opts models.AttachToObjectOptions) gost.ResultN
 	ObjectDeleteKey(ctx context.Context, userID int, object, key string, opts models.DeleteAttrOptions) gost.ResultN
 }
-
-//Set(ctx context.Context, key string, value string, opts models.SetOptions) error
-//Get(ctx context.Context, key string, opts models.GetOptions) (*api.GetResponse, error)
-//GetFromObject(ctx context.Context, name string, key string, opts models.GetFromObjectOptions) (*api.GetFromObjectResponse, error)
-//SetToObject(ctx context.Context, name string, key string, value string, opts models.SetToObjectOptions) error
-//NewObject(ctx context.Context, name string, opts models.ObjectOptions) error
-//Size(ctx context.Context, name string, opts models.SizeOptions) (*api.ObjectSizeResponse, error)
-//DeleteObject(ctx context.Context, name string, opts models.DeleteObjectOptions) error
-//Delete(ctx context.Context, Key string, opts models.DeleteOptions) error
-//AttachToObject(ctx context.Context, dst string, src string, opts models.AttachToObjectOptions) error
-//DeleteAttr(ctx context.Context, attr string, object string, opts models.DeleteAttrOptions) error

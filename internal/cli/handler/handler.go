@@ -3,6 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"strings"
+
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -11,7 +14,6 @@ import (
 	"itisadb/internal/cli/cookies"
 	"itisadb/internal/cli/schema"
 	"itisadb/internal/cli/usecase"
-	"net/http"
 )
 
 type Handler struct {
@@ -125,6 +127,8 @@ func (h *Handler) Servers(c echo.Context) error {
 	servers, err := h.logic.Servers(c.Request().Context(), cookie.Value)
 	if servers == "" {
 		servers = "no available balancer"
+	} else {
+		servers = strings.ReplaceAll(servers, "\n", "<br>")
 	}
 
 	var t = schema.Response{Text: servers}

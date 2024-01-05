@@ -3,6 +3,7 @@ package balancer
 import (
 	"context"
 	"fmt"
+
 	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
@@ -267,7 +268,8 @@ func (c *Balancer) attachToObject(ctx context.Context, userID int, dst, src stri
 		return constants.ErrServerNotFound
 	}
 
-	return cl.AttachToObject(ctx, userID, dst, src, opts).Error().WrapNotNilMsg("can't attach to object")
+	return cl.AttachToObject(ctx, userID, dst, src, opts).Error().
+		WrapNotNilMsg("can't attach to object")
 }
 
 func (c *Balancer) DeleteAttr(ctx context.Context, userID int, key string, object string, opts models.DeleteAttrOptions) error {
@@ -295,9 +297,6 @@ func (c *Balancer) deleteAttr(ctx context.Context, userID int, key, object strin
 		return constants.ErrServerNotFound
 	}
 
-	if r := cl.ObjectDeleteKey(ctx, userID, key, object, opts); r.IsErr() {
-		return fmt.Errorf("can't delete attr: %w", r.Error())
-	}
-
-	return nil
+	return cl.ObjectDeleteKey(ctx, userID, key, object, opts).Error().
+		WrapNotNilMsg("can't delete attr")
 }

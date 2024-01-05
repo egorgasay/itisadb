@@ -3,15 +3,16 @@ package transactionlogger
 import (
 	"bufio"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
-var PATH = "transaction-logger"
+var DefaultPath = "transaction-logger"
 
 const MaxCOL = 100_000
 
@@ -90,7 +91,7 @@ func (t *TransactionLogger) countWatcher(done chan struct{}) {
 			}
 			t.currentName++
 
-			t.pathToFile = fmt.Sprintf("%s/%d", PATH, t.currentName)
+			t.pathToFile = fmt.Sprintf("%s/%d", t.cfg.BackupDirectory, t.currentName)
 			f, err := os.OpenFile(t.pathToFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 			if err != nil {
 				t.errors <- err

@@ -3,16 +3,17 @@ package transactionlogger
 import (
 	"bufio"
 	"fmt"
-	"itisadb/internal/grpc-storage/storage"
-	"modernc.org/strutil"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"itisadb/internal/grpc-storage/storage"
+	"modernc.org/strutil"
 )
 
 func TestMain(m *testing.M) {
-	PATH = "testTL"
+	DefaultPath = "testTL"
 	os.Exit(m.Run())
 }
 
@@ -25,7 +26,7 @@ func Test_WriteSet(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -37,7 +38,7 @@ func Test_WriteSet(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -50,7 +51,7 @@ func Test_WriteSet(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -92,7 +93,7 @@ func Test_WriteDelete(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -104,7 +105,7 @@ func Test_WriteDelete(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -117,7 +118,7 @@ func Test_WriteDelete(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -159,7 +160,7 @@ func Test_WriteSetToObject(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -171,7 +172,7 @@ func Test_WriteSetToObject(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -184,7 +185,7 @@ func Test_WriteSetToObject(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -228,7 +229,7 @@ func Test_WriteDeleteAttr(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -240,7 +241,7 @@ func Test_WriteDeleteAttr(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -253,7 +254,7 @@ func Test_WriteDeleteAttr(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -297,7 +298,7 @@ func Test_WriteAttach(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -309,7 +310,7 @@ func Test_WriteAttach(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -322,7 +323,7 @@ func Test_WriteAttach(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -366,7 +367,7 @@ func Test_WriteDeleteObject(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -378,7 +379,7 @@ func Test_WriteDeleteObject(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -391,7 +392,7 @@ func Test_WriteDeleteObject(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -435,7 +436,7 @@ func Test_WriteCreateObject(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()
@@ -447,7 +448,7 @@ func Test_WriteCreateObject(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	files, err := os.ReadDir(PATH)
+	files, err := os.ReadDir(DefaultPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -460,7 +461,7 @@ func Test_WriteCreateObject(t *testing.T) {
 
 	for _, f := range files {
 		func() {
-			fobject, err := os.Open(PATH + "/" + f.Name())
+			fobject, err := os.Open(DefaultPath + "/" + f.Name())
 			if err != nil {
 				t.Error(err)
 				return
@@ -504,7 +505,7 @@ func Test_Restore(t *testing.T) {
 	defer func() {
 		tl.Stop()
 		time.Sleep(2 * time.Second)
-		if err = os.RemoveAll(PATH); err != nil {
+		if err = os.RemoveAll(DefaultPath); err != nil {
 			t.Errorf("remove failed: %s", err)
 		}
 	}()

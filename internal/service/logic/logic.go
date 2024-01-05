@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
+
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -57,9 +58,7 @@ func (l *Logic) DelOne(_ context.Context, userID int, key string, _ models.Delet
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteDelete(key)
-	}
+	l.tlogger.WriteDelete(key)
 
 	return res.Ok(gost.Nothing{})
 }
@@ -85,9 +84,7 @@ func (l *Logic) SetOne(_ context.Context, userID int, key string, val string, op
 		return res.ErrNew(0, 0, err.Error()) // TODO:
 	}
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteSet(key, val, opt)
-	}
+	l.tlogger.WriteSet(key, val, opt)
 
 	return res.Ok(constants.MainStorageNumber)
 }
@@ -117,10 +114,8 @@ func (l *Logic) NewObject(_ context.Context, userID int, name string, opts model
 
 	l.storage.AddObjectInfo(name, info) // TODO: maybe you should union Create + AddObjectInfo? and keep all information about object in one place?
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteCreateObject(name)
-		l.tlogger.WriteAddObjectInfo(name, info)
-	}
+	l.tlogger.WriteCreateObject(name)
+	l.tlogger.WriteAddObjectInfo(name, info)
 
 	return res.Ok(gost.Nothing{})
 }
@@ -140,9 +135,7 @@ func (l *Logic) SetToObject(_ context.Context, userID int, object string, key st
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteSetToObject(object, key, value)
-	}
+	l.tlogger.WriteSetToObject(object, key, value)
 
 	return res.Ok(gost.Nothing{})
 }
@@ -218,10 +211,8 @@ func (l *Logic) DeleteObject(_ context.Context, userID int, object string, _ mod
 
 	l.storage.DeleteObjectInfo(object)
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteDeleteObject(object)
-		l.tlogger.WriteDeleteObjectInfo(object)
-	}
+	l.tlogger.WriteDeleteObject(object)
+	l.tlogger.WriteDeleteObjectInfo(object)
 
 	return res.Ok()
 }
@@ -249,9 +240,7 @@ func (l *Logic) AttachToObject(_ context.Context, userID int, dst, src string, _
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteAttach(dst, src)
-	}
+	l.tlogger.WriteAttach(dst, src)
 
 	return res.Ok()
 }
@@ -270,9 +259,7 @@ func (l *Logic) ObjectDeleteKey(_ context.Context, userID int, object, key strin
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteDeleteAttr(object, key)
-	}
+	l.tlogger.WriteDeleteAttr(object, key)
 
 	return res.Ok()
 }
