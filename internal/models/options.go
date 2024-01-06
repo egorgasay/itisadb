@@ -9,9 +9,7 @@ type GetOptions struct {
 }
 
 func (o GetOptions) ToSDK() itisadb.GetOptions {
-	return itisadb.GetOptions{
-		Server: o.Server,
-	}
+	return itisadb.GetOptions{}
 }
 
 type SetOptions struct {
@@ -23,7 +21,6 @@ type SetOptions struct {
 
 func (o SetOptions) ToSDK() itisadb.SetOptions {
 	return itisadb.SetOptions{
-		Server:   o.Server,
 		ReadOnly: o.ReadOnly,
 	}
 }
@@ -33,9 +30,7 @@ type DeleteOptions struct {
 }
 
 func (o DeleteOptions) ToSDK() itisadb.DeleteOptions {
-	return itisadb.DeleteOptions{
-		Server: o.Server,
-	}
+	return itisadb.DeleteOptions{}
 }
 
 type Level byte
@@ -80,8 +75,7 @@ type ObjectOptions struct {
 
 func (o ObjectOptions) ToSDK() itisadb.ObjectOptions {
 	return itisadb.ObjectOptions{
-		Server: o.Server,
-		Level:  itisadb.Level(o.Level),
+		Level: itisadb.Level(o.Level),
 	}
 }
 
@@ -90,9 +84,7 @@ type ObjectToJSONOptions struct {
 }
 
 func (o ObjectToJSONOptions) ToSDK() itisadb.ObjectToJSONOptions {
-	return itisadb.ObjectToJSONOptions{
-		Server: o.Server,
-	}
+	return itisadb.ObjectToJSONOptions{}
 }
 
 type DeleteObjectOptions struct {
@@ -100,9 +92,7 @@ type DeleteObjectOptions struct {
 }
 
 func (o DeleteObjectOptions) ToSDK() itisadb.DeleteObjectOptions {
-	return itisadb.DeleteObjectOptions{
-		Server: o.Server,
-	}
+	return itisadb.DeleteObjectOptions{}
 }
 
 type IsObjectOptions struct {
@@ -110,9 +100,7 @@ type IsObjectOptions struct {
 }
 
 func (o IsObjectOptions) ToSDK() itisadb.IsObjectOptions {
-	return itisadb.IsObjectOptions{
-		Server: o.Server,
-	}
+	return itisadb.IsObjectOptions{}
 }
 
 type SizeOptions struct {
@@ -120,9 +108,7 @@ type SizeOptions struct {
 }
 
 func (o SizeOptions) ToSDK() itisadb.SizeOptions {
-	return itisadb.SizeOptions{
-		Server: o.Server,
-	}
+	return itisadb.SizeOptions{}
 }
 
 type AttachToObjectOptions struct {
@@ -130,9 +116,7 @@ type AttachToObjectOptions struct {
 }
 
 func (o AttachToObjectOptions) ToSDK() itisadb.AttachToObjectOptions {
-	return itisadb.AttachToObjectOptions{
-		Server: o.Server,
-	}
+	return itisadb.AttachToObjectOptions{}
 }
 
 type SetToObjectOptions struct {
@@ -142,7 +126,6 @@ type SetToObjectOptions struct {
 
 func (o SetToObjectOptions) ToSDK() itisadb.SetToObjectOptions {
 	return itisadb.SetToObjectOptions{
-		Server:   o.Server,
 		ReadOnly: o.ReadOnly,
 	}
 }
@@ -152,9 +135,7 @@ type GetFromObjectOptions struct {
 }
 
 func (o GetFromObjectOptions) ToSDK() itisadb.GetFromObjectOptions {
-	return itisadb.GetFromObjectOptions{
-		Server: o.Server,
-	}
+	return itisadb.GetFromObjectOptions{}
 }
 
 type ConnectOptions struct {
@@ -162,9 +143,7 @@ type ConnectOptions struct {
 }
 
 func (o ConnectOptions) ToSDK() itisadb.ConnectOptions {
-	return itisadb.ConnectOptions{
-		Server: o.Server,
-	}
+	return itisadb.ConnectOptions{}
 }
 
 type DeleteAttrOptions struct {
@@ -172,9 +151,7 @@ type DeleteAttrOptions struct {
 }
 
 func (o DeleteAttrOptions) ToSDK() itisadb.DeleteKeyOptions {
-	return itisadb.DeleteKeyOptions{
-		Server: o.Server,
-	}
+	return itisadb.DeleteKeyOptions{}
 }
 
 type CreateUserOptions struct {
