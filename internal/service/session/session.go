@@ -2,31 +2,36 @@ package session
 
 import (
 	"context"
+
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
+	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
+	"itisadb/internal/models"
 )
 
 type Session struct {
-	storage   domains.Storage
-	generator domains.Generator
-	logger    *zap.Logger
+	storage      domains.Storage
+	generator    domains.Generator
+	logger       *zap.Logger
+	validateUser bool
 
 	key []byte
 }
 
-func New(storage domains.Storage, generator domains.Generator, l *zap.Logger) domains.Session {
+func New(config config.Config, storage domains.Storage, generator domains.Generator, l *zap.Logger) domains.Session {
 	return Session{
-		storage:   storage,
-		generator: generator,
-		logger:    l,
-		key:       []byte("CHANGE_ME"), // TODO: change me
+		storage:      storage,
+		generator:    generator,
+		logger:       l,
+		validateUser: config.Balancer.On,
+		key:          []byte("CHANGE_ME"), // TODO: change me
 	}
 }
 
 func (s Session) AuthByPassword(ctx context.Context, username, password string) (string, error) {
-	id, user, err := s.storage.GetUserByName(username)
+	_, user, err := s.storage.GetUserByName(username)
 	if err != nil {
 		return "", err
 	}
@@ -35,7 +40,7 @@ func (s Session) AuthByPassword(ctx context.Context, username, password string) 
 		return "", constants.ErrInvalidPassword
 	}
 
-	token, _, err := s.generator.AccessToken(ctx, id, s.key, constants.AccessTTL)
+	token, _, err := s.generator.AccessToken(ctx, user.ExtractClaims(), s.key, constants.AccessTTL)
 	if err != nil {
 		return "", err
 	}
@@ -43,26 +48,29 @@ func (s Session) AuthByPassword(ctx context.Context, username, password string) 
 	return token, nil
 }
 
-func (s Session) AuthByToken(ctx context.Context, token string) (int, error) {
+func (s Session) AuthByToken(ctx context.Context, token string) (models.UserClaims, error) {
 	if ctx.Err() != nil {
-		return 0, ctx.Err()
+		return models.UserClaims{}, ctx.Err()
 	}
 
-	id, err := s.guidFromJWT(token)
+	claims, err := s.infoFromJWT(token)
 	if err != nil {
-		return 0, err
+		return models.UserClaims{}, err
 	}
 
-	_, err = s.storage.GetUserByID(id)
+	_, err = s.storage.GetUserByID(claims.ID)
 	if err != nil {
-		return 0, err
+		return models.UserClaims{}, err
 	}
 
-	return id, nil
+	return claims, nil
 }
 
-func (s Session) Create(ctx context.Context, guid int) (string, error) {
-	token, _, err := s.generator.AccessToken(ctx, guid, s.key, constants.AccessTTL)
+func (s Session) Create(ctx context.Context, userID int, level models.Level) (string, error) {
+	token, _, err := s.generator.AccessToken(ctx, models.UserClaims{
+		ID:    userID,
+		Level: level,
+	}, s.key, constants.AccessTTL)
 	if err != nil {
 		return "", err
 	}
@@ -70,32 +78,47 @@ func (s Session) Create(ctx context.Context, guid int) (string, error) {
 	return token, nil
 }
 
-func (s Session) guidFromJWT(token string) (int, error) {
+func (s Session) infoFromJWT(token string) (models.UserClaims, error) {
 	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return s.key, nil
 	})
 	if err != nil {
 		s.logger.Error("can't parse token", zap.Error(err))
-		return 0, constants.ErrInvalidToken
+		return models.UserClaims{}, constants.ErrInvalidToken
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
 		s.logger.Error("can't extract claims from token", zap.Error(err))
-		return 0, constants.ErrInvalidToken
+		return models.UserClaims{}, constants.ErrInvalidToken
 	}
 
 	guid, ok := claims[constants.GUID]
 	if !ok {
 		s.logger.Error("can't extract guid from token", zap.Error(err))
-		return 0, constants.ErrInvalidToken
+		return models.UserClaims{}, constants.ErrInvalidToken
 	}
 
 	guidInt, ok := guid.(float64)
 	if !ok {
 		s.logger.Error("can't convert guid to float64", zap.Error(err))
-		return 0, constants.ErrInvalidToken
+		return models.UserClaims{}, constants.ErrInvalidToken
 	}
 
-	return int(guidInt), nil
+	levelRaw, ok := claims[constants.LEVEL]
+	if !ok {
+		s.logger.Error("can't extract level from token", zap.Error(err))
+		return models.UserClaims{}, constants.ErrInvalidToken
+	}
+
+	level, ok := levelRaw.(float64)
+	if !ok {
+		s.logger.Error("can't convert meta to models.UserMeta", zap.Error(err))
+		return models.UserClaims{}, constants.ErrInvalidToken
+	}
+
+	return models.UserClaims{
+		ID:    int(guidInt),
+		Level: models.Level(level),
+	}, nil
 }

@@ -30,26 +30,26 @@ func NewLogic(storage domains.Storage, cfg config.Config, tlogger domains.Transa
 	}
 }
 
-func (l *Logic) GetOne(_ context.Context, userID int, key string, _ models.GetOptions) (res gost.Result[models.Value]) {
+func (l *Logic) GetOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.GetOptions) (res gost.Result[models.Value]) {
 	v, err := l.storage.Get(key)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, v.Level) {
+	if !l.hasPermission(claims, v.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
 	return res.Ok(v)
 }
 
-func (l *Logic) DelOne(_ context.Context, userID int, key string, _ models.DeleteOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.DeleteOptions) (res gost.Result[gost.Nothing]) {
 	v, err := l.storage.Get(key)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, v.Level) {
+	if !l.hasPermission(claims, v.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -63,14 +63,14 @@ func (l *Logic) DelOne(_ context.Context, userID int, key string, _ models.Delet
 	return res.Ok(gost.Nothing{})
 }
 
-func (l *Logic) SetOne(_ context.Context, userID int, key string, val string, opt models.SetOptions) (res gost.Result[int32]) {
-	if !l.hasPermission(userID, opt.Level) {
+func (l *Logic) SetOne(_ context.Context, claims gost.Option[models.UserClaims], key string, val string, opt models.SetOptions) (res gost.Result[int32]) {
+	if !l.hasPermission(claims, opt.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
 	v, err := l.storage.Get(key)
 	if err == nil {
-		if !l.hasPermission(userID, v.Level) {
+		if !l.hasPermission(claims, v.Level) {
 			return res.Err(constants.ErrForbidden)
 		}
 
@@ -89,17 +89,17 @@ func (l *Logic) SetOne(_ context.Context, userID int, key string, val string, op
 	return res.Ok(constants.MainStorageNumber)
 }
 
-func (l *Logic) HasPermissionToObject(userID int, name string) (res gost.Result[bool]) {
+func (l *Logic) HasPermissionToObject(claims gost.Option[models.UserClaims], name string) (res gost.Result[bool]) {
 	info, err := l.storage.GetObjectInfo(name)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	return res.Ok(l.hasPermission(userID, info.Level))
+	return res.Ok(l.hasPermission(claims, info.Level))
 }
 
-func (l *Logic) NewObject(_ context.Context, userID int, name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
-	if !l.hasPermission(userID, opts.Level) {
+func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
+	if !l.hasPermission(claims, opts.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -120,13 +120,13 @@ func (l *Logic) NewObject(_ context.Context, userID int, name string, opts model
 	return res.Ok(gost.Nothing{})
 }
 
-func (l *Logic) SetToObject(_ context.Context, userID int, object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) SetToObject(_ context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error()) // TODO: ??
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -140,13 +140,13 @@ func (l *Logic) SetToObject(_ context.Context, userID int, object string, key st
 	return res.Ok(gost.Nothing{})
 }
 
-func (l *Logic) GetFromObject(_ context.Context, userID int, object, key string, _ models.GetFromObjectOptions) (res gost.Result[string]) {
+func (l *Logic) GetFromObject(_ context.Context, claims gost.Option[models.UserClaims], object, key string, _ models.GetFromObjectOptions) (res gost.Result[string]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -158,13 +158,13 @@ func (l *Logic) GetFromObject(_ context.Context, userID int, object, key string,
 	return res.Ok(v)
 }
 
-func (l *Logic) ObjectToJSON(_ context.Context, userID int, object string, _ models.ObjectToJSONOptions) (res gost.Result[string]) {
+func (l *Logic) ObjectToJSON(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.ObjectToJSONOptions) (res gost.Result[string]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -176,13 +176,13 @@ func (l *Logic) ObjectToJSON(_ context.Context, userID int, object string, _ mod
 	return res.Ok(v)
 }
 
-func (l *Logic) ObjectSize(_ context.Context, userID int, object string, _ models.SizeOptions) (res gost.Result[uint64]) {
+func (l *Logic) ObjectSize(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.SizeOptions) (res gost.Result[uint64]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -194,13 +194,13 @@ func (l *Logic) ObjectSize(_ context.Context, userID int, object string, _ model
 	return res.Ok(v)
 }
 
-func (l *Logic) DeleteObject(_ context.Context, userID int, object string, _ models.DeleteObjectOptions) (res gost.ResultN) {
+func (l *Logic) DeleteObject(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.DeleteObjectOptions) (res gost.ResultN) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -217,7 +217,7 @@ func (l *Logic) DeleteObject(_ context.Context, userID int, object string, _ mod
 	return res.Ok()
 }
 
-func (l *Logic) AttachToObject(_ context.Context, userID int, dst, src string, _ models.AttachToObjectOptions) (res gost.ResultN) {
+func (l *Logic) AttachToObject(_ context.Context, claims gost.Option[models.UserClaims], dst, src string, _ models.AttachToObjectOptions) (res gost.ResultN) {
 	infoDst, err := l.storage.GetObjectInfo(dst)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
@@ -228,11 +228,11 @@ func (l *Logic) AttachToObject(_ context.Context, userID int, dst, src string, _
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, infoDst.Level) {
+	if !l.hasPermission(claims, infoDst.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if !l.hasPermission(userID, infoSrc.Level) {
+	if !l.hasPermission(claims, infoSrc.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -245,13 +245,13 @@ func (l *Logic) AttachToObject(_ context.Context, userID int, dst, src string, _
 	return res.Ok()
 }
 
-func (l *Logic) ObjectDeleteKey(_ context.Context, userID int, object, key string, _ models.DeleteAttrOptions) (res gost.ResultN) {
+func (l *Logic) ObjectDeleteKey(_ context.Context, claims gost.Option[models.UserClaims], object, key string, _ models.DeleteAttrOptions) (res gost.ResultN) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(userID, info.Level) {
+	if !l.hasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 

@@ -2,14 +2,16 @@ package grpc
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"itisadb/internal/constants"
 )
 
 func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	h.logger.Debug("Request", zap.String("method", info.FullMethod))
 
-	if !h.conf.On || info.FullMethod == "/api.ItisaDB/Authenticate" {
+	if !h.security.On || info.FullMethod == "/api.ItisaDB/Authenticate" {
 		return handler(ctx, req)
 	}
 
@@ -18,12 +20,12 @@ func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grp
 		return nil, err
 	}
 
-	userID, err := h.session.AuthByToken(ctx, token)
+	claims, err := h.session.AuthByToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, "userID", uint(userID))
+	ctx = context.WithValue(ctx, constants.UserKey, claims)
 
 	res, err := handler(ctx, req)
 	if err != nil {

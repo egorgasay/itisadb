@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/egorgasay/gost"
-	"github.com/egorgasay/itisadb-go-sdk"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"itisadb/internal/constants"
@@ -69,20 +68,23 @@ func New(local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error
 	return servers, nil
 }
 
-const _updateRAMInterval = 1 * time.Second
+const _updateRAMInterval = 5 * time.Second
 
 func (s *Servers) updateRAM() {
 	for {
 		for _, cl := range s.servers {
 			func() {
-				defer s.Unlock()
-				s.Lock()
-
-				ctx := context.Background()
-				ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
+				ctx, cancel := context.WithTimeout(context.Background(), constants.ServerConnectTimeout)
 				defer cancel()
 
-				if r := cl.RefreshRAM(ctxWithTimeout); r.IsErr() {
+				if cl.IsOffline() {
+					if r := cl.Reconnect(ctx); r.IsErr() {
+						s.logger.Warn("can't reconnect", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
+					}
+					return
+				}
+
+				if r := cl.RefreshRAM(ctx); r.IsErr() {
 					s.logger.Error("can't refresh RAM", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
 				}
 			}()
@@ -123,31 +125,22 @@ func (s *Servers) Len() int32 {
 
 var ErrInternal = errors.New("internal error")
 
-func (s *Servers) AddServer(address string, force bool) (int32, error) {
+func (s *Servers) AddServer(ctx context.Context, address string, force bool) (int32, error) {
 	s.Lock()
 	defer s.Unlock()
 
 	server := s.freeID
 	s.freeID++
 
-	ctx := context.Background()
-
-	var cl *itisadb.Client
-
-	switch r := itisadb.New(ctx, address); r.Switch() { /* TODO: add creds? */
-	case gost.IsOk:
-		cl = r.Unwrap()
-	case gost.IsErr:
-		if !force {
-			return 0, r.Error()
-		}
-
-		s.logger.Error("can't connect to server", zap.String("server", address), zap.Error(r.Error()))
-	}
-
 	// add test connection
 
-	var stClient = NewRemoteServer(cl, server)
+	stClient, err := NewRemoteServer(ctx, address, server, s.logger)
+	if err != nil {
+		s.logger.Error("can't add server", zap.Int32("server", server), zap.Error(err))
+		if !force {
+			return 0, err
+		}
+	}
 
 	// saving last id
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
@@ -172,7 +165,7 @@ func (s *Servers) Disconnect(number int32) {
 	delete(s.servers, number)
 }
 
-func (s *Servers) GetServers() []string {
+func (s *Servers) GetServersInfo() []string {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -192,7 +185,7 @@ func (s *Servers) GetServers() []string {
 	return servers
 }
 
-func (s *Servers) DeepSearch(ctx context.Context, userID int, key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]]) {
+func (s *Servers) DeepSearch(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]]) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -216,15 +209,19 @@ func (s *Servers) DeepSearch(ctx context.Context, userID int, key string, opts m
 	wg.Add(len(s.servers))
 
 	for _, cl := range s.servers {
+		if cl.IsOffline() {
+			continue
+		}
+
 		c := cl
 
 		go gost.WithContextPool(ctx, func() error {
 			defer wg.Done()
 
-			r := c.GetOne(ctxCancel, userID, key, opts)
+			r := c.GetOne(ctxCancel, claims, key, opts)
 			if r.IsErr() {
 				if !errors.Is(r.Error(), constants.ErrNotFound) {
-					// s.logger.Error("can't DeepSearch", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
+					s.logger.Error("can't DeepSearch", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
 				}
 
 				return nil
@@ -270,7 +267,7 @@ func (s *Servers) Exists(number int32) bool {
 	return ok
 }
 
-func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opts models.SetOptions) []int32 {
+func (s *Servers) SetToAll(ctx context.Context, claims gost.Option[models.UserClaims], key, val string, opts models.SetOptions) []int32 {
 	var failedServers = make([]int32, 0)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -279,7 +276,7 @@ func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opt
 
 	set := func(server domains.Server, number int32) {
 		defer wg.Done()
-		if r := server.SetOne(ctx, userID, key, val, opts); r.IsErr() {
+		if r := server.SetOne(ctx, claims, key, val, opts); r.IsErr() {
 			s.logger.Error("can't SetToAll", zap.Int32("server", number), zap.Error(r.Error()))
 
 			mu.Lock()
@@ -290,6 +287,9 @@ func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opt
 	}
 
 	for n, serv := range s.servers {
+		if serv.IsOffline() {
+			continue
+		}
 		s.poolCh <- struct{}{}
 		go func(serv domains.Server, n int32) {
 			set(serv, n)
@@ -301,14 +301,14 @@ func (s *Servers) SetToAll(ctx context.Context, userID int, key, val string, opt
 	return failedServers
 }
 
-func (s *Servers) DelFromAll(ctx context.Context, userID int, key string, opts models.DeleteOptions) (atLeastOnce bool) {
+func (s *Servers) DelFromAll(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.DeleteOptions) (atLeastOnce bool) {
 	var wg sync.WaitGroup
 
 	wg.Add(len(s.servers))
 
 	del := func(server domains.Server, number int32) {
 		defer wg.Done()
-		if r := server.DelOne(ctx, userID, key, opts); r.IsErr() {
+		if r := server.DelOne(ctx, claims, key, opts); r.IsErr() {
 			if !errors.Is(r.Error(), constants.ErrNotFound) {
 				s.logger.Error("can't DelFromAll", zap.Int32("server", number), zap.Error(r.Error()))
 			}
@@ -319,6 +319,9 @@ func (s *Servers) DelFromAll(ctx context.Context, userID int, key string, opts m
 	}
 
 	for n, serv := range s.servers {
+		if serv.IsOffline() {
+			continue
+		}
 		s.poolCh <- struct{}{}
 		go func(serv domains.Server, n int32) {
 			del(serv, n)

@@ -1,12 +1,12 @@
 package logic
 
 import (
-	"go.uber.org/zap"
+	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 )
 
-func (l *Logic) hasPermission(userID int, level models.Level) bool {
+func (l *Logic) hasPermission(claimsOpt gost.Option[models.UserClaims], level models.Level) bool {
 	// always ok when security is disabled
 	if !l.cfg.Security.On {
 		return true
@@ -17,11 +17,11 @@ func (l *Logic) hasPermission(userID int, level models.Level) bool {
 		return true
 	}
 
-	userLevel, err := l.storage.GetUserLevel(userID)
-	if err != nil {
-		l.logger.Warn("failed to get user level", zap.Error(err))
+	if claimsOpt.IsNone() {
 		return false
 	}
 
-	return userLevel >= level
+	claims := claimsOpt.Unwrap()
+
+	return claims.Level >= level
 }

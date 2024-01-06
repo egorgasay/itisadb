@@ -74,10 +74,10 @@ func main() {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
 
-	gen := generator.New(lg)
-	ses := session.New(store, gen, lg)
-
 	appCFG := *cfg
+
+	gen := generator.New(lg)
+	ses := session.New(appCFG, store, gen, lg)
 
 	logic, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses)
 	if err != nil {

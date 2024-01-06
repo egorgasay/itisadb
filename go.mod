@@ -7,10 +7,10 @@ require (
 	github.com/brpaz/echozap v1.1.3
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/dolthub/swiss v0.2.1
-	github.com/egorgasay/gost v0.0.14
+	github.com/egorgasay/gost v0.0.22
 	github.com/egorgasay/gotils v0.0.3
-	github.com/egorgasay/itisadb-go-sdk v0.15.1
-	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240103130519-71d21ef26787
+	github.com/egorgasay/itisadb-go-sdk v0.15.6
+	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240106120641-31e7222187f1
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/golang/mock v1.6.0
@@ -41,7 +41,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect

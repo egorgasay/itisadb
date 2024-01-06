@@ -1,14 +1,21 @@
 package models
 
 type User struct {
-	ID       uint   `json:"id"`
+	ID       int    `json:"id"`
 	Login    string `json:"username"`
 	Password string `json:"password"`
 	Level    Level  `json:"level"`
 	Active   bool   `json:"active"`
 }
 
-type MetaData struct {
-	UserID   uint  `json:"user_id"`
-	ServerID int32 `json:"server_id"`
+func (u User) ExtractClaims() UserClaims {
+	return UserClaims{
+		ID:    u.ID,
+		Level: u.Level,
+	}
+}
+
+type UserClaims struct {
+	ID    int   `json:"id"`
+	Level Level `json:"level"`
 }

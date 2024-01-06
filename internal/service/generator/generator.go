@@ -2,13 +2,15 @@ package generator
 
 import (
 	"context"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
-	"time"
+	"itisadb/internal/models"
 )
 
 type Generator struct {
@@ -28,7 +30,7 @@ const (
 
 func (g *Generator) AccessToken(
 	ctx context.Context,
-	guid int, key []byte,
+	claims models.UserClaims, key []byte,
 	accessTTL time.Duration,
 ) (access string, exp int64, err error) {
 
@@ -40,8 +42,9 @@ func (g *Generator) AccessToken(
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS512,
 		jwt.MapClaims{
-			_guid: guid,
-			_iat:  exp,
+			constants.GUID:  claims.ID,
+			constants.LEVEL: claims.Level,
+			constants.IAT:   exp,
 		})
 
 	access, err = t.SignedString(key)

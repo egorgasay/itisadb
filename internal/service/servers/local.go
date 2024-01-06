@@ -24,6 +24,10 @@ func NewLocalServer(uc *logic.Logic) *LocalServer {
 
 func (s *LocalServer) IsOffline() bool { return false }
 
+func (s *LocalServer) Reconnect(_ context.Context) (res gost.ResultN) {
+	return
+}
+
 func (s *LocalServer) ResetTries() {}
 
 func (s *LocalServer) Number() int32 {

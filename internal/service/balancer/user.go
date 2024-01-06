@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
@@ -18,14 +19,14 @@ func (c *Balancer) Authenticate(ctx context.Context, login string, password stri
 	return token, nil
 }
 
-func (c *Balancer) CreateUser(ctx context.Context, userID int, user models.User) error {
+func (c *Balancer) CreateUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
 	// TODO: determine server?
 
-	if !c.hasPermission(userID, user.Level) {
+	if !c.hasPermission(claims, user.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -43,7 +44,7 @@ func (c *Balancer) CreateUser(ctx context.Context, userID int, user models.User)
 	return nil
 }
 
-func (c *Balancer) DeleteUser(ctx context.Context, userID int, login string) error {
+func (c *Balancer) DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -56,7 +57,7 @@ func (c *Balancer) DeleteUser(ctx context.Context, userID int, login string) err
 		return err
 	}
 
-	if !c.hasPermission(userID, targetUser.Level) {
+	if !c.hasPermission(claims, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -73,7 +74,7 @@ func (c *Balancer) DeleteUser(ctx context.Context, userID int, login string) err
 	return nil
 }
 
-func (c *Balancer) ChangePassword(ctx context.Context, userID int, login, password string) error {
+func (c *Balancer) ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login, password string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -86,7 +87,7 @@ func (c *Balancer) ChangePassword(ctx context.Context, userID int, login, passwo
 		return err
 	}
 
-	if !c.hasPermission(userID, targetUser.Level) {
+	if !c.hasPermission(claims, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -104,14 +105,14 @@ func (c *Balancer) ChangePassword(ctx context.Context, userID int, login, passwo
 	return nil
 }
 
-func (c *Balancer) ChangeLevel(ctx context.Context, userID int, login string, level models.Level) error {
+func (c *Balancer) ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
 	// TODO: determine server
 
-	if !c.hasPermission(userID, level) {
+	if !c.hasPermission(claims, level) {
 		return constants.ErrForbidden
 	}
 
@@ -135,18 +136,24 @@ func (c *Balancer) ChangeLevel(ctx context.Context, userID int, login string, le
 	return nil
 }
 
-func (c *Balancer) hasPermission(userID int, level models.Level) bool {
+func (c *Balancer) hasPermission(claimsOpt gost.Option[models.UserClaims], level models.Level) bool {
 	// always ok when security is disabled
 	if !c.cfg.Security.On {
 		return true
 	}
+
+	if claimsOpt.IsNone() {
+		return false
+	}
+
+	claims := claimsOpt.Unwrap()
 
 	// ok when security is not mandatory for Default level
 	if !c.cfg.Security.MandatoryAuthorization && level == constants.DefaultLevel {
 		return true
 	}
 
-	userLevel, err := c.storage.GetUserLevel(userID)
+	userLevel, err := c.storage.GetUserLevel(claims.ID)
 	if err != nil {
 		c.logger.Warn("failed to get user level", zap.Error(err))
 		return false

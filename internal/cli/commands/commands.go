@@ -97,7 +97,8 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		case _object:
 			r := c.newObject(ctx, args[1:])
 			if r.IsOk() {
-				return res.Ok(fmt.Sprintf("object %s created", r.Unwrap().Name()))
+				obj := r.Unwrap()
+				return res.Ok(fmt.Sprintf("object %s created on server #%d", obj.Name(), obj.Server()))
 			}
 			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
 		default:

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"sync"
 
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
@@ -57,12 +56,19 @@ func New(
 	}
 
 	for _, server := range cfg.Balancer.Servers {
-		s, err := servers.AddServer(server)
-		if err != nil {
-			logger.Error("Failed to add server", zap.String("server", server), zap.Error(err))
-		} else {
-			logger.Info("Added server", zap.Int32("server", s))
-		}
+		logger.Info("Adding server", zap.String("server", server))
+
+		func() {
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
+			defer cancel()
+
+			s, err := servers.AddServer(ctxWithTimeout, server, true)
+			if err != nil {
+				logger.Error("Failed to add server", zap.String("server", server), zap.Error(err))
+			} else {
+				logger.Info("Added server", zap.Int32("server", s))
+			}
+		}()
 	}
 
 	return &Balancer{
@@ -78,24 +84,16 @@ func New(
 	}, nil
 }
 
-func toServerNumber(server *int32) int32 {
-	if server == nil {
-		return constants.MainStorageNumber
-	}
-
-	return *server
-}
-
-func (c *Balancer) Set(ctx context.Context, userID int, key, value string, opts models.SetOptions) (val int32, err error) {
-	return val, c.withContext(ctx, func() error {
-		val, err = c.set(ctx, userID, key, value, opts)
+func (c *Balancer) Set(ctx context.Context, claims gost.Option[models.UserClaims], key, value string, opts models.SetOptions) (val int32, err error) {
+	return val, gost.WithContextPool(ctx, func() error {
+		val, err = c.set(ctx, claims, key, value, opts)
 		return err
-	})
+	}, c.pool)
 }
 
-func (c *Balancer) set(ctx context.Context, userID int, key, val string, opts models.SetOptions) (int32, error) {
+func (c *Balancer) set(ctx context.Context, claims gost.Option[models.UserClaims], key, val string, opts models.SetOptions) (int32, error) {
 	if opts.Server == constants.SetToAllServers {
-		failedServers := c.servers.SetToAll(ctx, userID, key, val, opts)
+		failedServers := c.servers.SetToAll(ctx, claims, key, val, opts)
 		if len(failedServers) != 0 {
 			return opts.Server, fmt.Errorf("some servers failed: %v", failedServers)
 		}
@@ -108,7 +106,7 @@ func (c *Balancer) set(ctx context.Context, userID int, key, val string, opts mo
 		return 0, constants.ErrUnknownServer
 	}
 
-	err := cl.SetOne(ctx, userID, key, val, opts).Error()
+	err := cl.SetOne(ctx, claims, key, val, opts).Error()
 	if err != nil {
 		return 0, err
 	}
@@ -116,11 +114,11 @@ func (c *Balancer) set(ctx context.Context, userID int, key, val string, opts mo
 	return cl.Number(), nil
 }
 
-func (c *Balancer) Get(ctx context.Context, userID int, key string, opts models.GetOptions) (val models.Value, err error) {
-	return val, c.withContext(ctx, func() error {
-		val, err = c.get(ctx, userID, key, opts)
+func (c *Balancer) Get(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.GetOptions) (val models.Value, err error) {
+	return val, gost.WithContextPool(ctx, func() error {
+		val, err = c.get(ctx, claims, key, opts)
 		return err
-	})
+	}, c.pool)
 }
 
 func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
@@ -132,11 +130,11 @@ func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
 	return info, nil
 }
 
-func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.GetOptions) (models.Value, error) {
+func (c *Balancer) get(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.GetOptions) (models.Value, error) {
 	if opts.Server == constants.AutoServerNumber {
 		res := c.getKeyServer(key)
 		if res.IsNone() {
-			if r := c.servers.DeepSearch(ctx, userID, key, opts); r.IsErr() {
+			if r := c.servers.DeepSearch(ctx, claims, key, opts); r.IsErr() {
 				return models.Value{}, fmt.Errorf("can't get key after deep search: %w", r.Error())
 			} else {
 				res := r.Unwrap()
@@ -154,7 +152,7 @@ func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.
 		return models.Value{}, constants.ErrUnknownServer
 	}
 
-	switch r := cl.GetOne(ctx, userID, key, opts); r.IsOk() {
+	switch r := cl.GetOne(ctx, claims, key, opts); r.IsOk() {
 	case true:
 		return r.Unwrap(), nil
 	default:
@@ -164,59 +162,37 @@ func (c *Balancer) get(ctx context.Context, userID int, key string, opts models.
 
 func (c *Balancer) Connect(ctx context.Context, address string, available, total uint64) (number int32, err error) {
 	c.logger.Info("New request for connect from " + address)
-	return number, c.withContext(ctx, func() error {
-		number, err = c.servers.AddServer(address)
+	return number, gost.WithContextPool(ctx, func() error {
+		number, err = c.servers.AddServer(ctx, address, false)
 		if err != nil {
 			c.logger.Warn(err.Error())
 			return err
 		}
 
 		return nil
-	})
+	}, c.pool)
 }
 
 func (c *Balancer) Disconnect(ctx context.Context, server int32) error {
-	return c.withContext(ctx, func() error {
+	return gost.WithContextPool(ctx, func() error {
 		c.servers.Disconnect(server)
 		return nil
-	})
+	}, c.pool)
 }
 
 func (c *Balancer) Servers() []string {
 	return c.servers.GetServersInfo()
 }
 
-func (c *Balancer) withContext(ctx context.Context, fn func() error) (err error) {
-	ch := make(chan struct{})
-
-	once := sync.Once{}
-	done := func() { close(ch) }
-
-	c.pool <- struct{}{}
-	go func() {
-		err = fn()
-		once.Do(done)
-		<-c.pool
-	}()
-
-	select {
-	case <-ch:
-		return err
-	case <-ctx.Done():
-		once.Do(done)
-		return ctx.Err()
-	}
+func (c *Balancer) Delete(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.DeleteOptions) (err error) {
+	return gost.WithContextPool(ctx, func() error {
+		return c.delete(ctx, claims, key, opts)
+	}, c.pool)
 }
 
-func (c *Balancer) Delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) (err error) {
-	return c.withContext(ctx, func() error {
-		return c.delete(ctx, userID, key, opts)
-	})
-}
-
-func (c *Balancer) delete(ctx context.Context, userID int, key string, opts models.DeleteOptions) (err error) {
+func (c *Balancer) delete(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.DeleteOptions) (err error) {
 	if opts.Server == constants.DeleteFromAllServers {
-		atLeastOnce := c.servers.DelFromAll(ctx, userID, key, opts)
+		atLeastOnce := c.servers.DelFromAll(ctx, claims, key, opts)
 		if !atLeastOnce {
 			return constants.ErrNotFound
 		}
@@ -231,7 +207,7 @@ func (c *Balancer) delete(ctx context.Context, userID int, key string, opts mode
 				}
 			}()
 		default:
-			if r := c.servers.DeepSearch(ctx, userID, key, models.GetOptions{}); r.IsErr() {
+			if r := c.servers.DeepSearch(ctx, claims, key, models.GetOptions{}); r.IsErr() {
 				return fmt.Errorf("can't delete key after deep search: %w", r.Error())
 			} else {
 				opts.Server = r.Unwrap().Left
@@ -244,7 +220,7 @@ func (c *Balancer) delete(ctx context.Context, userID int, key string, opts mode
 		return constants.ErrUnknownServer
 	}
 
-	switch r := cl.DelOne(ctx, userID, key, opts); r.IsOk() {
+	switch r := cl.DelOne(ctx, claims, key, opts); r.IsOk() {
 	case true:
 		return nil
 	default:

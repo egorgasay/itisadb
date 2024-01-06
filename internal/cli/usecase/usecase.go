@@ -106,6 +106,9 @@ func withAuth(ctx context.Context, token string) context.Context {
 
 func (uc *UseCase) Servers(ctx context.Context, token string) (string, error) {
 	servers, err := uc.conn.Servers(withAuth(ctx, token), &api.ServersRequest{})
+	if err != nil {
+		return "", errors.Join(err, fmt.Errorf("failed to get servers"))
+	}
 	return servers.ServersInfo, err
 }
 

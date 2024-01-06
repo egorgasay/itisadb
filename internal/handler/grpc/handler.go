@@ -18,10 +18,10 @@ import (
 
 type Handler struct {
 	api.UnimplementedItisaDBServer
-	core    domains.Balancer
-	logger  *zap.Logger
-	session domains.Session
-	conf    config.SecurityConfig
+	core     domains.Balancer
+	logger   *zap.Logger
+	session  domains.Session
+	security config.SecurityConfig
 }
 
 func New(
@@ -30,26 +30,26 @@ func New(
 	session domains.Session,
 	conf config.SecurityConfig,
 ) *Handler {
-	return &Handler{core: logic, logger: l, session: session, conf: conf}
+	return &Handler{core: logic, logger: l, session: session, security: conf}
 }
 
-func (h *Handler) userIDFromContext(ctx context.Context) int {
+func (h *Handler) claimsFromContext(ctx context.Context) (opt gost.Option[models.UserClaims]) {
 	value := ctx.Value(constants.UserKey)
 	if value == nil {
-		return constants.NoUser
+		return opt.None()
 	}
 
-	userID, ok := value.(uint)
+	claims, ok := value.(models.UserClaims)
 	if !ok {
 		h.logger.Warn("failed to cast userID", zap.Any("value", value))
-		return constants.NoUser
+		return opt.None()
 	}
 
-	return int(userID)
+	return opt.Some(claims)
 }
 
 func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.SetOptions{}
 	if err := copier.Copy(&opts, gost.SafeDeref(r.Options)); err != nil {
@@ -57,7 +57,7 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 		return nil, converterr.ToGRPC(err)
 	}
 
-	setTo, err := h.core.Set(ctx, userID, r.Key, r.Value, opts)
+	setTo, err := h.core.Set(ctx, claims, r.Key, r.Value, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -68,7 +68,7 @@ func (h *Handler) Set(ctx context.Context, r *api.SetRequest) (*api.SetResponse,
 }
 
 func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*api.SetToObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.SetToObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -77,7 +77,7 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*
 		return nil, converterr.ToGRPC(err)
 	}
 
-	setTo, err := h.core.SetToObject(ctx, userID, r.Object, r.Key, r.Value, opts)
+	setTo, err := h.core.SetToObject(ctx, claims, r.Object, r.Key, r.Value, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -88,7 +88,7 @@ func (h *Handler) SetToObject(ctx context.Context, r *api.SetToObjectRequest) (*
 }
 
 func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.GetOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -97,7 +97,7 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 		return nil, converterr.ToGRPC(err)
 	}
 
-	res, err := h.core.Get(ctx, userID, r.Key, opts)
+	res, err := h.core.Get(ctx, claims, r.Key, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -110,7 +110,7 @@ func (h *Handler) Get(ctx context.Context, r *api.GetRequest) (*api.GetResponse,
 }
 
 func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest) (*api.GetFromObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.GetFromObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -119,7 +119,7 @@ func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest
 		return nil, converterr.ToGRPC(err)
 	}
 
-	value, err := h.core.GetFromObject(ctx, userID, r.Object, r.Key, opts)
+	value, err := h.core.GetFromObject(ctx, claims, r.Object, r.Key, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -130,7 +130,7 @@ func (h *Handler) GetFromObject(ctx context.Context, r *api.GetFromObjectRequest
 }
 
 func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.DeleteResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.DeleteOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -139,7 +139,7 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.Delete(ctx, userID, r.Key, opts)
+	err = h.core.Delete(ctx, claims, r.Key, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -148,7 +148,7 @@ func (h *Handler) Delete(ctx context.Context, r *api.DeleteRequest) (*api.Delete
 }
 
 func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectRequest) (*api.AttachToObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.AttachToObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -157,7 +157,7 @@ func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectReque
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.AttachToObject(ctx, userID, r.Dst, r.Src, opts)
+	err = h.core.AttachToObject(ctx, claims, r.Dst, r.Src, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -166,7 +166,7 @@ func (h *Handler) AttachToObject(ctx context.Context, r *api.AttachToObjectReque
 }
 
 func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) (*api.DeleteObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.DeleteObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -175,7 +175,7 @@ func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) 
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.DeleteObject(ctx, userID, r.Object, opts)
+	err = h.core.DeleteObject(ctx, claims, r.Object, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -196,7 +196,7 @@ func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*ap
 }
 
 func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.ObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.ObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -205,7 +205,7 @@ func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.Object
 		return nil, converterr.ToGRPC(err)
 	}
 
-	_, err = h.core.Object(ctx, userID, r.Name, opts)
+	_, err = h.core.Object(ctx, claims, r.Name, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -214,7 +214,7 @@ func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.Object
 }
 
 func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.ObjectToJSONOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -223,7 +223,7 @@ func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) 
 		return nil, converterr.ToGRPC(err)
 	}
 
-	m, err := h.core.ObjectToJSON(ctx, userID, r.Name, opts)
+	m, err := h.core.ObjectToJSON(ctx, claims, r.Name, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -234,7 +234,7 @@ func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) 
 }
 
 func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.IsObjectResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.IsObjectOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -243,7 +243,7 @@ func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.Is
 		return nil, converterr.ToGRPC(err)
 	}
 
-	ok, err := h.core.IsObject(ctx, userID, r.Name, opts)
+	ok, err := h.core.IsObject(ctx, claims, r.Name, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -254,7 +254,7 @@ func (h *Handler) IsObject(ctx context.Context, r *api.IsObjectRequest) (*api.Is
 }
 
 func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*api.DeleteAttrResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.DeleteAttrOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -263,7 +263,7 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.DeleteAttr(ctx, userID, r.Key, r.Object, opts)
+	err = h.core.DeleteAttr(ctx, claims, r.Key, r.Object, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -272,7 +272,7 @@ func (h *Handler) DeleteAttr(ctx context.Context, r *api.DeleteAttrRequest) (*ap
 }
 
 func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.ObjectSizeResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	opts := models.SizeOptions{}
 	err := copier.Copy(&opts, gost.SafeDeref(r.Options))
@@ -281,7 +281,7 @@ func (h *Handler) Size(ctx context.Context, r *api.ObjectSizeRequest) (*api.Obje
 		return nil, converterr.ToGRPC(err)
 	}
 
-	size, err := h.core.Size(ctx, userID, r.Name, opts)
+	size, err := h.core.Size(ctx, claims, r.Name, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -318,7 +318,7 @@ func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*
 }
 
 func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*api.CreateUserResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
 	user := models.User{}
 	err := copier.Copy(&user, gost.SafeDeref(r.User))
@@ -327,7 +327,7 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*ap
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.CreateUser(ctx, userID, user)
+	err = h.core.CreateUser(ctx, claims, user)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -335,9 +335,9 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*ap
 	return &api.CreateUserResponse{}, nil
 }
 func (h *Handler) DeleteUser(ctx context.Context, r *api.DeleteUserRequest) (*api.DeleteUserResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
-	err := h.core.DeleteUser(ctx, userID, r.Login)
+	err := h.core.DeleteUser(ctx, claims, r.Login)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -345,9 +345,9 @@ func (h *Handler) DeleteUser(ctx context.Context, r *api.DeleteUserRequest) (*ap
 	return &api.DeleteUserResponse{}, nil
 }
 func (h *Handler) ChangePassword(ctx context.Context, r *api.ChangePasswordRequest) (*api.ChangePasswordResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
-	err := h.core.ChangePassword(ctx, userID, r.Login, r.NewPassword)
+	err := h.core.ChangePassword(ctx, claims, r.Login, r.NewPassword)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -355,9 +355,9 @@ func (h *Handler) ChangePassword(ctx context.Context, r *api.ChangePasswordReque
 	return &api.ChangePasswordResponse{}, nil
 }
 func (h *Handler) ChangeLevel(ctx context.Context, r *api.ChangeLevelRequest) (*api.ChangeLevelResponse, error) {
-	userID := h.userIDFromContext(ctx)
+	claims := h.claimsFromContext(ctx)
 
-	err := h.core.ChangeLevel(ctx, userID, r.Login, models.Level(r.Level))
+	err := h.core.ChangeLevel(ctx, claims, r.Login, models.Level(r.Level))
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
