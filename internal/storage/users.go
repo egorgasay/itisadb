@@ -5,7 +5,7 @@ import (
 	"itisadb/internal/models"
 )
 
-func (s *Storage) CreateUser(user models.User) (id int, err error) {
+func (s *Storage) NewUser(user models.User) (id int, err error) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 

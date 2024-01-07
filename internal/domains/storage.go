@@ -53,7 +53,7 @@ type ObjectsStorage interface {
 }
 
 type UserStorage interface {
-	CreateUser(user models.User) (id int, err error)
+	NewUser(user models.User) (id int, err error)
 	GetUserByID(id int) (models.User, error)
 	GetUserByName(username string) (int, models.User, error)
 	DeleteUser(id int) error

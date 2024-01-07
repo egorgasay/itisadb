@@ -64,7 +64,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 			case CreateUser:
 				split := strings.Split(e.Value, ";")
 				if len(split) < 2 {
-					return fmt.Errorf("[%w]\n CreateUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+					return fmt.Errorf("[%w]\n NewUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
 				activeStr := split[0]
@@ -80,7 +80,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
-				r.CreateUser(models.User{
+				r.NewUser(models.User{
 					Login:    e.Name,
 					Password: e.Value,
 					Level:    models.Level(level),

@@ -42,7 +42,7 @@ func (t *TransactionLogger) WriteDeleteAttr(object string, key string) {
 
 var b64 = base64.StdEncoding
 
-func (t *TransactionLogger) WriteCreateUser(user models.User) {
+func (t *TransactionLogger) WriteNewUser(user models.User) {
 	value := fmt.Sprintf("%t;%d", user.Active, user.Level)
 
 	t.events <- Event{EventType: CreateUser, Name: user.Login, Value: value}

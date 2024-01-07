@@ -35,7 +35,7 @@ func NewLogic(
 	if err != nil {
 		logger.Info("creating default user")
 
-		_, err = storage.CreateUser(
+		_, err = storage.NewUser(
 			models.User{
 				Login:    "itisadb",
 				Password: "itisadb",
@@ -53,7 +53,7 @@ func NewLogic(
 	if err != nil {
 		logger.Info("creating demo user")
 
-		_, err = storage.CreateUser(
+		_, err = storage.NewUser(
 			models.User{
 				Login:    "demo",
 				Password: "demo",

@@ -19,7 +19,7 @@ func (c *Balancer) Authenticate(ctx context.Context, login string, password stri
 	return token, nil
 }
 
-func (c *Balancer) CreateUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) error {
+func (c *Balancer) NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -31,14 +31,14 @@ func (c *Balancer) CreateUser(ctx context.Context, claims gost.Option[models.Use
 	}
 
 	user.Active = true
-	_, err := c.storage.CreateUser(user)
+	_, err := c.storage.NewUser(user)
 	if err != nil {
 		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Login))
 		return err
 	}
 
 	if c.cfg.TransactionLogger.On { // TODO: ???
-		c.tlogger.WriteCreateUser(user)
+		c.tlogger.WriteNewUser(user)
 	}
 
 	return nil
@@ -99,7 +99,7 @@ func (c *Balancer) ChangePassword(ctx context.Context, claims gost.Option[models
 	}
 
 	if c.cfg.TransactionLogger.On { // TODO: ???
-		c.tlogger.WriteCreateUser(targetUser)
+		c.tlogger.WriteNewUser(targetUser)
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func (c *Balancer) ChangeLevel(ctx context.Context, claims gost.Option[models.Us
 	}
 
 	if c.cfg.TransactionLogger.On { // TODO: ???
-		c.tlogger.WriteCreateUser(targetUser)
+		c.tlogger.WriteNewUser(targetUser)
 	}
 
 	return nil

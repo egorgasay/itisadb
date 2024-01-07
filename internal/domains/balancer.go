@@ -28,7 +28,7 @@ type Balancer interface {
 	Servers() []string
 
 	Authenticate(ctx context.Context, login, password string) (string, error)
-	CreateUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) error
+	NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) error
 	DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) error
 	ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login, password string) error
 	ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) error

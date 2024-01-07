@@ -22,6 +22,8 @@ type SetOptions struct {
 func (o SetOptions) ToSDK() itisadb.SetOptions {
 	return itisadb.SetOptions{
 		ReadOnly: o.ReadOnly,
+		Unique:   o.Unique,
+		Level:    o.Level.ToSDK(),
 	}
 }
 

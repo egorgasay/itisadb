@@ -317,7 +317,7 @@ func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*
 	return &api.AuthResponse{Token: token}, nil
 }
 
-func (h *Handler) CreateUser(ctx context.Context, r *api.NewUserRequest) (*api.NewUserResponse, error) {
+func (h *Handler) NewUser(ctx context.Context, r *api.NewUserRequest) (*api.NewUserResponse, error) {
 	claims := h.claimsFromContext(ctx)
 
 	user := models.User{}
@@ -327,7 +327,7 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.NewUserRequest) (*api.N
 		return nil, converterr.ToGRPC(err)
 	}
 
-	err = h.core.CreateUser(ctx, claims, user)
+	err = h.core.NewUser(ctx, claims, user)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
