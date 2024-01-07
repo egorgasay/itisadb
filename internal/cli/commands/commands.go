@@ -42,7 +42,6 @@ var (
 const (
 	_get      = "get"
 	_newEl    = "new"
-	_object   = "object"
 	_marshalo = "marshalo"
 	_attach   = "attach"
 	_seto     = "seto"
@@ -50,6 +49,12 @@ const (
 	_delo     = "delo"
 	_del      = "del"
 	_deleteEl = "delete"
+	_change   = "change"
+
+	_object       = "object"
+	_userLevel    = "user.level"
+	_userPassword = "user.password"
+	_user         = "user"
 )
 
 const (
@@ -94,6 +99,28 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		}
 
 		switch strings.ToLower(args[0]) {
+		case _user: // NEW USER <name> <password> <optional level>
+			if len(args) < 3 {
+				return res.Err(ErrWrongInput)
+			}
+
+			opts := itisadb.NewUserOptions{}
+
+			if len(args) >= 4 {
+				levelRes := levelFromStr(args[len(args)-1])
+				if res.IsErr() {
+					return res.Err(levelRes.Error())
+				}
+
+				opts.Level = levelRes.Unwrap()
+			}
+
+			r := c.sdk.NewUser(ctx, args[1], args[2], opts)
+			if r.IsErr() {
+				return res.Err(r.Error())
+			}
+
+			return res.Ok(fmt.Sprintf("user %s with level %s created", args[1], opts.Level.String()))
 		case _object:
 			r := c.newObject(ctx, args[1:])
 			if r.IsOk() {
@@ -197,6 +224,51 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 			}
 			return res.Ok(fmt.Sprintf("status: ok, deleted %s", object))
 		}
+	case _change:
+		if len(args) < 2 {
+			return res.Err(ErrWrongInput)
+		}
+
+		switch strings.ToLower(args[0]) {
+		case _userLevel: // CHANGE user.level <user> <level>
+			args = args[1:]
+
+			if len(args) < 2 {
+				return res.Err(ErrWrongInput)
+			}
+
+			user := args[0]
+			levelRes := levelFromStr(args[1])
+
+			if levelRes.IsErr() {
+				return res.Err(levelRes.Error())
+			}
+
+			level := levelRes.Unwrap()
+
+			resLevel := c.sdk.ChangeLevel(ctx, user, level)
+			if resLevel.IsErr() {
+				return res.Err(resLevel.Error())
+			}
+
+			return res.Ok(fmt.Sprintf("status: ok, changed %s level to %s", user, level))
+		case _userPassword: // CHANGE user.password <user> <password>
+			args = args[1:]
+
+			if len(args) < 2 {
+				return res.Err(ErrWrongInput)
+			}
+
+			user := args[0]
+			password := args[1]
+
+			resPassword := c.sdk.ChangePassword(ctx, user, password)
+			if resPassword.IsErr() {
+				return res.Err(resPassword.Error())
+			}
+
+			return res.Ok(fmt.Sprintf("status: ok, changed %s password", user))
+		}
 	case _attach:
 		if len(args) < 2 {
 			return res.Err(ErrWrongInput)
@@ -215,6 +287,17 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 	return res.Err(ErrUnknownCMD)
 }
 
+func levelFromStr(lvl string) (res gost.Result[itisadb.Level]) {
+	lvl = strings.ToLower(lvl)
+	if lvl == "s" {
+		return res.Ok(secretLevel)
+	} else if lvl == "r" {
+		return res.Ok(restrictedLevel)
+	}
+
+	return res.Err(ErrWrongInput.WrapfNotNilMsg("wrong level: %s", lvl))
+}
+
 func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Result[*itisadb.Object]) {
 	if len(args) < 1 || len(args) > 3 {
 		return res.Err(ErrWrongInput)
@@ -228,9 +311,10 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 	)
 
 	for i := 1; i < len(args); i++ {
-		if args[i] == "S" || args[i] == "s" {
+		word := strings.ToLower(args[i])
+		if word == "s" {
 			lvl = secretLevel
-		} else if args[i] == "R" || args[i] == "r" {
+		} else if word == "r" {
 			lvl = restrictedLevel
 		} else {
 			serverStr := args[i]

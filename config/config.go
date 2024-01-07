@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+
 	"github.com/BurntSushi/toml"
 )
 
@@ -44,13 +45,11 @@ type BalancerConfig struct {
 }
 
 type SecurityConfig struct {
-	On                     bool `toml:"On"`
 	MandatoryAuthorization bool `toml:"MandatoryAuthorization"`
 	MandatoryEncryption    bool `toml:"MandatoryEncryption"`
 }
 
 var _noSecurity = SecurityConfig{
-	On:                     false,
 	MandatoryAuthorization: false,
 	MandatoryEncryption:    false,
 }
@@ -59,13 +58,9 @@ func New() (*Config, error) {
 	flag.Parse()
 
 	cfg := &Config{}
-	_, err := toml.DecodeFile("config/default-config.toml", cfg)
+	_, err := toml.DecodeFile("config/config.toml", cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
-	}
-
-	if !cfg.Security.On {
-		cfg.Security = _noSecurity
 	}
 
 	return cfg, nil

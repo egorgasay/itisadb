@@ -22,6 +22,7 @@ func (s *Storage) CreateUser(user models.User) (id int, err error) {
 	}
 
 	id = s.users.Count()
+	user.ID = id
 	s.users.Put(id, user)
 
 	return id, nil

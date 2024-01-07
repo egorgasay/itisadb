@@ -317,7 +317,7 @@ func (h *Handler) Authenticate(ctx context.Context, request *api.AuthRequest) (*
 	return &api.AuthResponse{Token: token}, nil
 }
 
-func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*api.CreateUserResponse, error) {
+func (h *Handler) CreateUser(ctx context.Context, r *api.NewUserRequest) (*api.NewUserResponse, error) {
 	claims := h.claimsFromContext(ctx)
 
 	user := models.User{}
@@ -332,7 +332,7 @@ func (h *Handler) CreateUser(ctx context.Context, r *api.CreateUserRequest) (*ap
 		return nil, converterr.ToGRPC(err)
 	}
 
-	return &api.CreateUserResponse{}, nil
+	return &api.NewUserResponse{}, nil
 }
 func (h *Handler) DeleteUser(ctx context.Context, r *api.DeleteUserRequest) (*api.DeleteUserResponse, error) {
 	claims := h.claimsFromContext(ctx)

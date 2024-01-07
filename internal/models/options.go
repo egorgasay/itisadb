@@ -158,8 +158,8 @@ type CreateUserOptions struct {
 	Level Level
 }
 
-func (o CreateUserOptions) ToSDK() itisadb.CreateUserOptions {
-	return itisadb.CreateUserOptions{
+func (o CreateUserOptions) ToSDK() itisadb.NewUserOptions {
+	return itisadb.NewUserOptions{
 		Level: itisadb.Level(o.Level),
 	}
 }

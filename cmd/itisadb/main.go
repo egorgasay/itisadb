@@ -15,6 +15,7 @@ import (
 	"itisadb/internal/service/balancer"
 	"itisadb/internal/service/generator"
 	"itisadb/internal/service/logic"
+	"itisadb/internal/service/security"
 	"itisadb/internal/service/servers"
 	"itisadb/internal/service/session"
 	transactionlogger "itisadb/internal/service/transaction-logger"
@@ -62,9 +63,15 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	appCFG := *cfg
+
+	gen := generator.New(lg)
+	ses := session.New(appCFG, store, gen, lg)
+	sec := security.NewSecurityService(cfg.Security)
+
 	var local = gost.None[domains.Server]()
 	if !cfg.Balancer.On || (cfg.Balancer.On && !cfg.Balancer.BalancerOnly) {
-		uc := logic.NewLogic(store, *cfg, tl, lg)
+		uc := logic.NewLogic(store, *cfg, tl, lg, sec)
 		ls := servers.NewLocalServer(uc)
 		local = local.Some(ls)
 	}
@@ -74,21 +81,16 @@ func main() {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
 
-	appCFG := *cfg
-
-	gen := generator.New(lg)
-	ses := session.New(appCFG, store, gen, lg)
-
-	logic, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses)
+	b, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses, sec)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}
 
-	go runGRPC(ctx, lg, logic, appCFG.Security, appCFG.Network, ses)
+	go runGRPC(ctx, lg, b, appCFG.Security, appCFG.Network, ses)
 	go runWebCLI(ctx, cfg.WebApp, cfg.Security, lg, cfg.Network.GRPC)
 
 	if cfg.Network.REST != "" {
-		go runREST(ctx, lg, logic, cfg.Network)
+		go runREST(ctx, lg, b, cfg.Network)
 	}
 
 	quit := make(chan os.Signal, 1)

@@ -62,7 +62,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				r.DeleteObject(e.Name)
 				// TODO: case Detach:
 			case CreateUser:
-				split := strings.Split(e.Metadata, ";")
+				split := strings.Split(e.Value, ";")
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n CreateUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}

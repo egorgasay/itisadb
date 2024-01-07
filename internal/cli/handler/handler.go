@@ -41,7 +41,7 @@ func (h *Handler) GetAuthPage(c echo.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/")
 	}
 
-	if !h.security.On || !h.security.MandatoryAuthorization {
+	if !h.security.MandatoryAuthorization {
 		cookie = cookies.SetCookie("itisadb")
 		c.SetCookie(cookie)
 	}
@@ -160,7 +160,7 @@ func (h *Handler) Authenticate(c echo.Context) error {
 	password := c.FormValue("password")
 
 	token, err := h.logic.Authenticate(ctx, username, password)
-	if err != nil && (h.security.On && h.security.MandatoryAuthorization) {
+	if err != nil && h.security.MandatoryAuthorization {
 		return c.Redirect(http.StatusMovedPermanently, "/auth")
 	}
 

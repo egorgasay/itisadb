@@ -13,20 +13,71 @@ import (
 )
 
 type Logic struct {
-	ram     gost.Mutex[models.RAM]
-	storage domains.Storage
-	cfg     config.Config
-	tlogger domains.TransactionLogger
-	logger  *zap.Logger
+	ram gost.Mutex[models.RAM]
+
+	storage  domains.Storage
+	cfg      config.Config
+	tlogger  domains.TransactionLogger
+	security domains.SecurityService
+
+	logger *zap.Logger
 }
 
-func NewLogic(storage domains.Storage, cfg config.Config, tlogger domains.TransactionLogger, logger *zap.Logger) *Logic {
+func NewLogic(
+	storage domains.Storage,
+	cfg config.Config,
+	tlogger domains.TransactionLogger,
+	logger *zap.Logger,
+	security domains.SecurityService,
+) *Logic {
+
+	_, _, err := storage.GetUserByName("itisadb")
+	if err != nil {
+		logger.Info("creating default user")
+
+		_, err = storage.CreateUser(
+			models.User{
+				Login:    "itisadb",
+				Password: "itisadb",
+				Level:    constants.SecretLevel,
+				Active:   true,
+			},
+		)
+
+		if err != nil {
+			logger.Error("failed to create default user", zap.Error(err))
+		}
+	}
+
+	_, _, err = storage.GetUserByName("demo")
+	if err != nil {
+		logger.Info("creating demo user")
+
+		_, err = storage.CreateUser(
+			models.User{
+				Login:    "demo",
+				Password: "demo",
+				Level:    constants.DefaultLevel,
+				Active:   true,
+			},
+		)
+
+		if err != nil {
+			logger.Error("failed to create demo user", zap.Error(err))
+		}
+	}
+
+	if err != nil {
+		logger.Error("failed to create demo user", zap.Error(err))
+	}
+
 	return &Logic{
-		ram:     gost.NewMutex(models.RAM{}),
-		storage: storage,
-		cfg:     cfg,
-		tlogger: tlogger,
-		logger:  logger,
+		ram:      gost.NewMutex(models.RAM{}),
+		storage:  storage,
+		cfg:      cfg,
+		tlogger:  tlogger,
+		logger:   logger,
+		security: security,
 	}
 }
 
@@ -36,7 +87,7 @@ func (l *Logic) GetOne(_ context.Context, claims gost.Option[models.UserClaims],
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, v.Level) {
+	if !l.security.HasPermission(claims, v.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -49,7 +100,7 @@ func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims],
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, v.Level) {
+	if !l.security.HasPermission(claims, v.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -64,13 +115,13 @@ func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims],
 }
 
 func (l *Logic) SetOne(_ context.Context, claims gost.Option[models.UserClaims], key string, val string, opt models.SetOptions) (res gost.Result[int32]) {
-	if !l.hasPermission(claims, opt.Level) {
+	if !l.security.HasPermission(claims, opt.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
 	v, err := l.storage.Get(key)
 	if err == nil {
-		if !l.hasPermission(claims, v.Level) {
+		if !l.security.HasPermission(claims, v.Level) {
 			return res.Err(constants.ErrForbidden)
 		}
 
@@ -95,11 +146,11 @@ func (l *Logic) HasPermissionToObject(claims gost.Option[models.UserClaims], nam
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	return res.Ok(l.hasPermission(claims, info.Level))
+	return res.Ok(l.security.HasPermission(claims, info.Level))
 }
 
 func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
-	if !l.hasPermission(claims, opts.Level) {
+	if !l.security.HasPermission(claims, opts.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -126,7 +177,7 @@ func (l *Logic) SetToObject(_ context.Context, claims gost.Option[models.UserCla
 		return res.ErrNew(0, 0, err.Error()) // TODO: ??
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -146,7 +197,7 @@ func (l *Logic) GetFromObject(_ context.Context, claims gost.Option[models.UserC
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -164,7 +215,7 @@ func (l *Logic) ObjectToJSON(_ context.Context, claims gost.Option[models.UserCl
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -182,7 +233,7 @@ func (l *Logic) ObjectSize(_ context.Context, claims gost.Option[models.UserClai
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -200,7 +251,7 @@ func (l *Logic) DeleteObject(_ context.Context, claims gost.Option[models.UserCl
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -228,11 +279,11 @@ func (l *Logic) AttachToObject(_ context.Context, claims gost.Option[models.User
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, infoDst.Level) {
+	if !l.security.HasPermission(claims, infoDst.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if !l.hasPermission(claims, infoSrc.Level) {
+	if !l.security.HasPermission(claims, infoSrc.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
@@ -251,7 +302,7 @@ func (l *Logic) ObjectDeleteKey(_ context.Context, claims gost.Option[models.Use
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	if !l.hasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 

@@ -18,10 +18,11 @@ import (
 type Balancer struct {
 	logger *zap.Logger
 
-	servers domains.Servers
-	storage domains.Storage
-	tlogger domains.TransactionLogger
-	session domains.Session
+	servers  domains.Servers
+	storage  domains.Storage
+	tlogger  domains.TransactionLogger
+	session  domains.Session
+	security domains.SecurityService
 
 	cfg config.Config
 
@@ -39,17 +40,9 @@ func New(
 	tlogger domains.TransactionLogger,
 	servers domains.Servers,
 	session domains.Session,
+	security domains.SecurityService,
 ) (*Balancer, error) {
 	var err error
-
-	_, err = storage.CreateUser(
-		models.User{
-			Login:    "itisadb",
-			Password: "itisadb",
-			Level:    constants.SecretLevel,
-			Active:   true,
-		},
-	)
 
 	if err != nil && !errors.Is(err, constants.ErrAlreadyExists) {
 		return nil, err
@@ -81,6 +74,7 @@ func New(
 		pool:          make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
 		objectServers: gost.NewRwLock(make(map[string]int32)),
 		keyServers:    gost.NewRwLock(make(map[string]int32)),
+		security:      security,
 	}, nil
 }
 
@@ -92,7 +86,12 @@ func (c *Balancer) Set(ctx context.Context, claims gost.Option[models.UserClaims
 }
 
 func (c *Balancer) set(ctx context.Context, claims gost.Option[models.UserClaims], key, val string, opts models.SetOptions) (int32, error) {
-	if opts.Server == constants.SetToAllServers {
+	if opts.Server == constants.AutoServerNumber {
+		res := c.getKeyServer(key)
+		if res.IsSome() {
+			opts.Server = res.Unwrap()
+		}
+	} else if opts.Server == constants.SetToAllServers {
 		failedServers := c.servers.SetToAll(ctx, claims, key, val, opts)
 		if len(failedServers) != 0 {
 			return opts.Server, fmt.Errorf("some servers failed: %v", failedServers)
@@ -110,6 +109,8 @@ func (c *Balancer) set(ctx context.Context, claims gost.Option[models.UserClaims
 	if err != nil {
 		return 0, err
 	}
+
+	c.addKeyServer(key, cl.Number())
 
 	return cl.Number(), nil
 }
@@ -220,12 +221,7 @@ func (c *Balancer) delete(ctx context.Context, claims gost.Option[models.UserCla
 		return constants.ErrUnknownServer
 	}
 
-	switch r := cl.DelOne(ctx, claims, key, opts); r.IsOk() {
-	case true:
-		return nil
-	default:
-		return fmt.Errorf("can't delete key: %w", r.Error())
-	}
+	return cl.DelOne(ctx, claims, key, opts).Error().WrapNotNilMsg("can't delete key").IntoStd()
 }
 
 func (c *Balancer) CalculateRAM(_ context.Context) (res gost.Result[models.RAM]) {

@@ -26,7 +26,7 @@ func (c *Balancer) CreateUser(ctx context.Context, claims gost.Option[models.Use
 
 	// TODO: determine server?
 
-	if !c.hasPermission(claims, user.Level) {
+	if !c.security.HasPermission(claims, user.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -57,7 +57,7 @@ func (c *Balancer) DeleteUser(ctx context.Context, claims gost.Option[models.Use
 		return err
 	}
 
-	if !c.hasPermission(claims, targetUser.Level) {
+	if !c.security.HasPermission(claims, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -87,7 +87,7 @@ func (c *Balancer) ChangePassword(ctx context.Context, claims gost.Option[models
 		return err
 	}
 
-	if !c.hasPermission(claims, targetUser.Level) {
+	if !c.security.HasPermission(claims, targetUser.Level) {
 		return constants.ErrForbidden
 	}
 
@@ -112,7 +112,7 @@ func (c *Balancer) ChangeLevel(ctx context.Context, claims gost.Option[models.Us
 
 	// TODO: determine server
 
-	if !c.hasPermission(claims, level) {
+	if !c.security.HasPermission(claims, level) {
 		return constants.ErrForbidden
 	}
 
@@ -134,30 +134,4 @@ func (c *Balancer) ChangeLevel(ctx context.Context, claims gost.Option[models.Us
 	}
 
 	return nil
-}
-
-func (c *Balancer) hasPermission(claimsOpt gost.Option[models.UserClaims], level models.Level) bool {
-	// always ok when security is disabled
-	if !c.cfg.Security.On {
-		return true
-	}
-
-	if claimsOpt.IsNone() {
-		return false
-	}
-
-	claims := claimsOpt.Unwrap()
-
-	// ok when security is not mandatory for Default level
-	if !c.cfg.Security.MandatoryAuthorization && level == constants.DefaultLevel {
-		return true
-	}
-
-	userLevel, err := c.storage.GetUserLevel(claims.ID)
-	if err != nil {
-		c.logger.Warn("failed to get user level", zap.Error(err))
-		return false
-	}
-
-	return userLevel >= level
 }
