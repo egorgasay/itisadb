@@ -109,7 +109,9 @@ func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims],
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	l.tlogger.WriteDelete(key)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteDelete(key)
+	}
 
 	return res.Ok(gost.Nothing{})
 }
@@ -135,7 +137,9 @@ func (l *Logic) SetOne(_ context.Context, claims gost.Option[models.UserClaims],
 		return res.ErrNew(0, 0, err.Error()) // TODO:
 	}
 
-	l.tlogger.WriteSet(key, val, opt)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteSet(key, val, opt)
+	}
 
 	return res.Ok(constants.MainStorageNumber)
 }
@@ -165,8 +169,9 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 
 	l.storage.AddObjectInfo(name, info) // TODO: maybe you should union Create + AddObjectInfo? and keep all information about object in one place?
 
-	l.tlogger.WriteCreateObject(name)
-	l.tlogger.WriteAddObjectInfo(name, info)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteCreateObject(name, info)
+	}
 
 	return res.Ok(gost.Nothing{})
 }
@@ -186,7 +191,9 @@ func (l *Logic) SetToObject(_ context.Context, claims gost.Option[models.UserCla
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	l.tlogger.WriteSetToObject(object, key, value)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteSetToObject(object, key, value)
+	}
 
 	return res.Ok(gost.Nothing{})
 }
@@ -262,8 +269,9 @@ func (l *Logic) DeleteObject(_ context.Context, claims gost.Option[models.UserCl
 
 	l.storage.DeleteObjectInfo(object)
 
-	l.tlogger.WriteDeleteObject(object)
-	l.tlogger.WriteDeleteObjectInfo(object)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteDeleteObject(object)
+	}
 
 	return res.Ok()
 }
@@ -291,7 +299,9 @@ func (l *Logic) AttachToObject(_ context.Context, claims gost.Option[models.User
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	l.tlogger.WriteAttach(dst, src)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteAttach(dst, src)
+	}
 
 	return res.Ok()
 }
@@ -310,7 +320,9 @@ func (l *Logic) ObjectDeleteKey(_ context.Context, claims gost.Option[models.Use
 		return res.ErrNew(0, 0, err.Error())
 	}
 
-	l.tlogger.WriteDeleteAttr(object, key)
+	if l.cfg.TransactionLogger.On {
+		l.tlogger.WriteDeleteAttr(object, key)
+	}
 
 	return res.Ok()
 }

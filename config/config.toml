@@ -11,7 +11,7 @@ FastHTTP = ""
 
 # Mechanism for balancing within servers.
 [Balancer]
-On = true
+On = false
 
 # List of servers to balance.
 # Example:
@@ -20,7 +20,7 @@ On = true
 # 	"127.0.0.1:8890",
 # ]
 Servers = [
-    "127.0.0.1:8889",
+    #"127.0.0.1:8889",
 ]
 
 # Balancing only mode.

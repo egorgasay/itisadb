@@ -71,7 +71,7 @@ func New(
 		tlogger:       tlogger,
 		session:       session,
 		cfg:           cfg,
-		pool:          make(chan struct{}, 10_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
+		pool:          make(chan struct{}, 20_000*runtime.NumCPU()), // TODO: MOVE TO CONFIG
 		objectServers: gost.NewRwLock(make(map[string]int32)),
 		keyServers:    gost.NewRwLock(make(map[string]int32)),
 		security:      security,
@@ -157,7 +157,7 @@ func (c *Balancer) get(ctx context.Context, claims gost.Option[models.UserClaims
 	case true:
 		return r.Unwrap(), nil
 	default:
-		return models.Value{}, r.Error()
+		return models.Value{}, r.Error().WrapfNotNilMsg("can't get key from server: %s", cl.Number())
 	}
 }
 

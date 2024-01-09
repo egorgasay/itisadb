@@ -24,8 +24,9 @@ func (t *TransactionLogger) WriteSetToObject(name string, key string, val string
 	t.events <- Event{EventType: SetToObject, Name: name + "." + key, Value: val}
 }
 
-func (t *TransactionLogger) WriteCreateObject(name string) {
-	t.events <- Event{EventType: CreateObject, Name: name}
+func (t *TransactionLogger) WriteCreateObject(name string, info models.ObjectInfo) {
+	value := fmt.Sprintf("%d;%d", info.Server, info.Level)
+	t.events <- Event{EventType: CreateObject, Name: name, Value: value}
 }
 
 func (t *TransactionLogger) WriteDeleteObject(name string) {
@@ -52,11 +53,6 @@ func (t *TransactionLogger) WriteDeleteUser(login string) {
 	t.events <- Event{EventType: DeleteUser, Name: login}
 }
 
-func (t *TransactionLogger) WriteAddObjectInfo(name string, info models.ObjectInfo) {
-	value := fmt.Sprintf("%d;%d", info.Server, info.Level)
-	t.events <- Event{EventType: AddObjectInfo, Name: name, Value: value}
-}
-
-func (t *TransactionLogger) WriteDeleteObjectInfo(name string) {
-	t.events <- Event{EventType: DeleteObjectInfo, Name: name}
-}
+//func (t *TransactionLogger) WriteDeleteObjectInfo(name string) {
+//	t.events <- Event{EventType: DeleteObjectInfo, Name: name}
+//}

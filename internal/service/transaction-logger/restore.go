@@ -39,27 +39,44 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("%w\n invalid level %s, Name: %s", ErrCorruptedConfigFile, levelStr, e.Name)
 				}
 
-				r.Set(e.Name, e.Value, models.SetOptions{
+				err = r.Set(e.Name, e.Value, models.SetOptions{
 					ReadOnly: readOnly,
 					Level:    models.Level(level),
 				})
+				if err != nil {
+					return fmt.Errorf("can't set %s: %w", e.Name, err)
+				}
 			case Delete:
-				r.Delete(e.Name)
+				err := r.Delete(e.Name)
+				if err != nil {
+					return fmt.Errorf("can't delete %s: %w", e.Name, err)
+				}
 			case SetToObject:
 				split := strings.Split(e.Name, ".")
 				if len(split) < 2 {
 					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 				key, value := split[len(split)-1], e.Value
-				r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, models.SetToObjectOptions{})
+				err := r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, models.SetToObjectOptions{})
+				if err != nil {
+					return fmt.Errorf("can't set to object %s, v: %s: %w", e.Name, e.Value, err)
+				}
 			case DeleteAttr:
-				r.Delete(e.Name)
-			case CreateObject:
-				r.CreateObject(e.Name, models.ObjectOptions{})
+				err := r.DeleteAttr(e.Name, e.Value)
+				if err != nil {
+					return fmt.Errorf("can't delete attr %s: %w", e.Name, err)
+				}
 			case Attach:
-				r.AttachToObject(e.Name, e.Value)
+				err := r.AttachToObject(e.Name, e.Value)
+				if err != nil {
+					return fmt.Errorf("can't attach %s, v: %s: %w", e.Name, e.Value, err)
+				}
 			case DeleteObject:
-				r.DeleteObject(e.Name)
+				err := r.DeleteObject(e.Name)
+				if err != nil {
+					return fmt.Errorf("can't delete object %s: %w", e.Name, err)
+				}
+				r.DeleteObjectInfo(e.Name)
 				// TODO: case Detach:
 			case CreateUser:
 				split := strings.Split(e.Value, ";")
@@ -80,13 +97,21 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
-				r.NewUser(models.User{
+				_, err = r.NewUser(models.User{
 					Login:    e.Name,
 					Password: e.Value,
 					Level:    models.Level(level),
 					Active:   active,
 				})
-			case AddObjectInfo:
+				if err != nil {
+					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, err)
+				}
+			case CreateObject:
+				err := r.CreateObject(e.Name, models.ObjectOptions{})
+				if err != nil {
+					return fmt.Errorf("can't create object %s: %w", e.Name, err)
+				}
+
 				split := strings.Split(e.Value, ";")
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n AddObjectInfo invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
@@ -109,8 +134,6 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					Server: int32(server),
 					Level:  models.Level(level),
 				})
-			case DeleteObjectInfo:
-				r.DeleteObjectInfo(e.Name)
 			}
 		}
 	}

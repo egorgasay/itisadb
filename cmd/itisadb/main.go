@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	lg, err := zap.NewDevelopment()
+	lg, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("failed to inizialise logger: %v", err)
 	}

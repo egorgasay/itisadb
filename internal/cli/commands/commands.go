@@ -208,6 +208,15 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		}
 
 		switch strings.ToLower(args[0]) {
+		case _user:
+			user := args[1]
+
+			r := c.sdk.DeleteUser(ctx, user)
+			if r.IsErr() {
+				return res.Err(r.Error())
+			}
+
+			return res.Ok(fmt.Sprintf("status: ok, deleted %s", user))
 		case _object:
 			var aargs []string
 

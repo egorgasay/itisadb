@@ -12,13 +12,11 @@ type TransactionLogger interface {
 	WriteSet(key string, value string, opts models.SetOptions)
 	WriteDelete(key string)
 	WriteSetToObject(name string, key string, val string)
-	WriteCreateObject(name string)
+	WriteCreateObject(name string, info models.ObjectInfo)
 	WriteDeleteObject(name string)
 	WriteAttach(dst string, src string)
 	WriteDeleteAttr(name string, key string)
 	WriteNewUser(user models.User)
-	WriteAddObjectInfo(name string, info models.ObjectInfo)
-	WriteDeleteObjectInfo(name string)
 	WriteDeleteUser(login string)
 }
 
@@ -32,4 +30,5 @@ type Restorer interface {
 	NewUser(user models.User) (int, error)
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
+	DeleteAttr(object, key string) error
 }
