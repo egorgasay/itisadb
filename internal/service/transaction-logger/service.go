@@ -23,8 +23,6 @@ const (
 	DeleteObject
 	CreateUser
 	DeleteUser
-	AddObjectInfo
-	DeleteObjectInfo
 )
 
 type Event struct {

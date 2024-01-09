@@ -1,3 +1,6 @@
 package constants
 
-const ObjectSeparator = "."
+const (
+	ObjectSeparator   = "."
+	MetadataSeparator = ";"
+)

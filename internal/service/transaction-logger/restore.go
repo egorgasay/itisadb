@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
 )
@@ -24,8 +25,10 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 			ok = true
 		case e, ok = <-events:
 			switch e.EventType {
+			case 0:
+				continue
 			case Set:
-				split := strings.Split(e.Metadata, ";")
+				split := strings.Split(e.Metadata, constants.MetadataSeparator)
 
 				if len(split) < 2 {
 					return fmt.Errorf("%w\n invalid metadata %s, Name: %s", ErrCorruptedConfigFile, e.Metadata, e.Name)
@@ -52,7 +55,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("can't delete %s: %w", e.Name, err)
 				}
 			case SetToObject:
-				split := strings.Split(e.Name, ".")
+				split := strings.Split(e.Name, constants.ObjectSeparator)
 				if len(split) < 2 {
 					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
@@ -79,7 +82,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				r.DeleteObjectInfo(e.Name)
 				// TODO: case Detach:
 			case CreateUser:
-				split := strings.Split(e.Value, ";")
+				split := strings.Split(e.Value, constants.MetadataSeparator)
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n NewUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
@@ -112,7 +115,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("can't create object %s: %w", e.Name, err)
 				}
 
-				split := strings.Split(e.Value, ";")
+				split := strings.Split(e.Value, constants.MetadataSeparator)
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n AddObjectInfo invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
@@ -134,6 +137,8 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					Server: int32(server),
 					Level:  models.Level(level),
 				})
+			default:
+				return fmt.Errorf("[%w]\n unknown event type %v", ErrCorruptedConfigFile, e)
 			}
 		}
 	}
