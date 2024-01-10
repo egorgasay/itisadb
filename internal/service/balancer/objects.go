@@ -56,13 +56,13 @@ func (c *Balancer) getKeyServer(key string) (opt gost.Option[int32]) {
 
 func (c *Balancer) delKeyServer(key string) {
 	defer c.keyServers.WRelease()
-	delete(c.keyServers.WBorrow().Read(), key)
+	delete(*c.keyServers.WBorrow().Ref(), key)
 }
 
 func (c *Balancer) object(ctx context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (int32, error) {
 	if opts.Server == constants.AutoServerNumber {
 		if res := c.getObjectServer(name); res.IsSome() {
-			return res.Unwrap(), nil
+			opts.Server = res.Unwrap()
 		}
 	}
 
@@ -79,7 +79,7 @@ func (c *Balancer) object(ctx context.Context, claims gost.Option[models.UserCla
 		return 0, fmt.Errorf("can't create object: %w", r.Error())
 	}
 
-	c.addObjectServer(name, opts.Server)
+	c.addObjectServer(name, serv.Number())
 
 	return serv.Number(), nil
 }

@@ -11,14 +11,14 @@ Through the Web UI, you can manage users and their permissions.
 The user is created using the CREATE USER command
 
 ```bash
-CREATE USER <name> <password> <optional level>
+NEW USER <name> <password> <optional level>
 ```
 
 Example:
 ```bash
-CREATE USER user1 123456
-CREATE USER user2 123456 R
-CREATE USER user3 123456 S
+NEW USER user1 123456
+NEW USER user2 123456 R
+NEW USER user3 123456 S
 ```
 
 ### Delete user

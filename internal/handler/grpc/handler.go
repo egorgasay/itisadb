@@ -205,12 +205,14 @@ func (h *Handler) Object(ctx context.Context, r *api.ObjectRequest) (*api.Object
 		return nil, converterr.ToGRPC(err)
 	}
 
-	_, err = h.core.Object(ctx, claims, r.Name, opts)
+	serv, err := h.core.Object(ctx, claims, r.Name, opts)
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
 
-	return &api.ObjectResponse{}, nil
+	return &api.ObjectResponse{
+		Server: serv,
+	}, nil
 }
 
 func (h *Handler) ObjectToJSON(ctx context.Context, r *api.ObjectToJSONRequest) (*api.ObjectToJSONResponse, error) {

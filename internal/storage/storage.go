@@ -209,6 +209,10 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 		}
 	}
 
+	if val.level != opts.Level {
+		val.level = opts.Level
+	}
+
 	return nil
 }
 

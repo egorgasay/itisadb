@@ -13,17 +13,22 @@ window.onload = function () {
               "<br>Basic commands: <br>" +
               "- SET - Sets the value to the storage, <br>" +
               "- GET - Gets the value from the storage, <br>" +
-              "- DEL - Deletes the key-value pair from the storage, <br>" +
+              "- DEL - Deletes the key-value pair from the storage. <br>" +
               "<br>Data manipulation: <br>" +
               "- NEW OBJECT - Creates an object with the specified name, <br>" +
-              "- DELETE OBJECT - Deletes the object with the specified name, <br>" +
+              "- DELETE OBJECT - Deletes the object with the specified name. <br>" +
               "<br>Basic object commands: <br>" +
               "- SETO - Sets the value to the object, <br>" +
               "- GETO - Gets the value from the object, <br>" +
-              "- DELO - Deletes the object key, <br>" +
+              "- DELO - Deletes the object key. <br>" +
               "<br>Object manipulation: <br>" +
               "- MARSHAL OBJECT - Displays the object as JSON, <br>" +
-              "- ATTACH - Attaches the src object to the dst, <br>" +
+              "- ATTACH - Attaches the src object to the dst. <br>" +
+              "<br>Access control: <br>" +
+              "- NEW USER - Creates a new user, <br>" +
+              "- CHANGE PASSWORD - Changes the password of the user, " +
+              "- CHANGE LEVEL - Changes the level of the user, " +
+              "- DELETE USER - Deletes the user. " +
               "<br>Advanced: <br>" +
               "- HISTORY - History of user actions, <br>" +
               "- SERVERS - List of active balancer with stats. ";

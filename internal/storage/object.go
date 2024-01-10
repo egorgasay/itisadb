@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/dolthub/swiss"
 	"github.com/egorgasay/gost"
@@ -15,6 +16,7 @@ type object struct {
 	values     *swiss.Map[string, something]
 	attachedTo []string
 	level      models.Level
+	*sync.RWMutex
 }
 
 func NewObject(name string, attachedTo []string, level models.Level) *object {
@@ -27,6 +29,7 @@ func NewObject(name string, attachedTo []string, level models.Level) *object {
 		attachedTo: attachedTo,
 		name:       name,
 		level:      level,
+		RWMutex:    &sync.RWMutex{},
 	}
 }
 
@@ -55,6 +58,9 @@ func (v *object) IsEmpty() bool {
 }
 
 func (v *object) Get(name string) (string, error) {
+	v.RLock()
+	defer v.RUnlock()
+
 	val, ok := v.values.Get(name)
 	if !ok {
 		return "", constants.ErrNotFound
@@ -69,24 +75,39 @@ func (v *object) Get(name string) (string, error) {
 }
 
 func (v *object) Size() int {
+	v.RLock()
+	defer v.RUnlock()
+
 	return v.values.Count()
 }
 
 func (v *object) IsAttached(name string) bool {
-	for _, n := range pkg.Clone(v.attachedTo) {
+	cloned := func() []string {
+		v.RLock()
+		defer v.RUnlock()
+		return pkg.Clone(v.attachedTo)
+	}()
+
+	for _, n := range cloned {
 		if n == name {
 			return true
 		}
 	}
+
 	return false
 }
 
 func (v *object) setAttached(attachedTo []string) {
+	v.Lock()
+	defer v.Unlock()
+
 	v.attachedTo = append(v.attachedTo, attachedTo...)
 }
 
 func (v *object) AttachObject(src *object) (err error) {
+	v.RLock()
 	defer func() {
+		v.RUnlock()
 		if err == nil {
 			src.setAttached(v.attachedTo)
 		}
@@ -108,10 +129,16 @@ func (v *object) AttachObject(src *object) (err error) {
 }
 
 func (v *object) Iter(f func(k string, v something) bool) {
+	v.RLock()
+	defer v.RUnlock()
+
 	v.values.Iter(f)
 }
 
 func (v *object) NextOrCreate(name string, level models.Level) something {
+	v.RLock()
+	defer v.RUnlock()
+
 	val, ok := v.values.Get(name)
 	if !ok {
 		blank := NewObject(name, v.attachedTo, level)
@@ -123,11 +150,17 @@ func (v *object) NextOrCreate(name string, level models.Level) something {
 }
 
 func (v *object) GetValue(key string) (something, bool) {
+	v.RLock()
+	defer v.RUnlock()
+
 	val, ok := v.values.Get(key)
 	return val, ok
 }
 
 func (v *object) Delete(key string) error {
+	v.Lock()
+	defer v.Unlock()
+
 	if !v.values.Has(key) {
 		return constants.ErrNotFound
 	}
@@ -137,19 +170,31 @@ func (v *object) Delete(key string) error {
 }
 
 func (v *object) RecreateObject() {
+	v.Lock()
+	defer v.Unlock()
+
 	v.values = swiss.NewMap[string, something](10)
 }
 
 func (v *object) Set(key string, val string) {
+	v.Lock()
+	defer v.Unlock()
+
 	v.values.Put(key, &value{
 		value: val,
 	})
 }
 
 func (v *object) Has(key string) bool {
+	v.RLock()
+	defer v.RUnlock()
+
 	return v.values.Has(key)
 }
 func (v *object) MarshalJSON() ([]byte, error) {
+	v.RLock()
+	defer v.RUnlock()
+
 	arr := make([]something, 0, 100)
 	var data map[string]interface{}
 
