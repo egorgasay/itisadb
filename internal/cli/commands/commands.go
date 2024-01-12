@@ -192,12 +192,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		obj := args[0]
 		key := args[1]
 
-		r := c.sdk.Object(ctx, obj, opts)
-		if r.IsErr() {
-			return res.Err(r.Error())
-		}
-
-		if r := r.Unwrap().DeleteKey(ctx, key); r.IsErr() {
+		if r := c.sdk.Object(obj, opts).DeleteKey(ctx, key); r.IsErr() {
 			return res.Err(r.Error())
 		}
 
@@ -337,10 +332,10 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 		}
 	}
 
-	switch r := c.sdk.Object(ctx, name, itisadb.ObjectOptions{
+	switch r := c.sdk.Object(name, itisadb.ObjectOptions{
 		Server: server,
 		Level:  itisadb.Level(lvl),
-	}); r.Switch() {
+	}).Create(ctx); r.Switch() {
 	case gost.IsOk:
 		return res.Ok(r.Unwrap())
 	case gost.IsErr:
@@ -362,19 +357,11 @@ func (c *Commands) geto(ctx context.Context, args []string) (res gost.Result[str
 }
 
 func (c *Commands) showObject(ctx context.Context, name string) (res gost.Result[string]) {
-	if r := c.sdk.Object(ctx, name); r.IsOk() {
-		return r.Unwrap().JSON(ctx)
-	} else {
-		return res.Err(r.Error())
-	}
+	return c.sdk.Object(name).JSON(ctx)
 }
 
 func (c *Commands) setObject(ctx context.Context, object string, cmd SetCommand) (res gost.Result[int32]) {
-	if r := c.sdk.Object(ctx, object); r.IsOk() {
-		return r.Unwrap().Set(ctx, cmd.key, cmd.value)
-	} else {
-		return res.Err(r.Error())
-	}
+	return c.sdk.Object(object).Set(ctx, cmd.key, cmd.value)
 }
 
 func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[itisadb.Value]) {
@@ -396,12 +383,7 @@ func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[itis
 }
 
 func (c *Commands) attach(ctx context.Context, dst string, src string) (res gost.Result[gost.Nothing]) {
-	r := c.sdk.Object(ctx, dst)
-	if r.IsOk() {
-		return r.Unwrap().Attach(ctx, src)
-	} else {
-		return res.Err(r.Error())
-	}
+	return c.sdk.Object(dst).Attach(ctx, src)
 }
 
 func toServerNumber(server int32) *int32 {
@@ -439,11 +421,7 @@ func (c *Commands) getFromObject(ctx context.Context, name string, key string, s
 		opts.Server = int32(servInt)
 	}
 
-	if r := c.sdk.Object(ctx, name); r.IsOk() {
-		return r.Unwrap().Get(ctx, key, opts)
-	} else {
-		return res.Err(r.Error())
-	}
+	return c.sdk.Object(name).Get(ctx, key, opts)
 }
 
 func (c *Commands) deleteObject(ctx context.Context, object string, args []string) (res gost.Result[gost.Nothing]) {
@@ -460,12 +438,7 @@ func (c *Commands) deleteObject(ctx context.Context, object string, args []strin
 		server = int32(num)
 	}
 
-	r := c.sdk.Object(ctx, object, itisadb.ObjectOptions{Server: server})
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	return r.Unwrap().DeleteObject(ctx)
+	return c.sdk.Object(object, itisadb.ObjectOptions{Server: server}).DeleteObject(ctx)
 }
 
 type Command interface {

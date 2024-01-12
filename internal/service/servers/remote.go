@@ -138,7 +138,7 @@ func (s *RemoteServer) resetTries() {
 func (s *RemoteServer) NewObject(ctx context.Context, _ gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, name, opts.ToSDK())
+	r := s.sdk.Object(name, opts.ToSDK()).Create(ctx)
 	if r.IsOk() {
 		return res.Ok(gost.Nothing{})
 	}
@@ -149,12 +149,7 @@ func (s *RemoteServer) NewObject(ctx context.Context, _ gost.Option[models.UserC
 func (s *RemoteServer) GetFromObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, key string, opts models.GetFromObjectOptions) (res gost.Result[string]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error().WrapfNotNilMsg("error while GetFromObject [%s]", object))
-	}
-
-	gerRes := r.Unwrap().Get(ctx, key, opts.ToSDK())
+	gerRes := s.sdk.Object(object).Get(ctx, key, opts.ToSDK())
 	if gerRes.IsErr() {
 		return res.Err(gerRes.Error().WrapfNotNilMsg("error while GetFromObject [%s.%s]", object, key))
 	}
@@ -165,12 +160,7 @@ func (s *RemoteServer) GetFromObject(ctx context.Context, _ gost.Option[models.U
 func (s *RemoteServer) SetToObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	setResult := r.Unwrap().Set(ctx, key, value, opts.ToSDK())
+	setResult := s.sdk.Object(object).Set(ctx, key, value, opts.ToSDK())
 	if setResult.IsErr() {
 		return res.Err(setResult.Error())
 	}
@@ -181,12 +171,7 @@ func (s *RemoteServer) SetToObject(ctx context.Context, _ gost.Option[models.Use
 func (s *RemoteServer) ObjectToJSON(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.ObjectToJSONOptions) (res gost.Result[string]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	rJSON := r.Unwrap().JSON(ctx, opts.ToSDK())
+	rJSON := s.sdk.Object(object).JSON(ctx, opts.ToSDK())
 	if rJSON.IsErr() {
 		return res.Err(rJSON.Error())
 	}
@@ -197,12 +182,7 @@ func (s *RemoteServer) ObjectToJSON(ctx context.Context, _ gost.Option[models.Us
 func (s *RemoteServer) ObjectSize(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.SizeOptions) (res gost.Result[uint64]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	rSize := r.Unwrap().Size(ctx, opts.ToSDK())
+	rSize := s.sdk.Object(object).Size(ctx, opts.ToSDK())
 	if rSize.IsErr() {
 		return res.Err(rSize.Error())
 	}
@@ -213,12 +193,7 @@ func (s *RemoteServer) ObjectSize(ctx context.Context, _ gost.Option[models.User
 func (s *RemoteServer) DeleteObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.DeleteObjectOptions) (res gost.ResultN) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	rDelete := r.Unwrap().DeleteObject(ctx, opts.ToSDK())
+	rDelete := s.sdk.Object(object).DeleteObject(ctx, opts.ToSDK())
 	if rDelete.IsErr() {
 		return res.Err(rDelete.Error())
 	}
@@ -229,12 +204,7 @@ func (s *RemoteServer) DeleteObject(ctx context.Context, _ gost.Option[models.Us
 func (s *RemoteServer) AttachToObject(ctx context.Context, _ gost.Option[models.UserClaims], dst, src string, opts models.AttachToObjectOptions) (res gost.ResultN) {
 	defer after(s, &res)
 
-	dstRes := s.sdk.Object(ctx, dst)
-	if dstRes.IsErr() {
-		return res.Err(dstRes.Error())
-	}
-
-	attachRes := dstRes.Unwrap().Attach(ctx, src, opts.ToSDK())
+	attachRes := s.sdk.Object(dst).Attach(ctx, src, opts.ToSDK())
 	if attachRes.IsErr() {
 		return res.Err(attachRes.Error())
 	}
@@ -245,12 +215,7 @@ func (s *RemoteServer) AttachToObject(ctx context.Context, _ gost.Option[models.
 func (s *RemoteServer) ObjectDeleteKey(ctx context.Context, _ gost.Option[models.UserClaims], object, key string, opts models.DeleteAttrOptions) (res gost.ResultN) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(ctx, object)
-	if r.IsErr() {
-		return res.Err(r.Error())
-	}
-
-	rDeleteK := r.Unwrap().DeleteKey(ctx, key, opts.ToSDK())
+	rDeleteK := s.sdk.Object(object).DeleteKey(ctx, key, opts.ToSDK())
 	if rDeleteK.IsErr() {
 		return res.Err(rDeleteK.Error())
 	}

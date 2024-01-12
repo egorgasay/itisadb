@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/egorgasay/gost"
@@ -176,10 +177,16 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 	return res.Ok(gost.Nothing{})
 }
 
-func (l *Logic) SetToObject(_ context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
-		return res.ErrNew(0, 0, err.Error()) // TODO: ??
+		if !errors.Is(err, constants.ErrObjectNotFound) {
+			return res.ErrNew(0, 0, err.Error()) // TODO: ??
+		}
+
+		r := l.NewObject(ctx, claims, object, models.ObjectOptions{
+			Level:  opts.,
+		})
 	}
 
 	if !l.security.HasPermission(claims, info.Level) {
