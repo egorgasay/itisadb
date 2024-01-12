@@ -215,3 +215,17 @@ func (v *object) MarshalJSON() ([]byte, error) {
 
 	return json.MarshalIndent(data, "", "\t")
 }
+
+func (v *object) setLevel(level models.Level) {
+	v.Lock()
+	defer v.Unlock()
+
+	v.level = level
+}
+
+func (v *object) Level() models.Level {
+	v.RLock()
+	defer v.RUnlock()
+
+	return v.level
+}
