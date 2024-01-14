@@ -64,6 +64,7 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				if err != nil {
 					return fmt.Errorf("can't set to object %s, v: %s: %w", e.Name, e.Value, err)
 				}
+
 			case DeleteAttr:
 				err := r.DeleteAttr(e.Name, e.Value)
 				if err != nil {

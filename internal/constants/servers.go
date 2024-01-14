@@ -4,7 +4,7 @@ import "time"
 
 const MainStorageNumber = 1
 
-const AutoServerNumber = 0
+const AutoServerNumber int32 = 0
 
 const MaxServerTries = 3
 

@@ -332,3 +332,20 @@ func (s *Servers) DelFromAll(ctx context.Context, claims gost.Option[models.User
 
 	return atLeastOnce
 }
+
+func (s *Servers) Iter(f func(domains.Server) error) error {
+	s.RLock()
+	defer s.RUnlock()
+
+	for _, serv := range s.servers {
+		if serv.IsOffline() {
+			continue
+		}
+
+		if err := f(serv); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

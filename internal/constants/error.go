@@ -3,12 +3,13 @@ package constants
 import (
 	"errors"
 	"fmt"
+
 	"github.com/egorgasay/gost"
 )
 
 var (
-	ErrObjectNotFound   = fmt.Errorf("object not found")
-	ErrServerNotFound   = errors.New("server not found")
+	ErrObjectNotFound   = gost.NewError(0, 0, "object not found")
+	ErrServerNotFound   = gost.NewError(0, 0, "server not found")
 	ErrWrongCredentials = errors.New("wrong credentials")
 
 	ErrNoData        = errors.New("the value is not found")

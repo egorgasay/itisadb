@@ -81,6 +81,12 @@ func (o ObjectOptions) ToSDK() itisadb.ObjectOptions {
 	}
 }
 
+func (o ObjectOptions) ToIsObjectOptions() IsObjectOptions {
+	return IsObjectOptions{
+		Server: o.Server,
+	}
+}
+
 type ObjectToJSONOptions struct {
 	Server int32
 }

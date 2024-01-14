@@ -31,4 +31,5 @@ type appLogic interface {
 	DeleteObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, opts models.DeleteObjectOptions) gost.ResultN
 	AttachToObject(ctx context.Context, claims gost.Option[models.UserClaims], dst, src string, opts models.AttachToObjectOptions) gost.ResultN
 	ObjectDeleteKey(ctx context.Context, claims gost.Option[models.UserClaims], object, key string, opts models.DeleteAttrOptions) gost.ResultN
+	IsObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool])
 }

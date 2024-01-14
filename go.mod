@@ -9,7 +9,7 @@ require (
 	github.com/dolthub/swiss v0.2.1
 	github.com/egorgasay/gost v0.0.22
 	github.com/egorgasay/gotils v0.0.3
-	github.com/egorgasay/itisadb-go-sdk v0.16.0
+	github.com/egorgasay/itisadb-go-sdk v0.17.1
 	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240107134715-1467774df2f3
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.0

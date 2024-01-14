@@ -138,7 +138,7 @@ func (s *RemoteServer) resetTries() {
 func (s *RemoteServer) NewObject(ctx context.Context, _ gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
 	defer after(s, &res)
 
-	r := s.sdk.Object(name, opts.ToSDK()).Create(ctx)
+	r := s.sdk.Object(name).Create(ctx, opts.ToSDK())
 	if r.IsOk() {
 		return res.Ok(gost.Nothing{})
 	}
@@ -221,4 +221,8 @@ func (s *RemoteServer) ObjectDeleteKey(ctx context.Context, _ gost.Option[models
 	}
 
 	return res.Ok()
+}
+
+func (s *RemoteServer) IsObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool]) {
+	return s.sdk.Object(object).Is(ctx)
 }

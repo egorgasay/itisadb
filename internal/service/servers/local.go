@@ -47,8 +47,7 @@ func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.Result[gost.Nothin
 		return res.Err(r.Error())
 	}
 
-	s.ram.WBorrow()
-	s.ram.WReturn(r.Unwrap())
+	s.ram.SetWithLock(r.Unwrap())
 
 	return res.Ok(gost.Nothing{})
 }

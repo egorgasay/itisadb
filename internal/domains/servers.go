@@ -24,4 +24,6 @@ type Servers interface {
 
 	// TODO: may be we should use Iter instead, because Servers != buisness logic
 	DeepSearch(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.GetOptions) (res gost.Result[gost.Pair[int32, models.Value]])
+
+	Iter(func(Server) error) error
 }

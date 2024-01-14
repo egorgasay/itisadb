@@ -124,8 +124,8 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		case _object:
 			r := c.newObject(ctx, args[1:])
 			if r.IsOk() {
-				obj := r.Unwrap()
-				return res.Ok(fmt.Sprintf("object %s created on server #%d", obj.Name(), obj.Server()))
+				serv := r.Unwrap()
+				return res.Ok(fmt.Sprintf("object %s created on server #%d", args[1], serv))
 			}
 			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
 		default:
@@ -145,13 +145,28 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 	case _geto:
 		r := c.geto(ctx, args)
 		return r
-	case _marshalo:
+	case _marshalo: // MARHALO <object> <optional server>
 		if len(args) < 1 {
 			return res.Err(ErrWrongInput)
 		}
 		name := args[0]
-		r := c.showObject(ctx, name)
-		return r
+
+		var (
+			server int
+			err    error
+		)
+
+		var opts itisadb.ObjectToJSONOptions
+		if len(args) >= 2 {
+			server, err = strconv.Atoi(args[1])
+			if err != nil {
+				return res.ErrNew(InvalidCode, InputExtCode, fmt.Sprintf("wrong server number: %s", args[1]))
+			}
+
+			opts.Server = int32(server)
+		}
+
+		return c.sdk.Object(name).JSON(ctx, opts)
 	case _del:
 		if len(args) < 1 {
 			return res.Err(ErrWrongInput)
@@ -179,7 +194,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 			return res.Err(ErrWrongInput)
 		}
 
-		var opts itisadb.ObjectOptions
+		var opts itisadb.DeleteKeyOptions
 		if len(args) >= 2 {
 			server, err := strconv.Atoi(args[1])
 			if err != nil {
@@ -192,7 +207,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		obj := args[0]
 		key := args[1]
 
-		if r := c.sdk.Object(obj, opts).DeleteKey(ctx, key); r.IsErr() {
+		if r := c.sdk.Object(obj).DeleteKey(ctx, key, opts); r.IsErr() {
 			return res.Err(r.Error())
 		}
 
@@ -302,7 +317,7 @@ func levelFromStr(lvl string) (res gost.Result[itisadb.Level]) {
 	return res.Err(ErrWrongInput.WrapfNotNilMsg("wrong level: %s", lvl))
 }
 
-func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Result[*itisadb.Object]) {
+func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Result[int32]) {
 	if len(args) < 1 || len(args) > 3 {
 		return res.Err(ErrWrongInput)
 	}
@@ -332,10 +347,10 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 		}
 	}
 
-	switch r := c.sdk.Object(name, itisadb.ObjectOptions{
+	switch r := c.sdk.Object(name).Create(ctx, itisadb.ObjectOptions{
 		Server: server,
 		Level:  itisadb.Level(lvl),
-	}).Create(ctx); r.Switch() {
+	}); r.Switch() {
 	case gost.IsOk:
 		return res.Ok(r.Unwrap())
 	case gost.IsErr:
@@ -348,7 +363,7 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 func (c *Commands) geto(ctx context.Context, args []string) (res gost.Result[string]) {
 	switch len(args) {
 	case 1:
-		return c.showObject(ctx, args[0])
+		return c.showObject(ctx, args[0], 0)
 	case 2:
 		return c.getFromObject(ctx, args[0], args[1])
 	default:
@@ -356,12 +371,19 @@ func (c *Commands) geto(ctx context.Context, args []string) (res gost.Result[str
 	}
 }
 
-func (c *Commands) showObject(ctx context.Context, name string) (res gost.Result[string]) {
-	return c.sdk.Object(name).JSON(ctx)
+func (c *Commands) showObject(ctx context.Context, name string, server int32) (res gost.Result[string]) {
+	return c.sdk.Object(name).JSON(ctx, itisadb.ObjectToJSONOptions{Server: server})
 }
 
 func (c *Commands) setObject(ctx context.Context, object string, cmd SetCommand) (res gost.Result[int32]) {
-	return c.sdk.Object(object).Set(ctx, cmd.key, cmd.value)
+	if cmd.level != 0 {
+		return res.ErrNewUnknown("cannot set level for object via set command, use level command instead")
+	}
+
+	return c.sdk.Object(object).Set(ctx, cmd.key, cmd.value, itisadb.SetToObjectOptions{
+		Server:   cmd.server,
+		ReadOnly: cmd.mode == readOnlySetMode,
+	})
 }
 
 func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[itisadb.Value]) {
@@ -438,7 +460,7 @@ func (c *Commands) deleteObject(ctx context.Context, object string, args []strin
 		server = int32(num)
 	}
 
-	return c.sdk.Object(object, itisadb.ObjectOptions{Server: server}).DeleteObject(ctx)
+	return c.sdk.Object(object).DeleteObject(ctx, itisadb.DeleteObjectOptions{Server: server})
 }
 
 type Command interface {

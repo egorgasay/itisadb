@@ -180,13 +180,15 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
-		if !errors.Is(err, constants.ErrObjectNotFound) {
+		if !errors.Is(err, constants.ErrNotFound) {
 			return res.ErrNew(0, 0, err.Error()) // TODO: ??
 		}
 
-		r := l.NewObject(ctx, claims, object, models.ObjectOptions{
-			Level:  opts.,
-		})
+		if r := l.NewObject(ctx, claims, object, models.ObjectOptions{
+			Level: constants.DefaultLevel,
+		}); r.IsErr() {
+			return res.Err(r.Error())
+		}
 	}
 
 	if !l.security.HasPermission(claims, info.Level) {
@@ -332,4 +334,8 @@ func (l *Logic) ObjectDeleteKey(_ context.Context, claims gost.Option[models.Use
 	}
 
 	return res.Ok()
+}
+
+func (l *Logic) IsObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool]) {
+	return res.Ok(l.storage.IsObject(object))
 }

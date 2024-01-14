@@ -284,14 +284,11 @@ func (s *Storage) Size(name string) (uint64, error) {
 }
 
 func (s *Storage) IsObject(name string) bool {
-	s.objects.RLock()
-	defer s.objects.RUnlock()
+	s.objectsInfo.RLock()
+	defer s.objectsInfo.RUnlock()
 
-	if val, err := s.findObject(name); err != nil {
-		return false
-	} else {
-		return val.IsObject()
-	}
+	_, ok := s.objectsInfo.Get(name)
+	return ok
 }
 
 func (s *Storage) DeleteIfExists(key string) {
