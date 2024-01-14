@@ -93,27 +93,14 @@ func (c *Balancer) isObject(ctx context.Context, claims gost.Option[models.UserC
 }
 
 func (c *Balancer) object(ctx context.Context, claims gost.Option[models.UserClaims], object string, opts models.ObjectOptions) (int32, error) {
-	objects := strings.Split(object, constants.ObjectSeparator)
-
-	res := c.getObjectServer(objects[0])
-	if res.IsNone() {
-
-	}
-
-	serverNumber := res.Unwrap()
-	if opts.Server != constants.AutoServerNumber && serverNumber != opts.Server {
-		return 0, fmt.Errorf("can't get inner object[%d] from different[%d] server: %w", serverNumber, opts.Server, constants.ErrObjectNotFound)
-	}
-
-	opts.Server = serverNumber
-
-	serv, ok := c.servers.GetServer(opts.Server)
-	if !ok {
-		return 0, constants.ErrServerNotFound
-	}
-
-	r := serv.NewObject(ctx, claims, object, opts)
+	r := c.findServerForObject(ctx, claims, object, opts.Server)
 	if r.IsErr() {
+		return 0, r.Error()
+	}
+
+	serv := r.Unwrap()
+
+	if r := serv.NewObject(ctx, claims, object, opts); r.IsErr() {
 		return 0, fmt.Errorf("can't create object: %w", r.Error())
 	}
 
