@@ -7,11 +7,15 @@ import (
 )
 
 type value struct {
+	// TODO: add lock
+
 	value    string
 	readOnly bool
 }
 
 func (v value) MarshalJSON() ([]byte, error) {
+	// TODO: add lock
+
 	var data = make(map[string]interface{})
 
 	data["value"] = v.value
@@ -32,8 +36,8 @@ func (v *value) IsObject() bool {
 	return false
 }
 
-func (v *value) Value() gost.Option[string] {
-	return gost.Some(v.value)
+func (v value) Value() gost.Option[value] {
+	return gost.Some(v)
 }
 
 func (v *value) IsValue() bool {

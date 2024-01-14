@@ -26,7 +26,7 @@ type ramStorage struct {
 }
 
 type objects struct {
-	*swiss.Map[string, something]
+	*swiss.Map[string, Something]
 	*sync.RWMutex
 }
 
@@ -35,11 +35,11 @@ type users struct {
 	*sync.RWMutex
 }
 
-type something interface {
+type Something interface {
 	Object() gost.Option[*object]
 	IsObject() bool
 
-	Value() gost.Option[string]
+	Value() gost.Option[value]
 	IsValue() bool
 }
 
@@ -52,7 +52,7 @@ func New() (*Storage, error) {
 	st := &Storage{
 		objectsInfo: objectsInfo{Map: swiss.NewMap[string, models.ObjectInfo](10_000), RWMutex: &sync.RWMutex{}},
 		ramStorage:  ramStorage{Map: swiss.NewMap[string, models.Value](10_000_000), RWMutex: &sync.RWMutex{}},
-		objects:     objects{Map: swiss.NewMap[string, something](100_000), RWMutex: &sync.RWMutex{}},
+		objects:     objects{Map: swiss.NewMap[string, Something](100_000), RWMutex: &sync.RWMutex{}},
 		users:       users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
@@ -238,7 +238,7 @@ func (s *Storage) findObject(name string) (*object, error) {
 	}
 
 	var (
-		val something
+		val Something
 		ok  bool
 	)
 

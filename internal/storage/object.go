@@ -13,7 +13,7 @@ import (
 
 type object struct {
 	name       string
-	values     *swiss.Map[string, something]
+	values     *swiss.Map[string, Something]
 	attachedTo []string
 	level      models.Level
 	*sync.RWMutex
@@ -25,7 +25,7 @@ func NewObject(name string, attachedTo []string, level models.Level) *object {
 	}
 
 	return &object{
-		values:     swiss.NewMap[string, something](10),
+		values:     swiss.NewMap[string, Something](10),
 		attachedTo: attachedTo,
 		name:       name,
 		level:      level,
@@ -37,7 +37,7 @@ func (v *object) Object() gost.Option[*object] {
 	return gost.Some(v)
 }
 
-func (v *object) Value() (opt gost.Option[string]) {
+func (v *object) Value() (opt gost.Option[value]) {
 	return opt.None()
 }
 
@@ -68,7 +68,7 @@ func (v *object) Get(name string) (string, error) {
 
 	switch some := val.Value(); some.IsSome() {
 	case true:
-		return some.Unwrap(), nil
+		return some.Unwrap().value, nil
 	default:
 		return "", constants.ErrSomethingExists
 	}
@@ -114,7 +114,7 @@ func (v *object) AttachObject(src *object) (err error) {
 	}()
 
 	if v.values == nil {
-		v.values = swiss.NewMap[string, something](10)
+		v.values = swiss.NewMap[string, Something](10)
 		v.values.Put(src.Name(), src)
 		return nil
 	}
@@ -128,14 +128,14 @@ func (v *object) AttachObject(src *object) (err error) {
 	return nil
 }
 
-func (v *object) Iter(f func(k string, v something) bool) {
+func (v *object) Iter(f func(k string, v Something) bool) {
 	v.RLock()
 	defer v.RUnlock()
 
 	v.values.Iter(f)
 }
 
-func (v *object) NextOrCreate(name string, level models.Level) something {
+func (v *object) NextOrCreate(name string, level models.Level) Something {
 	v.RLock()
 	defer v.RUnlock()
 
@@ -149,7 +149,7 @@ func (v *object) NextOrCreate(name string, level models.Level) something {
 	return val
 }
 
-func (v *object) GetValue(key string) (something, bool) {
+func (v *object) GetValue(key string) (Something, bool) {
 	v.RLock()
 	defer v.RUnlock()
 
@@ -173,7 +173,7 @@ func (v *object) RecreateObject() {
 	v.Lock()
 	defer v.Unlock()
 
-	v.values = swiss.NewMap[string, something](10)
+	v.values = swiss.NewMap[string, Something](10)
 }
 
 func (v *object) Set(key string, val string) {
@@ -191,16 +191,31 @@ func (v *object) Has(key string) bool {
 
 	return v.values.Has(key)
 }
+
+//type ValueJSON struct {
+//	Key string `json:"key"`
+//	value
+//}
+
 func (v *object) MarshalJSON() ([]byte, error) {
 	v.RLock()
 	defer v.RUnlock()
 
-	arr := make([]something, 0, 100)
+	arr := make([]any, 0, 100)
 	var data map[string]interface{}
 
-	v.values.Iter(func(k string, v something) bool {
+	v.values.Iter(func(k string, v Something) bool {
 		if v != nil {
-			arr = append(arr, v)
+			if v.IsValue() {
+				val := v.Value().Unwrap()
+				arr = append(arr, map[string]interface{}{
+					"key":       k,
+					"value":     val.value,
+					"read_only": val.readOnly,
+				})
+			} else {
+				arr = append(arr, v)
+			}
 		}
 
 		return false

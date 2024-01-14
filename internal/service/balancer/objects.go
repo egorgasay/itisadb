@@ -118,7 +118,7 @@ func (c *Balancer) GetFromObject(ctx context.Context, claims gost.Option[models.
 
 func (c *Balancer) findServerForObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, server int32) (res gost.Result[domains.Server]) {
 	objects := strings.Split(object, constants.ObjectSeparator)
-	serverActual := constants.AutoServerNumber
+	var resolvedServer int32
 
 	serverOpt := c.getObjectServer(objects[0])
 	if serverOpt.IsNone() {
@@ -128,17 +128,20 @@ func (c *Balancer) findServerForObject(ctx context.Context, claims gost.Option[m
 		}
 
 		if opt := r.Unwrap(); opt.IsSome() {
-			serverActual = opt.Unwrap()
+			resolvedServer = opt.Unwrap()
 		}
 	} else {
-		serverActual = serverOpt.Unwrap()
+		resolvedServer = serverOpt.Unwrap()
 	}
 
-	if server != constants.AutoServerNumber && server != serverActual {
-		return res.Err(constants.ErrObjectNotFound.WrapfNotNilMsg("can't get inner object[%d] from different[%d] server", server, serverOpt))
+	isRequestedServerAuto := server == constants.AutoServerNumber
+	isResolvedServerNone := resolvedServer == 0
+
+	if !isRequestedServerAuto && !isResolvedServerNone && server != resolvedServer {
+		return res.Err(constants.ErrAlreadyExists.WrapfNotNilMsg("can't get inner object[%d] from different[%d] server", server, serverOpt))
 	}
 
-	s, ok := c.servers.GetServer(serverActual)
+	s, ok := c.servers.GetServer(resolvedServer)
 	if !ok {
 		return res.Err(constants.ErrServerNotFound)
 	}
