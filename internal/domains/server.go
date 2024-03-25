@@ -15,6 +15,7 @@ type Server interface {
 	Reconnect(ctx context.Context) (res gost.ResultN)
 
 	appLogic
+	userLogic
 }
 
 type appLogic interface {
@@ -32,4 +33,11 @@ type appLogic interface {
 	AttachToObject(ctx context.Context, claims gost.Option[models.UserClaims], dst, src string, opts models.AttachToObjectOptions) gost.ResultN
 	ObjectDeleteKey(ctx context.Context, claims gost.Option[models.UserClaims], object, key string, opts models.DeleteAttrOptions) gost.ResultN
 	IsObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool])
+}
+
+type userLogic interface {
+	NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) gost.ResultN
+	DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) gost.Result[bool]
+	ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login string, password string) gost.ResultN
+	ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) gost.ResultN
 }

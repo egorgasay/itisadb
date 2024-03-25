@@ -1,11 +1,12 @@
 package storage
 
 import (
+	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 )
 
-func (s *Storage) NewUser(user models.User) (id int, err error) {
+func (s *Storage) NewUser(user models.User) (id int, err *gost.Error) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
@@ -28,7 +29,7 @@ func (s *Storage) NewUser(user models.User) (id int, err error) {
 	return id, nil
 }
 
-func (s *Storage) GetUserByID(id int) (models.User, error) {
+func (s *Storage) GetUserByID(id int) (models.User, *gost.ErrX) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
@@ -40,7 +41,7 @@ func (s *Storage) GetUserByID(id int) (models.User, error) {
 	return val, nil
 }
 
-func (s *Storage) GetUserByName(username string) (id int, u models.User, err error) {
+func (s *Storage) GetUserByName(username string) (id int, u models.User, err *gost.Error) {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
@@ -62,7 +63,7 @@ func (s *Storage) GetUserByName(username string) (id int, u models.User, err err
 	return id, u, nil
 }
 
-func (s *Storage) DeleteUser(id int) error {
+func (s *Storage) DeleteUser(id int) *gost.Error {
 	s.users.Lock()
 	defer s.users.Unlock()
 
@@ -75,7 +76,7 @@ func (s *Storage) DeleteUser(id int) error {
 	return nil
 }
 
-func (s *Storage) SaveUser(id int, user models.User) error {
+func (s *Storage) SaveUser(id int, user models.User) *gost.Error {
 	s.users.Lock()
 	defer s.users.Unlock()
 

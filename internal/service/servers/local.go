@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/egorgasay/gost"
+	"itisadb/config"
 	"itisadb/internal/constants"
+	"itisadb/internal/domains"
 	"itisadb/internal/models"
 	"itisadb/internal/service/logic"
 	"itisadb/pkg"
@@ -12,7 +14,9 @@ import (
 
 type LocalServer struct {
 	*logic.Logic
-	ram gost.RwLock[models.RAM]
+	storage domains.Storage
+	config  config.Config
+	ram     gost.RwLock[models.RAM]
 }
 
 func NewLocalServer(uc *logic.Logic) *LocalServer {
@@ -50,4 +54,49 @@ func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.Result[gost.Nothin
 	s.ram.SetWithLock(r.Unwrap())
 
 	return res.Ok(gost.Nothing{})
+}
+
+func (s *LocalServer) NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
+	if s.config.Balancer.On {
+		return r.Ok()
+	}
+
+	if rUser := s.storage.NewUser(user); r.IsErr() {
+		return r.Err(rUser.Error())
+	}
+
+	return r.Ok()
+}
+
+func (s *LocalServer) DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) (r gost.Result[bool]) {
+	if s.config.Balancer.On {
+		return r.Ok(false)
+	}
+
+	rUser := s.storage.GetUserIDByName(login)
+	if rUser.IsErr() {
+		return r.Err(rUser.Error())
+	}
+
+	return s.storage.DeleteUser(rUser.Unwrap())
+}
+
+func (s *LocalServer) ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login string, password string) (r gost.ResultN) {
+	if s.config.Balancer.On {
+		return r.Ok()
+	}
+
+	rUser := s.storage.GetUserByName(login)
+	if rUser.IsErr() {
+		return r.Err(rUser.Error())
+	}
+
+	user := rUser.Unwrap()
+	user.Password = password
+
+	return s.storage.SaveUser(user.ID, user)
+}
+
+func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
+	return r.Ok()
 }

@@ -3,7 +3,7 @@
 
 # Address of the gRPC server.
 # Example: ":8888"
-GRPC = ":8888"
+GRPC = ":8881"
 
 # Address of the REST server. If empty, no REST server is started.
 # Example: ":6071"
@@ -11,7 +11,7 @@ FastHTTP = ""
 
 # Mechanism for balancing within servers.
 [Balancer]
-On = false
+On = true
 
 # List of servers to balance.
 # Example:
@@ -20,7 +20,7 @@ On = false
 # 	"127.0.0.1:8890",
 # ]
 Servers = [
-    #"127.0.0.1:8889",
+    "127.0.0.1:8889",
 ]
 
 # Balancing only mode.
@@ -51,7 +51,7 @@ On = true
 
 # Host of the web application.
 # Example: "127.0.0.1:8080"
-Host = ":8070"
+Host = ":8074"
 
 # Allows you to enable or disable logs for a web application.
 Logs = false

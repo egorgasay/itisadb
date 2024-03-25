@@ -1,6 +1,7 @@
 package domains
 
 import (
+	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
 
@@ -53,10 +54,11 @@ type ObjectsStorage interface {
 }
 
 type UserStorage interface {
-	NewUser(user models.User) (id int, err error)
-	GetUserByID(id int) (models.User, error)
-	GetUserByName(username string) (int, models.User, error)
-	DeleteUser(id int) error
-	SaveUser(id int, user models.User) error
-	GetUserLevel(id int) (models.Level, error)
+	NewUser(user models.User) (r gost.Result[int])
+	GetUserByID(id int) (r gost.Result[models.User])
+	GetUserByName(username string) (r gost.Result[models.User])
+	GetUserIDByName(username string) (r gost.Result[int])
+	DeleteUser(id int) (r gost.Result[bool])
+	SaveUser(user models.User) (r gost.ResultN)
+	GetUserLevel(id int) (r gost.Result[models.Level])
 }

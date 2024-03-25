@@ -226,3 +226,23 @@ func (s *RemoteServer) ObjectDeleteKey(ctx context.Context, _ gost.Option[models
 func (s *RemoteServer) IsObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool]) {
 	return s.sdk.Object(object).Is(ctx)
 }
+
+func (s *RemoteServer) NewUser(ctx context.Context, _ gost.Option[models.UserClaims], user models.User) (res gost.Result[gost.Nothing]) {
+	defer after(s, &res)
+	return s.sdk.NewUser(ctx, user.Login, user.Password, itisadb.NewUserOptions{Level: user.Level.ToSDK()})
+}
+
+func (s *RemoteServer) DeleteUser(ctx context.Context, _ gost.Option[models.UserClaims], login string) (res gost.Result[bool]) {
+	defer after(s, &res)
+	return s.sdk.DeleteUser(ctx, login)
+}
+
+func (s *RemoteServer) ChangePassword(ctx context.Context, _ gost.Option[models.UserClaims], login string, password string) (res gost.ResultN) {
+	defer after(s, &res)
+	return s.sdk.ChangePassword(ctx, login, password)
+}
+
+func (s *RemoteServer) ChangeLevel(ctx context.Context, _ gost.Option[models.UserClaims], login string, level models.Level) (res gost.ResultN) {
+	defer after(s, &res)
+	return s.sdk.ChangeLevel(ctx, login, level.ToSDK())
+}

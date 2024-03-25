@@ -17,7 +17,7 @@ var (
 
 	ErrAlreadyExists = gost.NewError(0, 0, "already exists")
 	ErrUnavailable   = errors.New("server is unavailable")
-	ErrNotFound      = gost.NewError(0, 0, "not found")
+	ErrNotFound      = gost.NewErrX(0, "not found")
 
 	ErrCircularAttachment = fmt.Errorf("circular attachment")
 	ErrInternal           = fmt.Errorf("internal error")
