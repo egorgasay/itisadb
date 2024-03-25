@@ -32,11 +32,11 @@ func NewLogic(
 	security domains.SecurityService,
 ) *Logic {
 
-	_, _, err := storage.GetUserByName("itisadb")
-	if err != nil {
+	r := storage.GetUserByName("itisadb")
+	if r.IsErr() {
 		logger.Info("creating default user")
 
-		_, err = storage.NewUser(
+		r := storage.NewUser(
 			models.User{
 				Login:    "itisadb",
 				Password: "itisadb",
@@ -45,16 +45,16 @@ func NewLogic(
 			},
 		)
 
-		if err != nil {
-			logger.Error("failed to create default user", zap.Error(err))
+		if r.IsErr() {
+			logger.Error("failed to create default user", zap.Error(r.Error()))
 		}
 	}
 
-	_, _, err = storage.GetUserByName("demo")
-	if err != nil {
+	r = storage.GetUserByName("demo")
+	if r.IsErr() {
 		logger.Info("creating demo user")
 
-		_, err = storage.NewUser(
+		r := storage.NewUser(
 			models.User{
 				Login:    "demo",
 				Password: "demo",
@@ -63,13 +63,9 @@ func NewLogic(
 			},
 		)
 
-		if err != nil {
-			logger.Error("failed to create demo user", zap.Error(err))
+		if r.IsErr() {
+			logger.Error("failed to create demo user", zap.Error(r.Error()))
 		}
-	}
-
-	if err != nil {
-		logger.Error("failed to create demo user", zap.Error(err))
 	}
 
 	return &Logic{
@@ -95,7 +91,7 @@ func (l *Logic) GetOne(_ context.Context, claims gost.Option[models.UserClaims],
 	return res.Ok(v)
 }
 
-func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.DeleteOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.DeleteOptions) (res gost.ResultN) {
 	v, err := l.storage.Get(key)
 	if err != nil {
 		return res.ErrNew(0, 0, err.Error())
@@ -114,7 +110,7 @@ func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims],
 		l.tlogger.WriteDelete(key)
 	}
 
-	return res.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
 func (l *Logic) SetOne(_ context.Context, claims gost.Option[models.UserClaims], key string, val string, opt models.SetOptions) (res gost.Result[int32]) {
@@ -154,7 +150,7 @@ func (l *Logic) HasPermissionToObject(claims gost.Option[models.UserClaims], nam
 	return res.Ok(l.security.HasPermission(claims, info.Level))
 }
 
-func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.ResultN) {
 	if !l.security.HasPermission(claims, opts.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
@@ -174,10 +170,10 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 		l.tlogger.WriteCreateObject(name, info)
 	}
 
-	return res.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
-func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
+func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.ResultN) {
 	info, err := l.storage.GetObjectInfo(object)
 	if err != nil {
 		if !errors.Is(err, constants.ErrNotFound) {
@@ -204,7 +200,7 @@ func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserC
 		l.tlogger.WriteSetToObject(object, key, value)
 	}
 
-	return res.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
 func (l *Logic) GetFromObject(_ context.Context, claims gost.Option[models.UserClaims], object, key string, _ models.GetFromObjectOptions) (res gost.Result[string]) {

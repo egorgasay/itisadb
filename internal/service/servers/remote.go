@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 
 	"github.com/egorgasay/gost"
@@ -22,10 +23,12 @@ func NewRemoteServer(ctx context.Context, address string, number int32, logger *
 		logger:  logger,
 	}
 
-	return rs, rs.Reconnect(ctx).Error().IfErr(func(err *gost.Error) *gost.Error {
+	if err := rs.Reconnect(ctx).Error(); err != nil {
 		rs.tries.Store(constants.MaxServerTries)
-		return err.WrapNotNilMsg("failed to connect to remote server")
-	}).IntoStd()
+		return nil, err.ExtendMsg("failed to connect to remote server", address, err.Error())
+	}
+
+	return rs, nil
 }
 
 type RemoteServer struct {
@@ -61,7 +64,7 @@ func (s *RemoteServer) Reconnect(ctx context.Context) (res gost.ResultN) {
 
 type resulterr interface {
 	IsErr() bool
-	Error() *gost.Error
+	Error() *gost.ErrX
 }
 
 func after[Re resulterr, RePtr *Re](s *RemoteServer, res RePtr) {
@@ -100,7 +103,7 @@ func (s *RemoteServer) GetOne(ctx context.Context, _ gost.Option[models.UserClai
 	})
 }
 
-func (s *RemoteServer) DelOne(ctx context.Context, _ gost.Option[models.UserClaims], key string, opt models.DeleteOptions) (res gost.Result[gost.Nothing]) {
+func (s *RemoteServer) DelOne(ctx context.Context, _ gost.Option[models.UserClaims], key string, opt models.DeleteOptions) (res gost.ResultN) {
 	defer after(s, &res)
 	return s.sdk.DelOne(ctx, key, opt.ToSDK())
 }
@@ -115,7 +118,7 @@ func (s *RemoteServer) RAM() models.RAM {
 	return s.ram.RBorrow().Read()
 }
 
-func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Nothing]) {
+func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.ResultN) {
 	defer after(s, &res)
 
 	r := itisadb.Internal.GetRAM(ctx, s.sdk)
@@ -124,7 +127,7 @@ func (s *RemoteServer) RefreshRAM(ctx context.Context) (res gost.Result[gost.Not
 	}
 
 	s.ram.SetWithLock(models.RAM(r.Unwrap()))
-	return gost.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
 func (s *RemoteServer) incTries() uint32 {
@@ -135,12 +138,12 @@ func (s *RemoteServer) resetTries() {
 	s.tries.Store(0)
 }
 
-func (s *RemoteServer) NewObject(ctx context.Context, _ gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.Result[gost.Nothing]) {
+func (s *RemoteServer) NewObject(ctx context.Context, _ gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.ResultN) {
 	defer after(s, &res)
 
 	r := s.sdk.Object(name).Create(ctx, opts.ToSDK())
 	if r.IsOk() {
-		return res.Ok(gost.Nothing{})
+		return res.Ok()
 	}
 
 	return res.Err(r.Error())
@@ -151,13 +154,13 @@ func (s *RemoteServer) GetFromObject(ctx context.Context, _ gost.Option[models.U
 
 	gerRes := s.sdk.Object(object).Get(ctx, key, opts.ToSDK())
 	if gerRes.IsErr() {
-		return res.Err(gerRes.Error().WrapfNotNilMsg("error while GetFromObject [%s.%s]", object, key))
+		return res.Err(gerRes.Error().ExtendMsg(fmt.Sprintf("error while GetFromObject [%s.%s]", object, key)))
 	}
 
 	return res.Ok(gerRes.Unwrap())
 }
 
-func (s *RemoteServer) SetToObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.Result[gost.Nothing]) {
+func (s *RemoteServer) SetToObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.ResultN) {
 	defer after(s, &res)
 
 	setResult := s.sdk.Object(object).Set(ctx, key, value, opts.ToSDK())
@@ -165,7 +168,7 @@ func (s *RemoteServer) SetToObject(ctx context.Context, _ gost.Option[models.Use
 		return res.Err(setResult.Error())
 	}
 
-	return res.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
 func (s *RemoteServer) ObjectToJSON(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.ObjectToJSONOptions) (res gost.Result[string]) {
@@ -224,10 +227,11 @@ func (s *RemoteServer) ObjectDeleteKey(ctx context.Context, _ gost.Option[models
 }
 
 func (s *RemoteServer) IsObject(ctx context.Context, _ gost.Option[models.UserClaims], object string, opts models.IsObjectOptions) (res gost.Result[bool]) {
+	defer after(s, &res)
 	return s.sdk.Object(object).Is(ctx)
 }
 
-func (s *RemoteServer) NewUser(ctx context.Context, _ gost.Option[models.UserClaims], user models.User) (res gost.Result[gost.Nothing]) {
+func (s *RemoteServer) NewUser(ctx context.Context, _ gost.Option[models.UserClaims], user models.User) (res gost.ResultN) {
 	defer after(s, &res)
 	return s.sdk.NewUser(ctx, user.Login, user.Password, itisadb.NewUserOptions{Level: user.Level.ToSDK()})
 }

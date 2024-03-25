@@ -30,13 +30,14 @@ const (
 	UnknownExtCode = iota
 	InputExtCode
 	CmdExtCode
+	LevelExtCode
 )
 
 type Action string
 
 var (
-	ErrWrongInput = gost.NewError(InvalidCode, InputExtCode, "wrong input")
-	ErrUnknownCMD = gost.NewError(UnknownCode, CmdExtCode, "unknown cmd")
+	ErrWrongInput = gost.NewErrX(InvalidCode, "invalid").Extend(InputExtCode, "input")
+	ErrUnknownCMD = gost.NewErrX(UnknownCode, "unknown").Extend(CmdExtCode, "cmd")
 )
 
 const (
@@ -314,7 +315,7 @@ func levelFromStr(lvl string) (res gost.Result[itisadb.Level]) {
 		return res.Ok(restrictedLevel)
 	}
 
-	return res.Err(ErrWrongInput.WrapfNotNilMsg("wrong level: %s", lvl))
+	return res.Err(ErrWrongInput.Extend(LevelExtCode, fmt.Sprintf("unknown level: %s", lvl)))
 }
 
 func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Result[int32]) {
@@ -404,7 +405,7 @@ func (c *Commands) get(ctx context.Context, args []string) (res gost.Result[itis
 	return c.sdk.GetOne(ctx, args[0], itisadb.GetOptions{Server: server})
 }
 
-func (c *Commands) attach(ctx context.Context, dst string, src string) (res gost.Result[gost.Nothing]) {
+func (c *Commands) attach(ctx context.Context, dst string, src string) (res gost.ResultN) {
 	return c.sdk.Object(dst).Attach(ctx, src)
 }
 
@@ -446,7 +447,7 @@ func (c *Commands) getFromObject(ctx context.Context, name string, key string, s
 	return c.sdk.Object(name).Get(ctx, key, opts)
 }
 
-func (c *Commands) deleteObject(ctx context.Context, object string, args []string) (res gost.Result[gost.Nothing]) {
+func (c *Commands) deleteObject(ctx context.Context, object string, args []string) (res gost.ResultN) {
 	if len(args) < 1 {
 		return res.Err(ErrWrongInput)
 	}

@@ -8,14 +8,14 @@ import (
 )
 
 var (
-	ErrObjectNotFound   = gost.NewError(0, 0, "object not found")
-	ErrServerNotFound   = gost.NewError(0, 0, "server not found")
+	ErrObjectNotFound   = gost.NewErrX(0, "object not found")
+	ErrServerNotFound   = gost.NewErrX(0, "server not found")
 	ErrWrongCredentials = errors.New("wrong credentials")
 
 	ErrNoData        = errors.New("the value is not found")
 	ErrUnknownServer = errors.New("unknown server")
 
-	ErrAlreadyExists = gost.NewError(0, 0, "already exists")
+	ErrAlreadyExists = gost.NewErrX(0, "already exists")
 	ErrUnavailable   = errors.New("server is unavailable")
 	ErrNotFound      = gost.NewErrX(0, "not found")
 
@@ -41,5 +41,5 @@ var (
 
 	ErrInvalidPassword = errors.New("invalid password")
 
-	ErrForbidden = gost.NewError(0, 0, "forbidden")
+	ErrForbidden = gost.NewErrX(0, "forbidden")
 )

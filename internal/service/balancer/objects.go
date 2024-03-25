@@ -138,7 +138,7 @@ func (c *Balancer) findServerForObject(ctx context.Context, claims gost.Option[m
 	isResolvedServerNone := resolvedServer == 0
 
 	if !isRequestedServerAuto && !isResolvedServerNone && server != resolvedServer {
-		return res.Err(constants.ErrAlreadyExists.WrapfNotNilMsg("can't get inner object[%d] from different[%d] server", server, serverOpt))
+		return res.Err(constants.ErrAlreadyExists.ExtendMsg(fmt.Sprintf("can't get inner object[%d] from different[%d] server", server, serverOpt)))
 	}
 
 	s, ok := c.servers.GetServer(resolvedServer)
@@ -287,8 +287,11 @@ func (c *Balancer) attachToObject(ctx context.Context, claims gost.Option[models
 		return constants.ErrServerNotFound
 	}
 
-	return cl.AttachToObject(ctx, claims, dst, src, opts).Error().
-		WrapNotNilMsg("can't attach to object").IntoStd()
+	if r := cl.AttachToObject(ctx, claims, dst, src, opts); r.IsErr() {
+		return fmt.Errorf("can't attach to object: %w", r.Error())
+	}
+
+	return nil
 }
 
 func (c *Balancer) DeleteAttr(ctx context.Context, claims gost.Option[models.UserClaims], key string, object string, opts models.DeleteAttrOptions) error {
@@ -307,6 +310,9 @@ func (c *Balancer) deleteAttr(ctx context.Context, claims gost.Option[models.Use
 		return r.Error()
 	}
 
-	return r.Unwrap().ObjectDeleteKey(ctx, claims, key, object, opts).Error().
-		WrapNotNilMsg("can't delete attr").IntoStd()
+	if r := r.Unwrap().ObjectDeleteKey(ctx, claims, key, object, opts); r.IsErr() {
+		return fmt.Errorf("can't delete attr: %w", r.Error())
+	}
+
+	return nil
 }

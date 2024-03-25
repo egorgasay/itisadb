@@ -31,11 +31,12 @@ func New(config config.Config, storage domains.Storage, generator domains.Genera
 }
 
 func (s Session) AuthByPassword(ctx context.Context, username, password string) (string, error) {
-	_, user, err := s.storage.GetUserByName(username)
-	if err != nil {
-		return "", err
+	r := s.storage.GetUserByName(username)
+	if r.IsErr() {
+		return "", r.Error()
 	}
 
+	user := r.Unwrap()
 	if user.Password != password {
 		return "", constants.ErrInvalidPassword
 	}
@@ -58,9 +59,8 @@ func (s Session) AuthByToken(ctx context.Context, token string) (models.UserClai
 		return models.UserClaims{}, err
 	}
 
-	_, err = s.storage.GetUserByID(claims.ID)
-	if err != nil {
-		return models.UserClaims{}, err
+	if r := s.storage.GetUserByID(claims.ID); r.IsErr() {
+		return models.UserClaims{}, r.Error()
 	}
 
 	return claims, nil

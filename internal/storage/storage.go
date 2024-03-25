@@ -327,18 +327,6 @@ func (s *Storage) DeleteAttr(name, key string) error {
 	}
 }
 
-func (s *Storage) GetUserLevel(id int) (models.Level, error) {
-	s.users.RLock()
-	defer s.users.RUnlock()
-
-	val, ok := s.users.Get(id)
-	if !ok {
-		return 0, constants.ErrNotFound
-	}
-
-	return val.Level, nil
-}
-
 func (s *Storage) AddObjectInfo(name string, info models.ObjectInfo) {
 	s.objectsInfo.Lock()
 	defer s.objectsInfo.Unlock()
@@ -363,4 +351,25 @@ func (s *Storage) DeleteObjectInfo(name string) {
 	defer s.objectsInfo.Unlock()
 
 	s.objectsInfo.Delete(name)
+}
+
+func (s *Storage) GetUserIDByName(username string) (r gost.Result[int]) {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	var find *int
+
+	s.users.Iter(func(k int, v models.User) (stop bool) {
+		if v.Login == username {
+			find = &v.ID
+			return true
+		}
+		return false
+	})
+
+	if find == nil {
+		return r.Err(constants.ErrNotFound)
+	}
+
+	return r.Ok(*find)
 }

@@ -45,7 +45,7 @@ func (s *LocalServer) RAM() models.RAM {
 	return r.Read()
 }
 
-func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.Result[gost.Nothing]) {
+func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.ResultN) {
 	r := pkg.CalcRAM()
 	if r.IsErr() {
 		return res.Err(r.Error())
@@ -53,7 +53,7 @@ func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.Result[gost.Nothin
 
 	s.ram.SetWithLock(r.Unwrap())
 
-	return res.Ok(gost.Nothing{})
+	return res.Ok()
 }
 
 func (s *LocalServer) NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
@@ -94,9 +94,21 @@ func (s *LocalServer) ChangePassword(ctx context.Context, claims gost.Option[mod
 	user := rUser.Unwrap()
 	user.Password = password
 
-	return s.storage.SaveUser(user.ID, user)
+	return s.storage.SaveUser(user)
 }
 
 func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
-	return r.Ok()
+	if s.config.Balancer.On {
+		return r.Ok()
+	}
+
+	rUser := s.storage.GetUserByName(login)
+	if rUser.IsErr() {
+		return r.Err(rUser.Error())
+	}
+
+	user := rUser.Unwrap()
+	user.Level = level
+
+	return s.storage.SaveUser(user)
 }

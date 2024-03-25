@@ -30,10 +30,10 @@ func (c *Balancer) NewUser(ctx context.Context, claims gost.Option[models.UserCl
 	}
 
 	user.Active = true
-	_, err := c.storage.NewUser(user)
-	if err != nil {
-		c.logger.Warn("failed to create user", zap.Error(err), zap.String("user", user.Login))
-		return err
+	r := c.storage.NewUser(user)
+	if r.IsErr() {
+		c.logger.Warn("failed to create user", zap.Error(r.Error()), zap.String("user", user.Login))
+		return r.Error()
 	}
 
 	if c.cfg.TransactionLogger.On {

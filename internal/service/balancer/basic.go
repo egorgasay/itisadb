@@ -90,7 +90,7 @@ func (c *Balancer) get(ctx context.Context, claims gost.Option[models.UserClaims
 	case true:
 		return r.Unwrap(), nil
 	default:
-		return models.Value{}, r.Error().WrapfNotNilMsg("can't get key from server: %s", cl.Number())
+		return models.Value{}, r.Error().ExtendMsg(fmt.Sprintf("can't get key from server: %d", cl.Number()))
 	}
 }
 
@@ -154,7 +154,11 @@ func (c *Balancer) delete(ctx context.Context, claims gost.Option[models.UserCla
 		return constants.ErrUnknownServer
 	}
 
-	return cl.DelOne(ctx, claims, key, opts).Error().WrapNotNilMsg("can't delete key").IntoStd()
+	if r := cl.DelOne(ctx, claims, key, opts); r.IsErr() {
+		return r.Error().ExtendMsg(fmt.Sprintf("can't delete key from server: %d", cl.Number()))
+	}
+
+	return nil
 }
 
 func (c *Balancer) CalculateRAM(_ context.Context) (res gost.Result[models.RAM]) {
