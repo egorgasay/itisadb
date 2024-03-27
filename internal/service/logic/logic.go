@@ -14,8 +14,6 @@ import (
 )
 
 type Logic struct {
-	ram gost.Mutex[models.RAM]
-
 	storage  domains.Storage
 	cfg      config.Config
 	tlogger  domains.TransactionLogger
@@ -69,7 +67,6 @@ func NewLogic(
 	}
 
 	return &Logic{
-		ram:      gost.NewMutex(models.RAM{}),
 		storage:  storage,
 		cfg:      cfg,
 		tlogger:  tlogger,

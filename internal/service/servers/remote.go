@@ -250,3 +250,12 @@ func (s *RemoteServer) ChangeLevel(ctx context.Context, _ gost.Option[models.Use
 	defer after(s, &res)
 	return s.sdk.ChangeLevel(ctx, login, level.ToSDK())
 }
+
+func (s *RemoteServer) GetLastSyncID(ctx context.Context) (r gost.Result[uint64]) {
+	defer after(s, &r)
+	return itisadb.Internal.GetLastSyncID(ctx)
+}
+
+func (s *RemoteServer) Sync(todo context.Context, syncID uint64, users []models.User) (r gost.ResultN) {
+	return
+}

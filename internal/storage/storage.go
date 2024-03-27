@@ -33,6 +33,7 @@ type objects struct {
 type users struct {
 	*swiss.Map[int, models.User]
 	*sync.RWMutex
+	syncID uint64
 }
 
 type Something interface {
@@ -301,6 +302,7 @@ func (s *Storage) DeleteIfExists(key string) {
 func (s *Storage) Delete(key string) error {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
+
 	if _, ok := s.ramStorage.Get(key); !ok {
 		return constants.ErrNotFound
 	}
@@ -372,4 +374,27 @@ func (s *Storage) GetUserIDByName(username string) (r gost.Result[int]) {
 	}
 
 	return r.Ok(*find)
+}
+
+func (s *Storage) GetUsersFromSyncID(syncID uint64) (r gost.Result[[]models.User]) {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	var find []models.User
+
+	s.users.Iter(func(k int, v models.User) (stop bool) {
+		if v.GetSyncID() < syncID {
+			find = append(find, v)
+		}
+		return false
+	})
+
+	return r.Ok(find)
+}
+
+func (s *Storage) GetCurrentSyncID() uint64 {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	return s.users.syncID
 }

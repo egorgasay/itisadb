@@ -56,7 +56,7 @@ func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.ResultN) {
 	return res.Ok()
 }
 
-func (s *LocalServer) NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
+func (s *LocalServer) NewUser(ctx context.Context, _ gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}
@@ -68,7 +68,7 @@ func (s *LocalServer) NewUser(ctx context.Context, claims gost.Option[models.Use
 	return r.Ok()
 }
 
-func (s *LocalServer) DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) (r gost.Result[bool]) {
+func (s *LocalServer) DeleteUser(ctx context.Context, _ gost.Option[models.UserClaims], login string) (r gost.Result[bool]) {
 	if s.config.Balancer.On {
 		return r.Ok(false)
 	}
@@ -81,7 +81,7 @@ func (s *LocalServer) DeleteUser(ctx context.Context, claims gost.Option[models.
 	return s.storage.DeleteUser(rUser.Unwrap())
 }
 
-func (s *LocalServer) ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login string, password string) (r gost.ResultN) {
+func (s *LocalServer) ChangePassword(ctx context.Context, _ gost.Option[models.UserClaims], login string, password string) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}
@@ -97,7 +97,7 @@ func (s *LocalServer) ChangePassword(ctx context.Context, claims gost.Option[mod
 	return s.storage.SaveUser(user)
 }
 
-func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
+func (s *LocalServer) ChangeLevel(ctx context.Context, _ gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}

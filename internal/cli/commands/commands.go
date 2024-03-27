@@ -409,14 +409,6 @@ func (c *Commands) attach(ctx context.Context, dst string, src string) (res gost
 	return c.sdk.Object(dst).Attach(ctx, src)
 }
 
-func toServerNumber(server int32) *int32 {
-	if server != 0 {
-		return &server
-	}
-
-	return nil
-}
-
 func (c *Commands) set(ctx context.Context, cmd Command) (res gost.Result[int32]) {
 	args := cmd.Args()
 
