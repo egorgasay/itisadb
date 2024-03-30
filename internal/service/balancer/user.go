@@ -41,6 +41,10 @@ func (c *Balancer) NewUser(ctx context.Context, claims gost.Option[models.UserCl
 	}
 
 	if err := c.servers.Iter(func(server domains.Server) error {
+		if server.IsOffline() {
+			return nil
+		}
+
 		ctx := context.TODO()
 
 		if r := server.NewUser(ctx, claims, user); r.IsErr() {
