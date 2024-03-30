@@ -70,9 +70,10 @@ func main() {
 	ses := session.New(appCFG, store, gen, lg)
 	sec := security.NewSecurityService(cfg.Security)
 
+	uc := logic.NewLogic(store, *cfg, tl, lg, sec)
+
 	var local = gost.None[domains.Server]()
 	if !cfg.Balancer.On || (cfg.Balancer.On && !cfg.Balancer.BalancerOnly) {
-		uc := logic.NewLogic(store, *cfg, tl, lg, sec)
 		ls := servers.NewLocalServer(uc)
 		local = local.Some(ls)
 	}
@@ -86,7 +87,7 @@ func main() {
 	syncer := syncer.NewSyncer(s, lg, store)
 	go syncer.Start()
 
-	b, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses, sec)
+	b, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses, sec, uc)
 	if err != nil {
 		lg.Fatal("failed to inizialise logic layer: %v", zap.String("error", err.Error()))
 	}

@@ -21,7 +21,7 @@ type Balancer struct {
 	tlogger  domains.TransactionLogger
 	session  domains.Session
 	security domains.SecurityService
-	logic.Logic
+	*logic.Logic
 
 	cfg config.Config
 
@@ -40,6 +40,7 @@ func New(
 	servers domains.Servers,
 	session domains.Session,
 	security domains.SecurityService,
+	logic *logic.Logic,
 ) (*Balancer, error) {
 	var err error
 
@@ -74,5 +75,6 @@ func New(
 		objectServers: gost.NewRwLock(make(map[string]int32)),
 		keyServers:    gost.NewRwLock(make(map[string]int32)),
 		security:      security,
+		Logic:         logic,
 	}, nil
 }
