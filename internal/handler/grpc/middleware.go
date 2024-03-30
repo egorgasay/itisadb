@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handler) AuthMiddleware(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	h.logger.Debug("Request", zap.String("method", info.FullMethod))
+	h.logger.Info("Request", zap.String("method", info.FullMethod))
 
 	if !h.security.MandatoryAuthorization || info.FullMethod == "/api.ItisaDB/Authenticate" {
 		return handler(ctx, req)

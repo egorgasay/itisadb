@@ -67,3 +67,6 @@ MandatoryAuthorization = true
 # Mandatory encryption.
 # If false, encryption is not mandatory for keys and objects that has Secret level.
 MandatoryEncryption = true
+
+#[Logging]
+#Level = "info"

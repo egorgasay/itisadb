@@ -61,6 +61,8 @@ func (s Syncer) syncServer(server domains.Server) error {
 		return nil
 	}
 
+	s.logger.Info("syncing", zap.Uint64("sync_id", syncID), zap.Uint64("current_sync_id", currentSyncID))
+
 	rUsers := s.repo.GetUsersFromChangeID(syncID)
 	if rUsers.IsErr() {
 		return rUsers.Error()
