@@ -18,6 +18,7 @@ import (
 	"itisadb/internal/service/security"
 	"itisadb/internal/service/servers"
 	"itisadb/internal/service/session"
+	"itisadb/internal/service/syncer"
 	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
 )
@@ -35,7 +36,7 @@ func main() {
 
 	store, err := storage.New()
 	if err != nil {
-		lg.Fatal("failed to inizialise storage: %v", zap.String("error", err.Error()))
+		lg.Fatal("failed to inizialise storage", zap.String("error", err.Error()))
 	}
 
 	var tl domains.TransactionLogger
@@ -80,6 +81,10 @@ func main() {
 	if err != nil {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
+
+	// TODO: make it configurable
+	syncer := syncer.NewSyncer(s, lg, store)
+	go syncer.Start()
 
 	b, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses, sec)
 	if err != nil {

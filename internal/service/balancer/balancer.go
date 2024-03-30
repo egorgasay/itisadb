@@ -10,6 +10,7 @@ import (
 	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
+	"itisadb/internal/service/logic"
 )
 
 type Balancer struct {
@@ -20,6 +21,7 @@ type Balancer struct {
 	tlogger  domains.TransactionLogger
 	session  domains.Session
 	security domains.SecurityService
+	logic.Logic
 
 	cfg config.Config
 

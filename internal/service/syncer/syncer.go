@@ -16,12 +16,16 @@ type Syncer struct {
 
 var syncerIsRunning = false
 
-func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage) *Syncer {
-	return &Syncer{
+func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage) domains.Syncer {
+	s := &Syncer{
 		servers: servers,
 		repo:    repo,
 		logger:  logger,
 	}
+
+	// TODO: SET SYNC ID FROM FILE TO STORAGE
+
+	return s
 }
 
 func (s Syncer) Start() {
@@ -66,6 +70,8 @@ func (s Syncer) syncServer(server domains.Server) error {
 	if rSync.IsErr() {
 		return rSync.Error()
 	}
+
+	// TODO: SAVE SYNC ID TO FILE
 
 	return nil
 }

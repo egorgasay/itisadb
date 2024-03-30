@@ -1,14 +1,16 @@
 package models
 
-import "github.com/egorgasay/gost"
-
 type User struct {
-	ID       int                 `json:"id"`
-	Login    string              `json:"username"`
-	Password string              `json:"password"`
-	Level    Level               `json:"level"`
-	Active   bool                `json:"active"`
-	changeID gost.RwLock[uint64] `json:"-"`
+	ID       int      `json:"id"`
+	Login    string   `json:"username"`
+	Password string   `json:"password"`
+	Level    Level    `json:"level"`
+	Active   bool     `json:"active"`
+	changeID changeID `json:"-"`
+}
+
+type changeID struct {
+	id uint64
 }
 
 func (u User) ExtractClaims() UserClaims {
@@ -24,10 +26,9 @@ type UserClaims struct {
 }
 
 func (u *User) GetChangeID() uint64 {
-	u.changeID.RBorrow()
-	return u.changeID.ReadAndRelease()
+	return u.changeID.id
 }
 
 func (u *User) SetChangeID(syncID uint64) {
-	u.changeID.SetWithLock(syncID)
+	u.changeID.id = syncID
 }

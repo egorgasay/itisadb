@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/egorgasay/gost"
+	api "github.com/egorgasay/itisadb-shared-proto/go"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"itisadb/config"
@@ -12,8 +13,6 @@ import (
 	"itisadb/internal/domains"
 	"itisadb/internal/handler/converterr"
 	"itisadb/internal/models"
-
-	api "github.com/egorgasay/itisadb-shared-proto/go"
 )
 
 type Handler struct {
@@ -379,4 +378,37 @@ func (h *Handler) GetRam(ctx context.Context, r *api.GetRamRequest) (*api.GetRam
 		Total:     ram.Total,
 		Available: ram.Available,
 	}}, nil
+}
+
+func apiUsersToModelUsers(usersApi []*api.User) (users []models.User) {
+	for _, userApi := range usersApi {
+		user := models.User{
+			Login:    userApi.Login,
+			Password: userApi.Password,
+			Level:    models.Level(userApi.Level),
+		}
+		users = append(users, user)
+	}
+
+	return
+}
+
+func (h *Handler) Sync(ctx context.Context, req *api.SyncData) (*api.SyncData, error) {
+	res := h.core.Sync(ctx, req.SyncID, apiUsersToModelUsers(req.Users))
+	if res.IsErr() {
+		return nil, converterr.ToGRPC(res.Error())
+	}
+
+	return req, nil
+}
+
+func (h *Handler) GetLastUserChangeID(ctx context.Context, _ *api.GetLastUserChangeIDRequest) (*api.GetLastUserChangeIDResponse, error) {
+	res := h.core.GetLastUserChangeID(ctx)
+	if res.IsErr() {
+		return nil, converterr.ToGRPC(res.Error())
+	}
+
+	return &api.GetLastUserChangeIDResponse{
+		LastChangeID: res.Unwrap(),
+	}, nil
 }

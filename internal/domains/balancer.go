@@ -33,4 +33,6 @@ type Balancer interface {
 	ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login, password string) error
 	ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) error
 	CalculateRAM(ctx context.Context) (res gost.Result[models.RAM])
+	Sync(context.Context, uint64, []models.User) (r gost.ResultN)
+	GetLastUserChangeID(context.Context) (r gost.Result[uint64])
 }
