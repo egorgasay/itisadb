@@ -60,7 +60,7 @@ func (s Syncer) syncServer(server domains.Server) error {
 		return rUsers.Error()
 	}
 
-	rSync := server.Sync(context.TODO(), currentSyncID, users.Unwrap())
+	rSync := server.Sync(context.TODO(), currentSyncID, rUsers.Unwrap())
 	if rSync.IsErr() {
 		return rSync.Error()
 	}
