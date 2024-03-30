@@ -28,6 +28,8 @@ func (s *Storage) NewUser(user models.User) (r gost.Result[int]) {
 	user.ID = id
 	s.users.Put(id, user)
 
+	s.users.changeID++
+
 	return r.Ok(id)
 }
 
@@ -73,6 +75,8 @@ func (s *Storage) DeleteUser(id int) (r gost.Result[bool]) {
 
 	s.users.Delete(id)
 
+	s.users.changeID++
+
 	return r.Ok(true)
 }
 
@@ -85,6 +89,8 @@ func (s *Storage) SaveUser(user models.User) (r gost.ResultN) {
 	}
 
 	s.users.Put(user.ID, user)
+
+	s.users.changeID++
 
 	return r.Ok()
 }
