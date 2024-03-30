@@ -61,6 +61,7 @@ type UserStorage interface {
 	DeleteUser(id int) (r gost.Result[bool])
 	SaveUser(user models.User) (r gost.ResultN)
 	GetUserLevel(id int) (r gost.Result[models.Level])
-	GetUsersFromSyncID(id uint64) gost.Result[[]models.User]
-	GetCurrentSyncID() uint64
+	GetUsersFromChangeID(id uint64) gost.Result[[]models.User]
+	GetUserChangeID() uint64
+	SetUserChangeID(id uint64)
 }

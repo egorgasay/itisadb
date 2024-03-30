@@ -56,7 +56,7 @@ func (s *Storage) GetUserByName(username string) (r gost.Result[models.User]) {
 		return false
 	})
 
-	if find != nil {
+	if find == nil {
 		return r.Err(constants.ErrNotFound)
 	}
 
@@ -76,17 +76,17 @@ func (s *Storage) DeleteUser(id int) (r gost.Result[bool]) {
 	return r.Ok(true)
 }
 
-func (s *Storage) SaveUser(id int, user models.User) (r gost.ResultN) {
+func (s *Storage) SaveUser(user models.User) (r gost.ResultN) {
 	s.users.Lock()
 	defer s.users.Unlock()
 
-	if !s.users.Has(id) {
-		return r.constants.ErrNotFound
+	if !s.users.Has(user.ID) {
+		return r.Err(constants.ErrNotFound)
 	}
 
-	s.users.Put(id, user)
+	s.users.Put(user.ID, user)
 
-	return nil
+	return r.Ok()
 }
 
 func (s *Storage) GetUserLevel(id int) (r gost.Result[models.Level]) {
@@ -99,4 +99,11 @@ func (s *Storage) GetUserLevel(id int) (r gost.Result[models.Level]) {
 	}
 
 	return r.Ok(val.Level)
+}
+
+func (s *Storage) SetUserChangeID(id uint64) {
+	s.users.Lock()
+	defer s.users.Unlock()
+
+	s.users.changeID = id
 }

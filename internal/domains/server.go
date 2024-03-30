@@ -40,6 +40,6 @@ type userLogic interface {
 	DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) gost.Result[bool]
 	ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login string, password string) gost.ResultN
 	ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) gost.ResultN
-	GetLastSyncID() gost.Result[uint64]
+	GetLastUserChangeID(ctx context.Context) (r gost.Result[uint64])
 	Sync(todo context.Context, syncID uint64, users []models.User) gost.ResultN
 }

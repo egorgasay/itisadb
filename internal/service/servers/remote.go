@@ -25,7 +25,7 @@ func NewRemoteServer(ctx context.Context, address string, number int32, logger *
 
 	if err := rs.Reconnect(ctx).Error(); err != nil {
 		rs.tries.Store(constants.MaxServerTries)
-		return nil, err.ExtendMsg("failed to connect to remote server", address, err.Error())
+		return rs, err.ExtendMsg("failed to connect to remote server", address, err.Error())
 	}
 
 	return rs, nil
@@ -251,11 +251,27 @@ func (s *RemoteServer) ChangeLevel(ctx context.Context, _ gost.Option[models.Use
 	return s.sdk.ChangeLevel(ctx, login, level.ToSDK())
 }
 
-func (s *RemoteServer) GetLastSyncID(ctx context.Context) (r gost.Result[uint64]) {
+func (s *RemoteServer) GetLastUserChangeID(ctx context.Context) (r gost.Result[uint64]) {
 	defer after(s, &r)
-	return itisadb.Internal.GetLastSyncID(ctx)
+	return itisadb.Internal.GetLastUserChangeID(ctx, s.sdk)
 }
 
-func (s *RemoteServer) Sync(todo context.Context, syncID uint64, users []models.User) (r gost.ResultN) {
-	return
+func (s *RemoteServer) Sync(ctx context.Context, syncID uint64, users []models.User) (r gost.ResultN) {
+	defer after(s, &r)
+	return itisadb.Internal.Sync(ctx, s.sdk, syncID, fromUsersToInternalUsersSDK(users))
+}
+
+func fromUsersToInternalUsersSDK(users []models.User) []itisadb.Internal_User {
+	var sdkUsers []itisadb.Internal_User
+	for _, user := range users {
+		sdkUsers = append(sdkUsers, itisadb.Internal_User{
+			ID:       user.ID,
+			Login:    user.Login,
+			Password: user.Password,
+			Level:    user.Level.ToSDK(),
+			Active:   user.Active,
+		})
+	}
+	return sdkUsers
+
 }

@@ -154,9 +154,9 @@ func (s *Servers) AddServer(ctx context.Context, address string, force bool) (in
 		return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
 	}
 
-	s.servers[stClient.number] = stClient
+	s.servers[server] = stClient
 
-	return stClient.number, nil
+	return server, nil
 }
 
 func (s *Servers) Disconnect(number int32) {

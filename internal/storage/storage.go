@@ -33,7 +33,7 @@ type objects struct {
 type users struct {
 	*swiss.Map[int, models.User]
 	*sync.RWMutex
-	syncID uint64
+	changeID uint64
 }
 
 type Something interface {
@@ -383,7 +383,7 @@ func (s *Storage) GetUsersFromSyncID(syncID uint64) (r gost.Result[[]models.User
 	var find []models.User
 
 	s.users.Iter(func(k int, v models.User) (stop bool) {
-		if v.GetSyncID() < syncID {
+		if v.GetChangeID() < syncID {
 			find = append(find, v)
 		}
 		return false
@@ -396,5 +396,28 @@ func (s *Storage) GetCurrentSyncID() uint64 {
 	s.users.RLock()
 	defer s.users.RUnlock()
 
-	return s.users.syncID
+	return s.users.changeID
+}
+
+func (s *Storage) GetUsersFromChangeID(id uint64) gost.Result[[]models.User] {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	var find []models.User
+
+	s.users.Iter(func(k int, v models.User) (stop bool) {
+		if v.GetChangeID() < id {
+			find = append(find, v)
+		}
+		return false
+	})
+
+	return gost.Ok(find)
+}
+
+func (s *Storage) GetUserChangeID() uint64 {
+	s.users.RLock()
+	defer s.users.RUnlock()
+
+	return s.users.changeID
 }

@@ -8,7 +8,7 @@ type User struct {
 	Password string              `json:"password"`
 	Level    Level               `json:"level"`
 	Active   bool                `json:"active"`
-	syncID   gost.RwLock[uint64] `json:"-"`
+	changeID gost.RwLock[uint64] `json:"-"`
 }
 
 func (u User) ExtractClaims() UserClaims {
@@ -23,11 +23,11 @@ type UserClaims struct {
 	Level Level `json:"level"`
 }
 
-func (u *User) GetSyncID() uint64 {
-	u.syncID.RBorrow()
-	return u.syncID.ReadAndRelease()
+func (u *User) GetChangeID() uint64 {
+	u.changeID.RBorrow()
+	return u.changeID.ReadAndRelease()
 }
 
-func (u *User) SetSyncID(syncID uint64) {
-	u.syncID.SetWithLock(syncID)
+func (u *User) SetChangeID(syncID uint64) {
+	u.changeID.SetWithLock(syncID)
 }

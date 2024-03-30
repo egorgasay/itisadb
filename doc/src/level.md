@@ -24,7 +24,7 @@ You can manage security settings on the Web UI.
 Example:
 ```go
 SETO obj13 key52 "value42" R
-CREATE USER user1 123456 R
+NEW USER user1 123456 R
 ```
 
 ### Secret level
@@ -37,5 +37,5 @@ CREATE USER user1 123456 R
 Example:
 ```go
 SETO obj13 key52 "value42" S
-CREATE USER user1 123456 S
+NEW USER user1 123456 S
 ```

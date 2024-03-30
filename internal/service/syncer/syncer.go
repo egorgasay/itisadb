@@ -42,20 +42,22 @@ func (s Syncer) Start() {
 }
 
 func (s Syncer) syncServer(server domains.Server) error {
-	r := server.GetLastSyncID()
+	ctx := context.TODO()
+
+	r := server.GetLastUserChangeID(ctx)
 	if r.IsErr() {
 		return r.Error()
 	}
 
 	syncID := r.Unwrap()
 
-	currentSyncID := s.repo.GetCurrentSyncID()
+	currentSyncID := s.repo.GetUserChangeID()
 
 	if syncID != currentSyncID {
 		return nil
 	}
 
-	rUsers := s.repo.GetUsersFromSyncID(syncID)
+	rUsers := s.repo.GetUsersFromChangeID(syncID)
 	if rUsers.IsErr() {
 		return rUsers.Error()
 	}

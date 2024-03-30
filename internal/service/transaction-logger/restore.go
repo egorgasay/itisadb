@@ -101,14 +101,14 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
-				_, err = r.NewUser(models.User{
+				rUser := r.NewUser(models.User{
 					Login:    e.Name,
 					Password: e.Value,
 					Level:    models.Level(level),
 					Active:   active,
 				})
-				if err != nil {
-					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, err)
+				if rUser.IsErr() {
+					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, rUser.Error())
 				}
 			case CreateObject:
 				err := r.CreateObject(e.Name, models.ObjectOptions{})

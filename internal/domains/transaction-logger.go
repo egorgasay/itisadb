@@ -1,6 +1,7 @@
 package domains
 
 import (
+	"github.com/egorgasay/gost"
 	"itisadb/internal/models"
 )
 
@@ -27,7 +28,7 @@ type Restorer interface {
 	DeleteObject(name string) error
 	CreateObject(name string, opts models.ObjectOptions) error
 	AttachToObject(dst, src string) error
-	NewUser(user models.User) (int, error)
+	NewUser(user models.User) (r gost.Result[int])
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
 	DeleteAttr(object, key string) error

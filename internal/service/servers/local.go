@@ -56,59 +56,34 @@ func (s *LocalServer) RefreshRAM(_ context.Context) (res gost.ResultN) {
 	return res.Ok()
 }
 
-func (s *LocalServer) NewUser(ctx context.Context, _ gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
+func (s *LocalServer) NewUser(ctx context.Context, claims gost.Option[models.UserClaims], user models.User) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}
 
-	if rUser := s.storage.NewUser(user); r.IsErr() {
-		return r.Err(rUser.Error())
-	}
-
-	return r.Ok()
+	return s.Logic.NewUser(ctx, claims, user)
 }
 
-func (s *LocalServer) DeleteUser(ctx context.Context, _ gost.Option[models.UserClaims], login string) (r gost.Result[bool]) {
+func (s *LocalServer) DeleteUser(ctx context.Context, claims gost.Option[models.UserClaims], login string) (r gost.Result[bool]) {
 	if s.config.Balancer.On {
 		return r.Ok(false)
 	}
 
-	rUser := s.storage.GetUserIDByName(login)
-	if rUser.IsErr() {
-		return r.Err(rUser.Error())
-	}
-
-	return s.storage.DeleteUser(rUser.Unwrap())
+	return s.Logic.DeleteUser(ctx, claims, login)
 }
 
-func (s *LocalServer) ChangePassword(ctx context.Context, _ gost.Option[models.UserClaims], login string, password string) (r gost.ResultN) {
+func (s *LocalServer) ChangePassword(ctx context.Context, claims gost.Option[models.UserClaims], login string, password string) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}
 
-	rUser := s.storage.GetUserByName(login)
-	if rUser.IsErr() {
-		return r.Err(rUser.Error())
-	}
-
-	user := rUser.Unwrap()
-	user.Password = password
-
-	return s.storage.SaveUser(user)
+	return s.Logic.ChangePassword(ctx, claims, login, password)
 }
 
-func (s *LocalServer) ChangeLevel(ctx context.Context, _ gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
+func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models.UserClaims], login string, level models.Level) (r gost.ResultN) {
 	if s.config.Balancer.On {
 		return r.Ok()
 	}
 
-	rUser := s.storage.GetUserByName(login)
-	if rUser.IsErr() {
-		return r.Err(rUser.Error())
-	}
-
-	user := rUser.Unwrap()
-	user.Level = level
-
-	return s.storage.SaveUser(user)
+	return s.Logic.ChangeLevel(ctx, claims, login, level)
 }
