@@ -376,29 +376,6 @@ func (s *Storage) GetUserIDByName(username string) (r gost.Result[int]) {
 	return r.Ok(*find)
 }
 
-func (s *Storage) GetUsersFromSyncID(syncID uint64) (r gost.Result[[]models.User]) {
-	s.users.RLock()
-	defer s.users.RUnlock()
-
-	var find []models.User
-
-	s.users.Iter(func(k int, v models.User) (stop bool) {
-		if v.GetChangeID() < syncID {
-			find = append(find, v)
-		}
-		return false
-	})
-
-	return r.Ok(find)
-}
-
-func (s *Storage) GetCurrentSyncID() uint64 {
-	s.users.RLock()
-	defer s.users.RUnlock()
-
-	return s.users.changeID
-}
-
 func (s *Storage) GetUsersFromChangeID(id uint64) gost.Result[[]models.User] {
 	s.users.RLock()
 	defer s.users.RUnlock()

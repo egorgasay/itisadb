@@ -57,7 +57,7 @@ func (s Syncer) syncServer(server domains.Server) error {
 
 	currentSyncID := s.repo.GetUserChangeID()
 
-	if syncID != currentSyncID {
+	if syncID == currentSyncID {
 		return nil
 	}
 
