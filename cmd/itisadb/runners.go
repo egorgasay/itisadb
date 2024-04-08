@@ -126,6 +126,7 @@ func runWebCLI(ctx context.Context, cfg config.WebAppConfig, securityConfig conf
 	e.Renderer = t
 	h.PublicRoutes(e)
 	e.Static("/static", "static")
+	e.Static("/doc", "doc/book/")
 
 	//router.Use(gzip.Gzip(gzip.BestSpeed))
 

@@ -30,7 +30,6 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
-	github.com/egorgasay/itisadb-shared-proto v0.11.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect

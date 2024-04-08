@@ -1,6 +1,9 @@
 # Objects commands
 
-### SETO - Sets the value to the object.
+### SETO
+
+_Sets the value to the object._
+
 ```go
 //                    MODE                  LEVEL         SERVER
 SETO name key "value" [ RO | UQ | NX | XX ] [ D | R | L ] [ [0-9]+ ]
@@ -26,7 +29,10 @@ Example:
 SETO obj13 key52 "value42" UQ S 1
 ```
 
-### GETO - Gets the value from the object.
+### GETO
+
+_Gets the value from the object._
+
 ```go
 //            SERVER
 GETO name key [ [0-9]+ ]
@@ -41,7 +47,10 @@ Example:
 GETO obj13 key52
 ```
 
-### DELO - Deletes the object key.
+### DELO
+
+_Deletes the object key._
+
 ```go
 //            SERVER
 DELO name key [ [0-9]+ ]

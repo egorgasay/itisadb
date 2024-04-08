@@ -1,6 +1,9 @@
 # Advanced object commands
 
-### MARSHAL OBJECT - Displays the object as JSON.
+### MARSHAL OBJECT
+
+_Displays the object as JSON._
+
 ```go
 //                  SERVER
 MARSHAL OBJECT name [ [0-9]+ ]
@@ -24,7 +27,10 @@ MARSHAL OBJECT qwe
 }
 ```
 
-### ATTACH - Attaches the src object to the dst.
+### ATTACH
+
+_Attaches the src object to the dst._
+
 ```go
 ATTACH dst src
 ```

@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="quick-start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li class="chapter-item expanded "><a href="base-commands.html"><strong aria-hidden="true">4.</strong> Base commands</a></li><li class="chapter-item expanded "><a href="objects.html"><strong aria-hidden="true">5.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="object-managment.html"><strong aria-hidden="true">5.1.</strong> Object management</a></li><li class="chapter-item expanded "><a href="object-commands.html"><strong aria-hidden="true">5.2.</strong> Object commands</a></li><li class="chapter-item expanded "><a href="advanced-object-commands.html" class="active"><strong aria-hidden="true">5.3.</strong> Advanced object commands</a></li></ol></li><li class="chapter-item expanded "><a href="transaction-logger.html"><strong aria-hidden="true">6.</strong> Transaction Logger</a></li><li class="chapter-item expanded "><a href="search-algorythm.html"><strong aria-hidden="true">7.</strong> Search algorithm</a></li><li class="chapter-item expanded "><a href="other.html"><strong aria-hidden="true">8.</strong> Other</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="quick-start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li class="chapter-item expanded "><a href="base-commands.html"><strong aria-hidden="true">4.</strong> Base commands</a></li><li class="chapter-item expanded "><a href="objects.html"><strong aria-hidden="true">5.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="object-managment.html"><strong aria-hidden="true">5.1.</strong> Object management</a></li><li class="chapter-item expanded "><a href="object-commands.html"><strong aria-hidden="true">5.2.</strong> Object commands</a></li><li class="chapter-item expanded "><a href="advanced-object-commands.html" class="active"><strong aria-hidden="true">5.3.</strong> Advanced object commands</a></li></ol></li><li class="chapter-item expanded "><a href="security.html"><strong aria-hidden="true">6.</strong> Security</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="security-managment-ui.html"><strong aria-hidden="true">6.1.</strong> Security management (Web UI)</a></li><li class="chapter-item expanded "><a href="security-managment-conf.html"><strong aria-hidden="true">6.2.</strong> Security management (Config)</a></li><li class="chapter-item expanded "><a href="level.html"><strong aria-hidden="true">6.3.</strong> Level</a></li></ol></li><li class="chapter-item expanded "><a href="transaction-logger.html"><strong aria-hidden="true">7.</strong> Transaction Logger</a></li><li class="chapter-item expanded "><a href="search-algorythm.html"><strong aria-hidden="true">8.</strong> Search algorithm</a></li><li class="chapter-item expanded "><a href="other.html"><strong aria-hidden="true">9.</strong> Other</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -174,7 +174,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="advanced-object-commands"><a class="header" href="#advanced-object-commands">Advanced object commands</a></h1>
-<h3 id="marshal-object---displays-the-object-as-json"><a class="header" href="#marshal-object---displays-the-object-as-json">MARSHAL OBJECT - Displays the object as JSON.</a></h3>
+<h3 id="marshal-object"><a class="header" href="#marshal-object">MARSHAL OBJECT</a></h3>
+<p><em>Displays the object as JSON.</em></p>
 <pre><code class="language-go">//                  SERVER
 MARSHAL OBJECT name [ [0-9]+ ]
 </code></pre>
@@ -195,7 +196,8 @@ MARSHAL OBJECT name [ [0-9]+ ]
     ]
 }
 </code></pre>
-<h3 id="attach---attaches-the-src-object-to-the-dst"><a class="header" href="#attach---attaches-the-src-object-to-the-dst">ATTACH - Attaches the src object to the dst.</a></h3>
+<h3 id="attach"><a class="header" href="#attach">ATTACH</a></h3>
+<p><em>Attaches the src object to the dst.</em></p>
 <pre><code class="language-go">ATTACH dst src
 </code></pre>
 <p>Example:</p>
@@ -211,7 +213,7 @@ MARSHAL OBJECT name [ [0-9]+ ]
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="transaction-logger.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="security.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -225,29 +227,13 @@ MARSHAL OBJECT name [ [0-9]+ ]
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="transaction-logger.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="security.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
 
         </div>
 
-        <!-- Livereload script (if served using the cli tool) -->
-        <script>
-            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
-            const socket = new WebSocket(wsAddress);
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
 
 
 

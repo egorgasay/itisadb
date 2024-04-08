@@ -9,11 +9,11 @@ import (
 
 	"github.com/egorgasay/itisadb-go-sdk"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"itisadb/config"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"itisadb/internal/cli/commands"
 
 	api "github.com/egorgasay/itisadb-shared-proto/go"
@@ -23,9 +23,10 @@ import (
 
 type UseCase struct {
 	storage *storage.Storage
-	conn    api.ItisaDBClient
 
-	sdk *itisadb.Client
+	sdk       *itisadb.Client
+	conn      api.ItisaDBClient
+	mainToken string
 
 	cmds   *commands.Commands
 	tokens map[string]string
@@ -35,18 +36,31 @@ type UseCase struct {
 func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string, lg *zap.Logger) *UseCase {
 	conn, err := grpc.Dial(balancer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("DIAL did not connect: %v", err)
 	}
 	b := api.NewItisaDBClient(conn)
 
 	r := itisadb.New(context.TODO(), balancer)
 	if err := r.Error(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("itisadb.New failed: %v", err)
+	}
+
+	resp, err := b.Authenticate(context.TODO(), &api.AuthRequest{
+		Login:    "itisadb",
+		Password: "itisadb",
+	})
+
+	if err != nil {
+		log.Fatalf("Authentication failed: %v", err)
 	}
 
 	cmds := commands.New(r.Unwrap())
 
-	return &UseCase{conn: b, storage: storage, cmds: cmds, tokens: map[string]string{"itisadb": "itisadb"}, logger: lg}
+	return &UseCase{
+		conn: b, storage: storage, cmds: cmds,
+		tokens: map[string]string{"itisadb": "itisadb"},
+		logger: lg, mainToken: resp.Token,
+	}
 }
 
 func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) (string, error) {
@@ -64,31 +78,22 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 
 func (uc *UseCase) SendCommand(ctx context.Context, cmd commands.Command) error {
 	server := cmd.Server()
-	readonly := cmd.Mode()
+	mode := cmd.Mode()
 	level := cmd.Level()
 
 	switch cmd.Action() {
 	case commands.Set:
-		//args := cmd.Args()
-		//uc.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
-		//	Server:   &server,
-		//	ReadOnly: readonly == 1,
-		//	Unique:   cmd.Mode() == uniqueSetMode,
-		//	Level:    0,
-		//})
-		resp, err := uc.conn.Set(ctx, &api.SetRequest{
-			Key:   cmd.Args()[0],
-			Value: cmd.Args()[1],
-			Options: &api.SetRequest_Options{
-				Server:   server,
-				ReadOnly: readonly == 1, // TODO: fix
-				Level:    api.Level(level),
-			},
+		args := cmd.Args()
+		r := uc.sdk.SetOne(ctx, args[0], args[1], itisadb.SetOptions{
+			Server:   server,
+			ReadOnly: mode == 1,
+			Unique:   cmd.Mode() == 2,
+			Level:    itisadb.Level(level),
 		})
-		if err != nil {
+		if err := r.Error(); err != nil {
 			return err
 		}
-		_ = resp
+
 		return nil
 	default:
 		return errors.New("unknown command")

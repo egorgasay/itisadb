@@ -1,6 +1,9 @@
 # Data manipulation
 
-### NEW OBJECT - Creates an object with the specified name.
+### NEW OBJECT
+
+_Creates an object with the specified name._
+
 ```go
 //              LEVEL     SERVER
 NEW OBJECT name [ R | S ] [ [0-9]+ ] 
@@ -19,7 +22,10 @@ Example:
 NEW OBJECT obj R 6
 ```
 
-### DELETE OBJECT - Deletes the object with the specified name.
+### DELETE OBJECT
+
+_Deletes the object with the specified name._
+
 ```go
 //                 SERVER
 DELETE OBJECT name [ [0-9]+ ] 

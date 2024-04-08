@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="quick-start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li class="chapter-item expanded "><a href="base-commands.html" class="active"><strong aria-hidden="true">4.</strong> Base commands</a></li><li class="chapter-item expanded "><a href="objects.html"><strong aria-hidden="true">5.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="object-managment.html"><strong aria-hidden="true">5.1.</strong> Object management</a></li><li class="chapter-item expanded "><a href="object-commands.html"><strong aria-hidden="true">5.2.</strong> Object commands</a></li><li class="chapter-item expanded "><a href="advanced-object-commands.html"><strong aria-hidden="true">5.3.</strong> Advanced object commands</a></li></ol></li><li class="chapter-item expanded "><a href="transaction-logger.html"><strong aria-hidden="true">6.</strong> Transaction Logger</a></li><li class="chapter-item expanded "><a href="search-algorythm.html"><strong aria-hidden="true">7.</strong> Search algorithm</a></li><li class="chapter-item expanded "><a href="other.html"><strong aria-hidden="true">8.</strong> Other</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="quick-start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li class="chapter-item expanded "><a href="base-commands.html" class="active"><strong aria-hidden="true">4.</strong> Base commands</a></li><li class="chapter-item expanded "><a href="objects.html"><strong aria-hidden="true">5.</strong> Objects</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="object-managment.html"><strong aria-hidden="true">5.1.</strong> Object management</a></li><li class="chapter-item expanded "><a href="object-commands.html"><strong aria-hidden="true">5.2.</strong> Object commands</a></li><li class="chapter-item expanded "><a href="advanced-object-commands.html"><strong aria-hidden="true">5.3.</strong> Advanced object commands</a></li></ol></li><li class="chapter-item expanded "><a href="security.html"><strong aria-hidden="true">6.</strong> Security</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="security-managment-ui.html"><strong aria-hidden="true">6.1.</strong> Security management (Web UI)</a></li><li class="chapter-item expanded "><a href="security-managment-conf.html"><strong aria-hidden="true">6.2.</strong> Security management (Config)</a></li><li class="chapter-item expanded "><a href="level.html"><strong aria-hidden="true">6.3.</strong> Level</a></li></ol></li><li class="chapter-item expanded "><a href="transaction-logger.html"><strong aria-hidden="true">7.</strong> Transaction Logger</a></li><li class="chapter-item expanded "><a href="search-algorythm.html"><strong aria-hidden="true">8.</strong> Search algorithm</a></li><li class="chapter-item expanded "><a href="other.html"><strong aria-hidden="true">9.</strong> Other</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -174,7 +174,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="basic-commands"><a class="header" href="#basic-commands">Basic commands</a></h1>
-<h3 id="set---sets-the-value-to-the-storage"><a class="header" href="#set---sets-the-value-to-the-storage">SET - Sets the value to the storage.</a></h3>
+<h3 id="set"><a class="header" href="#set">SET</a></h3>
+<p><em>Sets the value to the storage.</em></p>
 <pre><code class="language-go">//              MODE                  LEVEL     SERVER
 SET key &quot;value&quot; [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]
 </code></pre>
@@ -199,7 +200,8 @@ SET key &quot;value&quot; [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]
 <p>Example:</p>
 <pre><code class="language-go">SET key &quot;value&quot; UQ S 1
 </code></pre>
-<h3 id="get---gets-the-value-from-the-storage"><a class="header" href="#get---gets-the-value-from-the-storage">GET - Gets the value from the storage.</a></h3>
+<h3 id="get"><a class="header" href="#get">GET</a></h3>
+<p><em>Gets the value from the storage.</em></p>
 <pre><code class="language-go">//      SERVER
 GET key [ [0-9]+ ]
 </code></pre>
@@ -211,7 +213,8 @@ GET key [ [0-9]+ ]
 <p>Example:</p>
 <pre><code class="language-go">GET key
 </code></pre>
-<h3 id="del---deletes-the-key-value-pair-from-the-storage"><a class="header" href="#del---deletes-the-key-value-pair-from-the-storage">DEL - Deletes the key-value pair from the storage.</a></h3>
+<h3 id="del"><a class="header" href="#del">DEL</a></h3>
+<p><em>Deletes the key-value pair from the storage.</em></p>
 <pre><code class="language-go">//      SERVER
 DEL key [ [0-9]+ ] 
 </code></pre>
@@ -253,22 +256,6 @@ DEL key [ [0-9]+ ]
 
         </div>
 
-        <!-- Livereload script (if served using the cli tool) -->
-        <script>
-            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
-            const socket = new WebSocket(wsAddress);
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
 
 
 

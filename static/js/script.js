@@ -35,56 +35,46 @@ window.onload = function () {
         } else {
           switch (split[1].toLowerCase()) {
             case "set":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
+              window.location.href = '/doc/base-commands.html#set';
               break;
             case "get":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
+              window.location.href = '/doc/base-commands.html#get';
               break;
             case "del":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/base-commands.html';
+              window.location.href = '/doc/base-commands.html#del';
               break;
             case "seto":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
+              window.location.href = '/doc/object-commands.html#seto';
               break;
             case "geto":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
+              window.location.href = '/doc/object-commands.html#geto';
               break;
             case "delo":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-commands.html';
+              window.location.href = '/doc/object-commands.html#delo';
               break;
             case "new":
               switch (split[2]) {
                 case "object":
-                  console.log('Redirecting to /doc');
-                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-managment.html';
+                  window.location.href = '/doc/object-managment.html#new-object';
                   break;
               }
               break;
             case "delete":
               switch (split[2]) {
                 case "object":
-                  console.log('Redirecting to /doc');
-                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/object-managment.html';
+                  window.location.href = '/doc/object-managment.html#delete-object';
                   break;
               }
               break;
             case "marshal":
               switch (split[2]) {
                 case "object":
-                  console.log('Redirecting to /doc');
-                  window.location.href = 'https://itisa-doc.egorgasay.repl.co/advanced-object-commands.html';
+                  window.location.href = '/doc/advanced-object-commands.html#marshal-object';
                   break;
               }
               break;
             case "attach":
-              console.log('Redirecting to /doc');
-              window.location.href = 'https://itisa-doc.egorgasay.repl.co/advanced-object-commands.html';
+              window.location.href = '/doc/advanced-object-commands.html#attach';
               break;
           }
         }
@@ -104,7 +94,7 @@ window.onload = function () {
         window.location.href = '/exit';
       } else if (command === "doc") {
         console.log('Redirecting to /doc');
-        window.location.href = 'https://itisa-doc.egorgasay.repl.co/';
+        window.location.href = '/doc/';
       } else {
         fetch("/act?action="+encodeURIComponent(this.value)).then(response => response.json()).then(json => output.innerHTML = json.text);
       }

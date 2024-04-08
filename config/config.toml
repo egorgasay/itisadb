@@ -3,7 +3,7 @@
 
 # Address of the gRPC server.
 # Example: ":8888"
-GRPC = ":8881"
+GRPC = ":8833"
 
 # Address of the REST server. If empty, no REST server is started.
 # Example: ":6071"
@@ -20,7 +20,7 @@ On = true
 # 	"127.0.0.1:8890",
 # ]
 Servers = [
-    "127.0.0.1:8889",
+    #"127.0.0.1:8889",
 ]
 
 # Balancing only mode.
@@ -47,7 +47,7 @@ Key = "CHANGE ME"
 
 # Web application settings.
 [WebApp]
-On = true
+On = false
 
 # Host of the web application.
 # Example: "127.0.0.1:8080"

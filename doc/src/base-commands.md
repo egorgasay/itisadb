@@ -1,6 +1,9 @@
 # Basic commands
 
-### SET - Sets the value to the storage.
+### SET 
+
+_Sets the value to the storage._
+
 ```go
 //              MODE                  LEVEL     SERVER
 SET key "value" [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]
@@ -26,7 +29,10 @@ Example:
 SET key "value" UQ S 1
 ```
 
-### GET - Gets the value from the storage.
+### GET
+
+_Gets the value from the storage._
+
 ```go
 //      SERVER
 GET key [ [0-9]+ ]
@@ -41,7 +47,10 @@ Example:
 GET key
 ```
 
-### DEL - Deletes the key-value pair from the storage.
+### DEL
+
+_Deletes the key-value pair from the storage._
+
 ```go
 //      SERVER
 DEL key [ [0-9]+ ] 

@@ -93,6 +93,10 @@ func main() {
 	}
 
 	go runGRPC(ctx, lg, b, appCFG.Security, appCFG.Network, ses)
+
+	// TODO: do check before connect
+	time.Sleep(2 * time.Second)
+
 	go runWebCLI(ctx, cfg.WebApp, cfg.Security, lg, cfg.Network.GRPC)
 
 	if cfg.Network.REST != "" {
