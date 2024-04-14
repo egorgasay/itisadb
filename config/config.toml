@@ -3,7 +3,7 @@
 
 # Address of the gRPC server.
 # Example: ":8888"
-GRPC = ":8833"
+GRPC = ":8888"
 
 # Address of the REST server. If empty, no REST server is started.
 # Example: ":6071"
@@ -35,7 +35,7 @@ On = true
 BackupDirectory = "transaction-logger"
 
 # Buffer size.
-BufferSize = 1
+BufferSize = "1s"
 
 # Encryption parameters.
 [Encryption]
@@ -68,5 +68,5 @@ MandatoryAuthorization = true
 # If false, encryption is not mandatory for keys and objects that has Secret level.
 MandatoryEncryption = true
 
-#[Logging]
-#Level = "info"
+[Logging]
+Level = "debug"

@@ -17,14 +17,13 @@ var DefaultPath = "transaction-logger"
 const MaxCOL = 100_000
 
 type limitedBuffer struct {
-	sb      strings.Builder
-	counter int
+	sb       strings.Builder
+	lastSync time.Time
 }
 
 func newLimitedBuffer() *limitedBuffer {
 	return &limitedBuffer{
-		sb:      strings.Builder{},
-		counter: 1,
+		sb: strings.Builder{},
 	}
 }
 
@@ -35,7 +34,6 @@ func (t *TransactionLogger) Run() {
 	t.errors = errorsch
 	t.events = events
 
-	op := newLimitedBuffer()
 	done := make(chan struct{})
 
 	go t.countWatcher(done)
@@ -43,6 +41,8 @@ func (t *TransactionLogger) Run() {
 	go func() {
 		defer close(done)
 		defer close(errorsch)
+
+		op := newLimitedBuffer()
 
 		for e := range events {
 			var data []byte
@@ -59,10 +59,11 @@ func (t *TransactionLogger) Run() {
 
 			op.sb.Write(data)
 
-			op.counter++
 			t.currentCOL++
 
-			if op.counter >= t.cfg.BufferSize {
+			if time.Now().Sub(op.lastSync) >= t.cfg.SyncBufferTime {
+				t.logger.Debug("transaction logger syncing...")
+
 				t.RLock()
 				_, err := t.file.WriteString(op.sb.String())
 				//t.file.Sync() // TODO: ???
@@ -72,7 +73,7 @@ func (t *TransactionLogger) Run() {
 					t.errors <- err
 				}
 				op.sb.Reset()
-				op.counter = 0
+				op.lastSync = time.Now()
 			}
 		}
 	}()

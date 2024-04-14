@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -14,12 +15,13 @@ type Config struct {
 	WebApp            WebAppConfig            `toml:"WebApp"`
 	Balancer          BalancerConfig          `toml:"Balancer"`
 	Security          SecurityConfig          `toml:"Security"`
+	Logging           LoggingConfig           `toml:"Logging"`
 }
 
 type TransactionLoggerConfig struct {
-	On              bool   `toml:"On"`
-	BackupDirectory string `toml:"BackupDirectory"`
-	BufferSize      int    `toml:"BufferSize"`
+	On              bool          `toml:"On"`
+	BackupDirectory string        `toml:"BackupDirectory"`
+	SyncBufferTime  time.Duration `toml:"SyncBufferTime"`
 }
 
 type NetworkConfig struct {
@@ -47,6 +49,10 @@ type BalancerConfig struct {
 type SecurityConfig struct {
 	MandatoryAuthorization bool `toml:"MandatoryAuthorization"`
 	MandatoryEncryption    bool `toml:"MandatoryEncryption"`
+}
+
+type LoggingConfig struct {
+	Level string `toml:"Level"`
 }
 
 var _noSecurity = SecurityConfig{

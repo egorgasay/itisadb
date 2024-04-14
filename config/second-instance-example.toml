@@ -33,7 +33,7 @@ On = true
 BackupDirectory = "transaction-logger"
 
 # Buffer size.
-BufferSize = 1
+BufferSize = "1s"
 
 # Encryption parameters.
 [Encryption]

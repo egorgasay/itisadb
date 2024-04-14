@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
@@ -33,6 +34,9 @@ func New(config config.Config, storage domains.Storage, generator domains.Genera
 func (s Session) AuthByPassword(ctx context.Context, username, password string) (string, error) {
 	r := s.storage.GetUserByName(username)
 	if r.IsErr() {
+		if errors.Is(r.Error(), constants.ErrNotFound) {
+			return "", constants.ErrWrongCredentials
+		}
 		return "", r.Error()
 	}
 

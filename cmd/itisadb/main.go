@@ -10,6 +10,7 @@ import (
 
 	"github.com/egorgasay/gost"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"itisadb/config"
 	"itisadb/internal/domains"
 	"itisadb/internal/service/balancer"
@@ -24,15 +25,31 @@ import (
 )
 
 func main() {
-	lg, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("failed to inizialise logger: %v", err)
-	}
-
 	cfg, err := config.New()
 	if err != nil {
-		lg.Fatal("failed to inizialise config: %v", zap.Error(err))
+		log.Fatalf("failed to inizialise config: %v", err)
 	}
+
+	var lg *zap.Logger
+	var level zap.AtomicLevel
+	switch cfg.Logging.Level {
+	case "debug":
+		level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	case "info":
+		level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	case "error":
+		level = zap.NewAtomicLevelAt(zap.ErrorLevel)
+	case "fatal":
+		level = zap.NewAtomicLevelAt(zap.FatalLevel)
+	default:
+		level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	}
+
+	lg = zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.Lock(os.Stdout),
+		level,
+	))
 
 	store, err := storage.New()
 	if err != nil {
@@ -42,7 +59,7 @@ func main() {
 	var tl domains.TransactionLogger
 
 	if cfg.TransactionLogger.On {
-		tl, err = transactionlogger.New(cfg.TransactionLogger)
+		tl, err = transactionlogger.New(cfg.TransactionLogger, lg)
 		if err != nil {
 			lg.Fatal("failed to inizialise transaction logger: %v", zap.Error(err))
 		}

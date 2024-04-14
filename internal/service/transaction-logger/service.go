@@ -48,7 +48,7 @@ type TransactionLogger struct {
 	cfg    config.TransactionLoggerConfig
 }
 
-func New(cfg config.TransactionLoggerConfig) (*TransactionLogger, error) {
+func New(cfg config.TransactionLoggerConfig, logger *zap.Logger) (*TransactionLogger, error) {
 	if cfg.BackupDirectory == "" {
 		cfg.BackupDirectory = DefaultPath
 	}
@@ -90,5 +90,6 @@ func New(cfg config.TransactionLoggerConfig) (*TransactionLogger, error) {
 		file:        f,
 		currentName: int32(maxNumber),
 		cfg:         cfg,
+		logger:      logger,
 	}, nil
 }
