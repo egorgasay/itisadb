@@ -29,7 +29,7 @@ func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage
 		logger:  logger,
 	}
 
-	f, err := os.OpenFile("sync", os.O_RDONLY, 0666)
+	f, err := os.OpenFile("sync", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, fmt.Errorf("can't open sync file: %w", err)
 	}
@@ -41,12 +41,14 @@ func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage
 		return nil, fmt.Errorf("can't read sync file: %w", err)
 	}
 
-	syncID, err := strconv.ParseUint(string(b), 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse sync id from file: %w", err)
-	}
+	if len(b) != 0 {
+		syncID, err := strconv.ParseUint(string(b), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("can't parse sync id from file: %w", err)
+		}
 
-	s.repo.SetUserChangeID(syncID)
+		s.repo.SetUserChangeID(syncID)
+	}
 
 	return s, nil
 }
