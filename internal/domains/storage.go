@@ -54,13 +54,11 @@ type ObjectsStorage interface {
 }
 
 type UserStorage interface {
-	NewUser(user models.User) (r gost.Result[int])
-	GetUserByID(id int) (r gost.Result[models.User])
+	NewUser(user models.User) (r gost.ResultN)
 	GetUserByName(username string) (r gost.Result[models.User])
-	GetUserIDByName(username string) (r gost.Result[int])
-	DeleteUser(id int) (r gost.Result[bool])
+	DeleteUser(username string) (r gost.Result[bool])
 	SaveUser(user models.User) (r gost.ResultN)
-	GetUserLevel(id int) (r gost.Result[models.Level])
+	GetUserLevel(username string) (r gost.Result[models.Level])
 	GetUsersFromChangeID(id uint64) gost.Result[[]models.User]
 	GetUserChangeID() uint64
 	SetUserChangeID(id uint64)

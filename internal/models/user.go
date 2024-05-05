@@ -1,7 +1,6 @@
 package models
 
 type User struct {
-	ID       int      `json:"id"`
 	Login    string   `json:"username"`
 	Password string   `json:"password"`
 	Level    Level    `json:"level"`
@@ -15,13 +14,13 @@ type changeID struct {
 
 func (u User) ExtractClaims() UserClaims {
 	return UserClaims{
-		ID:    u.ID,
+		ID:    u.Login,
 		Level: u.Level,
 	}
 }
 
 type UserClaims struct {
-	ID    int   `json:"id"`
+	ID    string   `json:"id"`
 	Level Level `json:"level"`
 }
 

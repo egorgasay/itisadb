@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"itisadb/internal/constants"
 	"itisadb/internal/models"
 )
 
@@ -44,9 +45,13 @@ func (t *TransactionLogger) WriteDeleteAttr(object string, key string) {
 var b64 = base64.StdEncoding
 
 func (t *TransactionLogger) WriteNewUser(user models.User) {
-	value := fmt.Sprintf("%t;%d", user.Active, user.Level)
+	meta := fmt.Sprintf("%d%s%t%s%d", 
+		user.GetChangeID(), constants.MetadataSeparator, 
+		user.Active, constants.MetadataSeparator, 
+		user.Level,
+	)
 
-	t.events <- Event{EventType: CreateUser, Name: user.Login, Value: value}
+	t.events <- Event{EventType: CreateUser, Name: user.Login, Value: user.Password, Metadata: meta}
 }
 
 func (t *TransactionLogger) WriteDeleteUser(login string) {

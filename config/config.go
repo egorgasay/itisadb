@@ -55,16 +55,28 @@ type LoggingConfig struct {
 	Level string `toml:"Level"`
 }
 
+var _configFlag = flag.String("config", "", "Specify the path to the config file")
+
 var _noSecurity = SecurityConfig{
 	MandatoryAuthorization: false,
 	MandatoryEncryption:    false,
 }
 
+const _defaultPathToConfig = "config/config.toml"
+
 func New() (*Config, error) {
 	flag.Parse()
 
 	cfg := &Config{}
-	_, err := toml.DecodeFile("config/config.toml", cfg)
+
+	var pathToConfig string
+	if * _configFlag!= "" {
+		pathToConfig = * _configFlag
+	} else {
+		pathToConfig = _defaultPathToConfig
+	}
+
+	_, err := toml.DecodeFile(pathToConfig, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}

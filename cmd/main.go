@@ -5,12 +5,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/egorgasay/gost"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"itisadb/config"
 	"itisadb/internal/domains"
 	"itisadb/internal/service/balancer"
@@ -22,9 +20,24 @@ import (
 	"itisadb/internal/service/syncer"
 	transactionlogger "itisadb/internal/service/transaction-logger"
 	"itisadb/internal/storage"
+
+	"github.com/egorgasay/gost"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to get working directory: %v", err)
+	}
+
+	if path := strings.Split(wd, "/"); path[len(path) - 1] == "cmd" {
+		if err := os.Chdir(".."); err != nil {
+			log.Fatalf("failed to change working directory: %v", err)
+		}
+	}
+
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatalf("failed to inizialise config: %v", err)
@@ -101,7 +114,11 @@ func main() {
 	}
 
 	// TODO: make it configurable
-	syncer := syncer.NewSyncer(s, lg, store)
+	syncer, err := syncer.NewSyncer(s, lg, store)
+	if err != nil {
+		lg.Fatal("failed to inizialise syncer: %v", zap.Error(err))
+	}
+
 	go syncer.Start()
 
 	b, err := balancer.New(ctx, appCFG, lg, store, tl, s, ses, sec, uc)
@@ -114,7 +131,9 @@ func main() {
 	// TODO: do check before connect
 	time.Sleep(2 * time.Second)
 
-	go runWebCLI(ctx, cfg.WebApp, cfg.Security, lg, cfg.Network.GRPC)
+	if cfg.WebApp.On {
+		go runWebCLI(ctx, cfg.WebApp, cfg.Security, lg, cfg.Network.GRPC)
+	}
 
 	if cfg.Network.REST != "" {
 		go runREST(ctx, lg, b, cfg.Network)

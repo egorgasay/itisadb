@@ -31,7 +31,7 @@ type objects struct {
 }
 
 type users struct {
-	*swiss.Map[int, models.User]
+	*swiss.Map[string, models.User]
 	*sync.RWMutex
 	changeID uint64
 }
@@ -54,7 +54,7 @@ func New() (*Storage, error) {
 		objectsInfo: objectsInfo{Map: swiss.NewMap[string, models.ObjectInfo](10_000), RWMutex: &sync.RWMutex{}},
 		ramStorage:  ramStorage{Map: swiss.NewMap[string, models.Value](10_000_000), RWMutex: &sync.RWMutex{}},
 		objects:     objects{Map: swiss.NewMap[string, Something](100_000), RWMutex: &sync.RWMutex{}},
-		users:       users{Map: swiss.NewMap[int, models.User](100), RWMutex: &sync.RWMutex{}},
+		users:       users{Map: swiss.NewMap[string, models.User](100), RWMutex: &sync.RWMutex{}},
 	}
 
 	return st, nil
@@ -355,26 +355,6 @@ func (s *Storage) DeleteObjectInfo(name string) {
 	s.objectsInfo.Delete(name)
 }
 
-func (s *Storage) GetUserIDByName(username string) (r gost.Result[int]) {
-	s.users.RLock()
-	defer s.users.RUnlock()
-
-	var find *int
-
-	s.users.Iter(func(k int, v models.User) (stop bool) {
-		if v.Login == username {
-			find = &v.ID
-			return true
-		}
-		return false
-	})
-
-	if find == nil {
-		return r.Err(constants.ErrNotFound)
-	}
-
-	return r.Ok(*find)
-}
 
 func (s *Storage) GetUsersFromChangeID(id uint64) gost.Result[[]models.User] {
 	s.users.RLock()
@@ -382,7 +362,7 @@ func (s *Storage) GetUsersFromChangeID(id uint64) gost.Result[[]models.User] {
 
 	var find []models.User
 
-	s.users.Iter(func(k int, v models.User) (stop bool) {
+	s.users.Iter(func(k string, v models.User) (stop bool) {
 		if v.GetChangeID() < id {
 			find = append(find, v)
 		}

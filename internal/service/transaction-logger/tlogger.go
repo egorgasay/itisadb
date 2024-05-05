@@ -45,9 +45,7 @@ func (t *TransactionLogger) Run() {
 		op := newLimitedBuffer()
 
 		for e := range events {
-			var data []byte
-			// TODO: Check this
-			data = []byte(
+			data := []byte(
 				fmt.Sprintf(
 					"%d %s %s %s\n",
 					e.EventType,
@@ -80,7 +78,7 @@ func (t *TransactionLogger) Run() {
 }
 
 func (t *TransactionLogger) countWatcher(done chan struct{}) {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
 		select {

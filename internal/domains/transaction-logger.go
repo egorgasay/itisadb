@@ -28,7 +28,7 @@ type Restorer interface {
 	DeleteObject(name string) error
 	CreateObject(name string, opts models.ObjectOptions) error
 	AttachToObject(dst, src string) error
-	NewUser(user models.User) (r gost.Result[int])
+	NewUser(user models.User) (r gost.ResultN)
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
 	DeleteAttr(object, key string) error

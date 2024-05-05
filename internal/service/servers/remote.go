@@ -265,7 +265,6 @@ func fromUsersToInternalUsersSDK(users []models.User) []itisadb.Internal_User {
 	var sdkUsers []itisadb.Internal_User
 	for _, user := range users {
 		sdkUsers = append(sdkUsers, itisadb.Internal_User{
-			ID:       user.ID,
 			Login:    user.Login,
 			Password: user.Password,
 			Level:    user.Level.ToSDK(),

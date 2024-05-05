@@ -183,7 +183,7 @@ func (h *Handler) DeleteObject(ctx context.Context, r *api.DeleteObjectRequest) 
 }
 
 func (h *Handler) Connect(ctx context.Context, request *api.ConnectRequest) (*api.ConnectResponse, error) {
-	serverNum, err := h.core.Connect(ctx, request.GetAddress(), request.GetAvailable(), request.GetTotal())
+	serverNum, err := h.core.Connect(ctx, request.GetAddress())
 	if err != nil {
 		return nil, converterr.ToGRPC(err)
 	}
@@ -412,3 +412,15 @@ func (h *Handler) GetLastUserChangeID(ctx context.Context, _ *api.GetLastUserCha
 		LastChangeID: res.Unwrap(),
 	}, nil
 }
+
+func (h *Handler) AddServer(ctx context.Context, r *api.AddServerRequest) (*api.AddServerResponse, error) {
+	num, err := h.core.Connect(ctx, r.Address)
+	if err != nil {
+		return nil, converterr.ToGRPC(err)
+	}
+
+	return &api.AddServerResponse{
+		ServerID: uint64(num),
+	}, nil
+}
+

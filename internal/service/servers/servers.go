@@ -71,19 +71,22 @@ func New(local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error
 const _updateRAMInterval = 5 * time.Second
 
 func (s *Servers) updateRAM() {
-	for {
-		for _, cl := range s.servers {
+	for { // Бесконечный цикл
+		for _, cl := range s.servers { // Цикл по всем доступным серверам
 			func() {
 				ctx, cancel := context.WithTimeout(context.Background(), constants.ServerConnectTimeout)
 				defer cancel()
 
+				 // Проверка последнего состояния сервера (ответил на запросы или нет)
 				if cl.IsOffline() {
+					// Попытка переподключиться к серверу
 					if r := cl.Reconnect(ctx); r.IsErr() {
 						s.logger.Warn("can't reconnect", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
+						return
 					}
-					return
 				}
 
+				// Обновление значений
 				if r := cl.RefreshRAM(ctx); r.IsErr() {
 					s.logger.Error("can't refresh RAM", zap.Int32("server", cl.Number()), zap.Error(r.Error()))
 				}

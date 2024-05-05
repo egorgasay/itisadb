@@ -10,7 +10,7 @@ require (
 	github.com/egorgasay/gost v0.0.35
 	github.com/egorgasay/gotils v0.0.3
 	github.com/egorgasay/itisadb-go-sdk v0.18.2
-	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240330141422-ce40ab5f77d7
+	github.com/egorgasay/itisadb-shared-proto/go v0.0.0-20240414181125-856cb36fef2a
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/golang/mock v1.6.0
@@ -22,8 +22,8 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/valyala/fasthttp v1.51.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.21.0
-	google.golang.org/grpc v1.62.1
+	golang.org/x/crypto v0.22.0
+	google.golang.org/grpc v1.63.2
 	modernc.org/strutil v1.2.0
 )
 
@@ -40,9 +40,9 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6 // indirect
+	google.golang.org/protobuf v1.34.0 // indirect
 )

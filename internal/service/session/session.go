@@ -63,14 +63,14 @@ func (s Session) AuthByToken(ctx context.Context, token string) (models.UserClai
 		return models.UserClaims{}, err
 	}
 
-	if r := s.storage.GetUserByID(claims.ID); r.IsErr() {
+	if r := s.storage.GetUserByName(claims.ID); r.IsErr() {
 		return models.UserClaims{}, r.Error()
 	}
 
 	return claims, nil
 }
 
-func (s Session) Create(ctx context.Context, userID int, level models.Level) (string, error) {
+func (s Session) Create(ctx context.Context, userID string, level models.Level) (string, error) {
 	token, _, err := s.generator.AccessToken(ctx, models.UserClaims{
 		ID:    userID,
 		Level: level,
@@ -103,7 +103,7 @@ func (s Session) infoFromJWT(token string) (models.UserClaims, error) {
 		return models.UserClaims{}, constants.ErrInvalidToken
 	}
 
-	guidInt, ok := guid.(float64)
+	guidStr, ok := guid.(string)
 	if !ok {
 		s.logger.Error("can't convert guid to float64", zap.Error(err))
 		return models.UserClaims{}, constants.ErrInvalidToken
@@ -122,7 +122,7 @@ func (s Session) infoFromJWT(token string) (models.UserClaims, error) {
 	}
 
 	return models.UserClaims{
-		ID:    int(guidInt),
+		ID:    guidStr,
 		Level: models.Level(level),
 	}, nil
 }

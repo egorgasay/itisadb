@@ -83,30 +83,40 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				r.DeleteObjectInfo(e.Name)
 				// TODO: case Detach:
 			case CreateUser:
-				split := strings.Split(e.Value, constants.MetadataSeparator)
+				split := strings.Split(e.Metadata, constants.MetadataSeparator)
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n NewUser invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
-				activeStr := split[0]
-				levelStr := split[1]
+				syncIDStr := split[0]
+				activeStr := split[1]
+				levelStr := split[2]
 
 				active, err := strconv.ParseBool(activeStr)
 				if err != nil {
-					return fmt.Errorf("[%w]\n invalid active value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+					return fmt.Errorf("[%w]\n invalid active value %s, Name: %s", ErrCorruptedConfigFile, e.Metadata, e.Name)
 				}
 
 				level, err := strconv.Atoi(levelStr)
 				if err != nil {
-					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
+					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Metadata, e.Name)
 				}
 
-				rUser := r.NewUser(models.User{
+				syncID, err := strconv.ParseUint(syncIDStr, 10, 64)
+				if err != nil {
+					return fmt.Errorf("[%w]\n invalid syncID value %s, Name: %s", ErrCorruptedConfigFile, e.Metadata, e.Name)
+				}
+
+				user := models.User{
 					Login:    e.Name,
 					Password: e.Value,
 					Level:    models.Level(level),
 					Active:   active,
-				})
+				}
+
+				user.SetChangeID(syncID)
+
+				rUser := r.NewUser(user)
 				if rUser.IsErr() {
 					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, rUser.Error())
 				}

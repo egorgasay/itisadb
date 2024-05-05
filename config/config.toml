@@ -14,13 +14,10 @@ FastHTTP = ""
 On = true
 
 # List of servers to balance.
-# Example:
-# Servers = [
-# 	"127.0.0.1:8889",
-# 	"127.0.0.1:8890",
-# ]
 Servers = [
-    #"127.0.0.1:8889",
+    "127.0.0.1:10001",
+    "127.0.0.1:10002",
+    "127.0.0.1:10003",
 ]
 
 # Balancing only mode.
@@ -47,7 +44,7 @@ Key = "CHANGE ME"
 
 # Web application settings.
 [WebApp]
-On = false
+On = true
 
 # Host of the web application.
 # Example: "127.0.0.1:8080"

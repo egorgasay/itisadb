@@ -2,30 +2,53 @@ package syncer
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
 	"time"
 
-	"go.uber.org/zap"
 	"itisadb/internal/domains"
+
+	"go.uber.org/zap"
 )
 
 type Syncer struct {
 	servers domains.Servers
 	repo    domains.Storage
 	logger  *zap.Logger
+	f       *os.File
 }
 
 var syncerIsRunning = false
 
-func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage) domains.Syncer {
+func NewSyncer(servers domains.Servers, logger *zap.Logger, repo domains.Storage) (domains.Syncer, error) {
 	s := &Syncer{
 		servers: servers,
 		repo:    repo,
 		logger:  logger,
 	}
 
-	// TODO: SET SYNC ID FROM FILE TO STORAGE
+	f, err := os.OpenFile("sync", os.O_RDONLY, 0666)
+	if err != nil {
+		return nil, fmt.Errorf("can't open sync file: %w", err)
+	}
 
-	return s
+	s.f = f
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("can't read sync file: %w", err)
+	}
+
+	syncID, err := strconv.ParseUint(string(b), 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse sync id from file: %w", err)
+	}
+
+	s.repo.SetUserChangeID(syncID)
+
+	return s, nil
 }
 
 func (s Syncer) Start() {
@@ -46,34 +69,40 @@ func (s Syncer) Start() {
 }
 
 func (s Syncer) syncServer(server domains.Server) error {
-	ctx := context.TODO()
+	ctx := context.Background()
 
-	r := server.GetLastUserChangeID(ctx)
+	// Получение последнего идентификатора изменений на проверяемом сервере
+	r := server.GetLastUserChangeID(ctx) 
 	if r.IsErr() {
 		return r.Error()
 	}
 
 	syncID := r.Unwrap()
 
+	// Получение последнего идентификатора изменений
 	currentSyncID := s.repo.GetUserChangeID()
-
-	if syncID == currentSyncID {
-		return nil
+	if syncID == currentSyncID { 
+		return nil // Если нет изменений - алгоритм завершает работу
 	}
 
 	s.logger.Info("syncing", zap.Uint64("sync_id", syncID), zap.Uint64("current_sync_id", currentSyncID))
 
+	// Получение списка обновленных пользователей
 	rUsers := s.repo.GetUsersFromChangeID(syncID)
 	if rUsers.IsErr() {
 		return rUsers.Error()
 	}
 
-	rSync := server.Sync(context.TODO(), currentSyncID, rUsers.Unwrap())
+	// Обновление пользователей
+	rSync := server.Sync(ctx, currentSyncID, rUsers.Unwrap())
 	if rSync.IsErr() {
 		return rSync.Error()
 	}
 
-	// TODO: SAVE SYNC ID TO FILE
+	_, err := s.f.WriteAt([]byte(fmt.Sprint(currentSyncID)), 0) // Сохраняем идентификатор в файл
+	if err != nil {
+		return fmt.Errorf("can't write sync id to file: %w", err)
+	}
 
 	return nil
 }

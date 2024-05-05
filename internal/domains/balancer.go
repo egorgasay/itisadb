@@ -23,7 +23,7 @@ type Balancer interface {
 	SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object, key, val string, opts models.SetToObjectOptions) (int32, error)
 	DeleteAttr(ctx context.Context, claims gost.Option[models.UserClaims], attr, object string, opts models.DeleteAttrOptions) error
 
-	Connect(ctx context.Context, address string, available uint64, total uint64) (int32, error)
+	Connect(ctx context.Context, address string) (int32, error)
 	Disconnect(ctx context.Context, number int32) error
 	Servers() []string
 
