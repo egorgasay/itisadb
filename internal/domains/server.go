@@ -13,6 +13,7 @@ type Server interface {
 	Number() int32
 	IsOffline() bool
 	Reconnect(ctx context.Context) (res gost.ResultN)
+	Address() string
 
 	appLogic
 	userLogic

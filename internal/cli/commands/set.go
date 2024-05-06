@@ -63,7 +63,7 @@ func (s SetCommand) Extract() SetCommand {
 ------------------- [ MODE ] --- [    LEVEL     ] - [    SERVER    ]
 
 
-SET key "value" [ RO | UQ | NX | XX ] [ D | R | S ] [ [0-9]+ ]
+SET key "value" [ RO | UQ | NX | XX ] [ R | S ] [ [0-9]+ ]
 
 ----------------------------------------------------------------------
 

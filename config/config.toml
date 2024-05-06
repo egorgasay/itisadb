@@ -13,13 +13,6 @@ FastHTTP = ""
 [Balancer]
 On = true
 
-# List of servers to balance.
-Servers = [
-    "127.0.0.1:10001",
-    "127.0.0.1:10002",
-    "127.0.0.1:10003",
-]
-
 # Balancing only mode.
 BalancingOnly = false
 

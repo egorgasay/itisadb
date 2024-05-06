@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"itisadb/internal/constants"
 	"strconv"
 	"strings"
 
@@ -51,6 +52,7 @@ const (
 	_del      = "del"
 	_deleteEl = "delete"
 	_change   = "change"
+	_server  = "server"
 
 	_object       = "object"
 	_userLevel    = "user.level"
@@ -85,12 +87,12 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 
 		r := c.set(ctx, cmd)
 		if r.IsErr() {
-			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
+			return res.Err(r.Error())
 		}
 
 		switch savedTo := r.Unwrap(); savedTo {
 		case setToAll:
-			return res.Ok(fmt.Sprintf("status: ok, saved on all balancer"))
+			return res.Ok("status: ok, saved on all balancer")
 		default:
 			return res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
 		}
@@ -129,6 +131,18 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 				return res.Ok(fmt.Sprintf("object %s created on server #%d", args[1], serv))
 			}
 			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
+		case _server:
+			r := itisadb.Internal.AddServer(ctx, c.sdk, args[1])
+			if r.IsOk() {
+				return res.Ok("server has been added")
+			}
+
+			err := r.Error()
+			if err.Is(constants.ErrAlreadyExists) {
+				return res.Err(gost.NewErrX(0, "server has been already added"))
+			}
+
+			return res.Err(r.Error())
 		default:
 			return res.Err(ErrWrongInput)
 		}
@@ -353,7 +367,7 @@ func (c *Commands) newObject(ctx context.Context, args []string) (res gost.Resul
 		Level:  itisadb.Level(lvl),
 	}); r.Switch() {
 	case gost.IsOk:
-		return res.Ok(r.Unwrap())
+		return res.Ok(r.Unwrap().Server())
 	case gost.IsErr:
 		return res.Err(r.Error())
 	}

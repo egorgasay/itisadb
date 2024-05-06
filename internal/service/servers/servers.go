@@ -145,6 +145,13 @@ func (s *Servers) AddServer(ctx context.Context, address string, force bool) (in
 		}
 	}
 
+	// check if server is already exists
+	for _, serv := range s.servers {
+		if serv.Address() == address {
+			return 0, constants.ErrAlreadyExists
+		}
+	}
+
 	// saving last id
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {

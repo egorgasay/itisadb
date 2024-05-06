@@ -58,7 +58,7 @@ func New(cfg config.WebAppConfig, storage *storage.Storage, balancer string, lg 
 
 	return &UseCase{
 		conn: b, storage: storage, cmds: cmds,
-		tokens: map[string]string{"itisadb": "itisadb"},
+		tokens: map[string]string{"itisadb": "itisadb"}, // TODO: ??
 		logger: lg, mainToken: resp.Token,
 	}
 }
@@ -69,8 +69,7 @@ func (uc *UseCase) ProcessQuery(ctx context.Context, token string, line string) 
 
 	res := uc.cmds.Do(withAuth(ctx, token), strings.ToLower(split[0]), split[1:]...)
 	if res.IsErr() {
-		uc.logger.Warn(res.Error().Error())
-		return "", res.Error()
+		return "", fmt.Errorf("ERROR: %s", res.Error().MessagesSpace())
 	}
 
 	return strings.Replace(strings.Replace(res.Unwrap(), "\n", "<br/>", -1), "\t", "&emsp;", -1), nil

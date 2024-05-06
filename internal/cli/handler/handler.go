@@ -60,12 +60,14 @@ func (h *Handler) Action(c echo.Context) error {
 	res, err := h.logic.ProcessQuery(c.Request().Context(), cookie.Value, action)
 	if err != nil {
 		st, ok := status.FromError(err)
-		if ok && st.Code().String() == codes.NotFound.String() {
-			err = errors.New("not found")
-		} else if st.Message() == "unknown server" {
-			err = errors.New("unknown server")
-		} else if ok && st.Code().String() == codes.Unavailable.String() {
-			err = errors.New("memory balancer is offline")
+		if ok  {
+			if st.Code().String() == codes.NotFound.String() {
+				err = errors.New("not found")
+			} else if st.Message() == "unknown server" {
+				err = errors.New("unknown server")
+			} else if st.Code().String() == codes.Unavailable.String() {
+				err = errors.New("memory balancer is offline")
+			}
 		}
 
 		var t = schema.Response{Text: err.Error()}

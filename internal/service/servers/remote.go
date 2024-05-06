@@ -274,3 +274,7 @@ func fromUsersToInternalUsersSDK(users []models.User) []itisadb.Internal_User {
 	return sdkUsers
 
 }
+
+func (s *RemoteServer) Address() string {
+	return s.address
+}

@@ -87,3 +87,8 @@ func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models
 
 	return s.Logic.ChangeLevel(ctx, claims, login, level)
 }
+
+func (s *LocalServer) Address() string {
+	return ""
+}
+
