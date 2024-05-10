@@ -141,7 +141,7 @@ func (v *object) NextOrCreate(name string, level models.Level) Something {
 
 	val, ok := v.values.Get(name)
 	if !ok {
-		blank := NewObject(name, v.attachedTo, level)
+		blank := NewObject(name, v.attachedTo, max(level, v.level))
 		v.values.Put(name, blank)
 		return blank
 	}

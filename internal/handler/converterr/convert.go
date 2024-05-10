@@ -3,12 +3,24 @@ package converterr
 import (
 	"context"
 	"fmt"
+	"itisadb/internal/constants"
+
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"itisadb/internal/constants"
 )
 
-func ToGRPC(err error) error {
+type ConvertErr struct {
+	logger *zap.Logger
+}
+
+func New(logger *zap.Logger) ConvertErr {
+	return ConvertErr{logger: logger}
+}
+
+func (c ConvertErr) ToGRPC(err error) error {
+	c.logger.Info(err.Error())
+
 	baseError, _ := Unwrap(err)
 	switch baseError {
 	case constants.ErrNotFound:

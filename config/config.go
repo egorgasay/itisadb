@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -66,29 +67,56 @@ var _noSecurity = SecurityConfig{
 const _defaultPathToConfig = "config/config.toml"
 const _defaultPathToServers = "config/config-servers.toml"
 
+func getPathToConfig() string {
+	var pathToConfig = _defaultPathToConfig
+	if *_configFlag != "" {
+		pathToConfig = *_configFlag
+	}
+
+	return pathToConfig
+}
+
+func getPathToServers() string {
+	var pathToServers = _defaultPathToServers
+	if *_configServersFlag != "" {
+		pathToServers = *_configServersFlag
+	}
+
+	return pathToServers
+}
+
 func New() (*Config, error) {
 	flag.Parse()
 
 	cfg := &Config{}
 
-	var pathToConfig string
-	if *_configFlag != "" {
-		pathToConfig = *_configFlag
-	} else if *_configServersFlag != "" {
-		pathToConfig = *_configServersFlag
-	} else {
-		pathToConfig = _defaultPathToConfig
-	}
-
-	_, err := toml.DecodeFile(_defaultPathToServers, &cfg.Balancer)
+	_, err := toml.DecodeFile(getPathToServers(), &cfg.Balancer)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
-	_, err = toml.DecodeFile(pathToConfig, cfg)
+	_, err = toml.DecodeFile(getPathToConfig(), cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
 	return cfg, nil
+}
+
+type ServersConfig struct {
+	Servers []string `toml:"Servers"`
+}
+
+func UpdateServers(servers []string) error {
+	f, err := os.OpenFile(getPathToServers(), os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("can't open servers file to insert new")
+	}
+	defer f.Close()
+
+	if err := toml.NewEncoder(f).Encode(&ServersConfig{Servers: servers}); err != nil {
+		return fmt.Errorf("failed to decode config: %w", err)
+	}
+
+	return nil
 }

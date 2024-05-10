@@ -95,11 +95,9 @@ func (c *Balancer) get(ctx context.Context, claims gost.Option[models.UserClaims
 }
 
 func (c *Balancer) Connect(ctx context.Context, address string) (number int32, err error) {
-	c.logger.Info("New request for connect from " + address)
 	return number, gost.WithContextPool(ctx, func() error {
 		number, err = c.servers.AddServer(ctx, address, false)
 		if err != nil {
-			c.logger.Warn(err.Error())
 			return err
 		}
 

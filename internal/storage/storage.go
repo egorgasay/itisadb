@@ -2,13 +2,15 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 
-	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
+
+	"github.com/egorgasay/gost"
 
 	"github.com/dolthub/swiss"
 )
@@ -177,6 +179,15 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
+	obj, err := s.findObject(name)
+	if err != nil && !errors.Is(err, constants.ErrNotFound) {
+		return err
+	} else if obj != nil {
+		obj.setLevel(opts.Level)
+		s.objects.Put(name, obj)
+		return
+	}
+
 	path := strings.Split(name, constants.ObjectSeparator)
 	if name == "" || len(path) == 0 {
 		return constants.ErrEmptyObjectName
@@ -208,10 +219,6 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 		default:
 			return constants.ErrSomethingExists
 		}
-	}
-
-	if val != nil && val.Level() != opts.Level {
-		val.setLevel(opts.Level)
 	}
 
 	return nil

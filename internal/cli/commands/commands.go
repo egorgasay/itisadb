@@ -43,7 +43,7 @@ var (
 
 const (
 	_get      = "get"
-	_newEl    = "new"
+	_new    = "new"
 	_marshalo = "marshalo"
 	_attach   = "attach"
 	_seto     = "seto"
@@ -53,6 +53,7 @@ const (
 	_deleteEl = "delete"
 	_change   = "change"
 	_server  = "server"
+	_add     = "add"
 
 	_object       = "object"
 	_userLevel    = "user.level"
@@ -96,7 +97,7 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		default:
 			return res.Ok(fmt.Sprintf("status: ok, saved on server #%d", savedTo))
 		}
-	case _newEl:
+	case _new:
 		if len(args) < 1 {
 			return res.Err(ErrWrongInput)
 		}
@@ -131,18 +132,6 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 				return res.Ok(fmt.Sprintf("object %s created on server #%d", args[1], serv))
 			}
 			return res.ErrNew(InvalidCode, InputExtCode, r.Error().Error())
-		case _server:
-			r := itisadb.Internal.AddServer(ctx, c.sdk, args[1])
-			if r.IsOk() {
-				return res.Ok("server has been added")
-			}
-
-			err := r.Error()
-			if err.Is(constants.ErrAlreadyExists) {
-				return res.Err(gost.NewErrX(0, "server has been already added"))
-			}
-
-			return res.Err(r.Error())
 		default:
 			return res.Err(ErrWrongInput)
 		}
@@ -316,6 +305,27 @@ func (c *Commands) Do(ctx context.Context, act string, args ...string) (res gost
 		}
 
 		return res.Ok(fmt.Sprintf("status: ok, attached %s to %s", src, dst))
+	case _add:
+		if len(args) < 1 {
+			return res.Err(ErrWrongInput)
+		}
+
+		switch strings.ToLower(args[0]) {
+		case _server:
+			r := itisadb.Internal.AddServer(ctx, c.sdk, args[1])
+			if r.IsOk() {
+				return res.Ok("server has been added")
+			}
+
+			err := r.Error()
+			if err.Is(constants.ErrAlreadyExists) {
+				return res.Err(gost.NewErrX(0, "server has been already added"))
+			}
+
+			return res.Err(r.Error())
+		default:
+			return res.Err(ErrWrongInput)
+		}
 	}
 
 	return res.Err(ErrUnknownCMD)

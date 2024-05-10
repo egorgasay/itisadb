@@ -1,37 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Itisadb</title>
-  <link rel="stylesheet" href="/static/css/auth.css">
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/common.css">
+    <meta charset="UTF-8">
+    <title>Itisadb</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/common.css">
 </head>
+
 <body class="container">
-  <div class="login-container">
-    <div class="login-content">
-      <h1 class="logo-text">𓆩✧𓆪</h1>
-      <h1 class="welcome-text">ItisaDB</h1>
-      <h1 class="version-text">v0.11.1</h1>
-      <input type="text" name="name" id="name" autocomplete="off" class="textfield"  placeholder="Type your request">
-      <div class="message">
-        Hello, friend!<br>
-        This is a web view for a single set\get to\from the distributed database called itisadb.<br>
-        <br>
-        How it works:<br>
-        <br>
-        1. Your request will be processed by a web service that will determine the appropriate gRPC method of the memory balancer.<br>
-        <br>
-        2. After that, the memory balancer will process your operation by saving\getting the necessary values from\to the storage(-s) and
-        return you the value (or the error was not found) if it was a get operation or the server number (or the option number that
-        you specified) on which the value was saved if it was a set operation.<br>
-        <br>
-        3. You will be able to see the value if it was a get operation or the server number if it was a set operation.<br>
-        <br>
-        Try it now! Type "help" for more information. <br>
-      </div>
+    <div class="login-container">
+        <div class="login-content">
+            <h1 class="logo-text">𓆩✧𓆪</h1>
+            <h1 class="welcome-text">ItisaDB</h1>
+            <h1 class="version-text">v0.11.2</h1>
+            <input type="text" name="name" id="name" autocomplete="off" class="textfield" placeholder="Type your request">
+            <div class="message">
+                Hello, friend!<br> This is a web view for a single set\get to\from the distributed database called itisadb.<br>
+                <br> How it works:<br>
+                <br> 1. Your request will be processed by a web service that will determine the appropriate gRPC method of the memory balancer.<br>
+                <br> 2. After that, the memory balancer will process your operation by saving\getting the necessary values from\to the storage(-s) and return you the value (or the error was not found) if it was a get operation or the server number (or
+                the option number that you specified) on which the value was saved if it was a set operation.<br>
+                <br> 3. You will be able to see the value if it was a get operation or the server number if it was a set operation.<br>
+                <br> Try it now! Type "help" for more information. <br>
+            </div>
+        </div>
     </div>
-  </div>
 </body>
-<script  src="/static/js/script.js"></script>
+<script src="/static/js/script.js"></script>
+
 </html>

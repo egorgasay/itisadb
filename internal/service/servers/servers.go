@@ -10,12 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/egorgasay/gost"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
+
+	"github.com/egorgasay/gost"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type Servers struct {
@@ -26,7 +28,7 @@ type Servers struct {
 	sync.RWMutex
 }
 
-func New(local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error) {
+func New(addresses []string, local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error) {
 	f, err := os.OpenFile("servers", os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
@@ -48,6 +50,25 @@ func New(local gost.Option[domains.Server], logger *zap.Logger) (*Servers, error
 		poolCh:  make(chan struct{}, maxProc),
 		logger:  logger,
 	}
+
+	ctx := context.Background()
+
+	for _, server := range addresses {
+		logger.Info("Adding server", zap.String("server", server))
+
+		func() {
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
+			defer cancel()
+
+			s, err := servers.AddServer(ctxWithTimeout, server, true)
+			if err != nil {
+				logger.Error("Failed to add server", zap.String("server", server), zap.Error(err))
+			} else {
+				logger.Info("Added server", zap.Int32("server", s))
+			}
+		}()
+	}
+
 
 	go servers.updateRAM()
 
@@ -145,11 +166,19 @@ func (s *Servers) AddServer(ctx context.Context, address string, force bool) (in
 		}
 	}
 
-	// check if server is already exists
+	var addresses = make([]string, 0, len(s.servers))
 	for _, serv := range s.servers {
 		if serv.Address() == address {
 			return 0, constants.ErrAlreadyExists
 		}
+
+		if addr := serv.Address(); addr != "" {
+			addresses = append(addresses, addr)
+		}
+	}
+
+	if address != "" {
+		addresses = append(addresses, address)
 	}
 
 	// saving last id
@@ -162,6 +191,10 @@ func (s *Servers) AddServer(ctx context.Context, address string, force bool) (in
 	_, err = f.WriteString(fmt.Sprintf("%d\n", s.freeID))
 	if err != nil {
 		return 0, errors.Wrapf(ErrInternal, "can't save last id: %v", err.Error())
+	}
+
+	if err := config.UpdateServers(addresses); err != nil {
+		return 0, errors.Wrapf(ErrInternal, "can't update config: %v", err.Error())
 	}
 
 	s.servers[server] = stClient

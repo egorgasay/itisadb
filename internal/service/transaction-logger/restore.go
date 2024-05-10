@@ -121,11 +121,6 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, rUser.Error())
 				}
 			case CreateObject:
-				err := r.CreateObject(e.Name, models.ObjectOptions{})
-				if err != nil {
-					return fmt.Errorf("can't create object %s: %w", e.Name, err)
-				}
-
 				split := strings.Split(e.Value, constants.MetadataSeparator)
 				if len(split) < 2 {
 					return fmt.Errorf("[%w]\n AddObjectInfo invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
@@ -144,10 +139,17 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("[%w]\n invalid level value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 
-				r.AddObjectInfo(e.Name, models.ObjectInfo{
+				objOpts := models.ObjectOptions{
 					Server: int32(server),
 					Level:  models.Level(level),
-				})
+				}
+
+				err = r.CreateObject(e.Name, objOpts)
+				if err != nil {
+					return fmt.Errorf("can't create object %s: %w", e.Name, err)
+				}
+
+				r.AddObjectInfo(e.Name, models.ObjectInfo(objOpts))
 			default:
 				return fmt.Errorf("[%w]\n unknown event type %v", ErrCorruptedConfigFile, e)
 			}

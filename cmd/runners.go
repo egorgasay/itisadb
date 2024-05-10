@@ -9,6 +9,16 @@ import (
 	"net"
 	"net/http"
 
+	"itisadb/config"
+	"itisadb/internal/cli/handler"
+	"itisadb/internal/cli/storage"
+	"itisadb/internal/cli/usecase"
+	"itisadb/internal/domains"
+	"itisadb/internal/handler/converterr"
+	grpchandler "itisadb/internal/handler/grpc"
+	resthandler "itisadb/internal/handler/rest"
+	"itisadb/internal/service/balancer"
+
 	"github.com/brpaz/echozap"
 	"github.com/egorgasay/gost"
 	api "github.com/egorgasay/itisadb-shared-proto/go"
@@ -17,14 +27,6 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"itisadb/config"
-	"itisadb/internal/cli/handler"
-	"itisadb/internal/cli/storage"
-	"itisadb/internal/cli/usecase"
-	"itisadb/internal/domains"
-	grpchandler "itisadb/internal/handler/grpc"
-	resthandler "itisadb/internal/handler/rest"
-	"itisadb/internal/service/balancer"
 )
 
 func runGRPC(
@@ -35,7 +37,9 @@ func runGRPC(
 	networkCFG config.NetworkConfig,
 	session domains.Session,
 ) {
-	h := grpchandler.New(logic, l, session, securityCFG)
+	converterr := converterr.New(l)
+
+	h := grpchandler.New(logic, l, session, securityCFG, converterr)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(h.AuthMiddleware),
 	)

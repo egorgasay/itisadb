@@ -48,22 +48,7 @@ func New(
 		return nil, err
 	}
 
-	for _, server := range cfg.Balancer.Servers {
-		logger.Info("Adding server", zap.String("server", server))
-
-		func() {
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, constants.ServerConnectTimeout)
-			defer cancel()
-
-			s, err := servers.AddServer(ctxWithTimeout, server, true)
-			if err != nil {
-				logger.Error("Failed to add server", zap.String("server", server), zap.Error(err))
-			} else {
-				logger.Info("Added server", zap.Int32("server", s))
-			}
-		}()
-	}
-
+	
 	return &Balancer{
 		logger:        logger,
 		servers:       servers,

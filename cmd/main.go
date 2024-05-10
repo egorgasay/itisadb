@@ -108,7 +108,7 @@ func main() {
 		local = local.Some(ls)
 	}
 
-	s, err := servers.New(local, lg)
+	s, err := servers.New(cfg.Balancer.Servers, local, lg)
 	if err != nil {
 		lg.Fatal("failed to inizialise balancer: %v", zap.Error(err))
 	}
