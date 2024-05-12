@@ -2,7 +2,7 @@ package constants
 
 import "time"
 
-const MainStorageNumber = 1
+const LocalServerNumber = 1
 
 const AutoServerNumber int32 = 0
 

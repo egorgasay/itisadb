@@ -42,17 +42,27 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("%w\n invalid level %s, Name: %s", ErrCorruptedConfigFile, levelStr, e.Name)
 				}
 
-				err = r.Set(e.Name, e.Value, models.SetOptions{
+				if len(split) > 2 {
+					encrypt := split[2] == _enctyptedSign
+					if encrypt {
+						e.Value, err = t.security.Decrypt(e.Value)
+						if err != nil {
+							return fmt.Errorf("can't decrypt encrypted value %s: %w", e.Name, err)
+						}
+					}
+				}
+
+				r := r.Set(e.Name, e.Value, models.SetOptions{
 					ReadOnly: readOnly,
 					Level:    models.Level(level),
 				})
-				if err != nil {
-					return fmt.Errorf("can't set %s: %w", e.Name, err)
+				if r.IsErr() {
+					return fmt.Errorf("can't set %s: %w", e.Name, r.Error())
 				}
 			case Delete:
-				err := r.Delete(e.Name)
-				if err != nil {
-					return fmt.Errorf("can't delete %s: %w", e.Name, err)
+				r := r.Delete(e.Name)
+				if r.IsErr() {
+					return fmt.Errorf("can't delete %s: %w", e.Name, r.Error())
 				}
 			case SetToObject:
 				split := strings.Split(e.Name, constants.ObjectSeparator)
@@ -60,25 +70,38 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					return fmt.Errorf("%w\n invalid value %s, Name: %s", ErrCorruptedConfigFile, e.Value, e.Name)
 				}
 				key, value := split[len(split)-1], e.Value
-				err := r.SetToObject(strings.Join(split[:len(split)-1], "."), key, value, models.SetToObjectOptions{})
-				if err != nil {
-					return fmt.Errorf("can't set to object %s, v: %s: %w", e.Name, e.Value, err)
+
+				if len(split) > 2 {
+					encrypt := split[2] == _enctyptedSign
+					if encrypt {
+						value, err = t.security.Decrypt(value)
+						if err != nil {
+							return fmt.Errorf("can't decrypt encrypted value %s: %w", e.Name, err)
+						}
+					}
+				}
+
+				r := r.SetToObject(strings.Join(split[:len(split)-1], constants.ObjectSeparator), key, value, models.SetToObjectOptions{
+					ReadOnly: e.Metadata == "1",
+				})
+				if r.IsErr() {
+					return fmt.Errorf("can't set to object %s, v: %s: %w", e.Name, e.Value, r.Error())
 				}
 
 			case DeleteAttr:
-				err := r.DeleteAttr(e.Name, e.Value)
-				if err != nil {
-					return fmt.Errorf("can't delete attr %s: %w", e.Name, err)
+				r := r.DeleteAttr(e.Name, e.Value)
+				if r.IsErr() {
+					return fmt.Errorf("can't delete attr %s: %w", e.Name, r.Error())
 				}
 			case Attach:
-				err := r.AttachToObject(e.Name, e.Value)
-				if err != nil {
-					return fmt.Errorf("can't attach %s, v: %s: %w", e.Name, e.Value, err)
+				r := r.AttachToObject(e.Name, e.Value)
+				if r.IsErr() {
+					return fmt.Errorf("can't attach %s, v: %s: %w", e.Name, e.Value, r.Error())
 				}
 			case DeleteObject:
-				err := r.DeleteObject(e.Name)
-				if err != nil {
-					return fmt.Errorf("can't delete object %s: %w", e.Name, err)
+				rDel := r.DeleteObject(e.Name)
+				if rDel.IsErr() {
+					return fmt.Errorf("can't delete object %s: %w", e.Name, rDel.Error())
 				}
 				r.DeleteObjectInfo(e.Name)
 				// TODO: case Detach:
@@ -144,9 +167,9 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 					Level:  models.Level(level),
 				}
 
-				err = r.CreateObject(e.Name, objOpts)
-				if err != nil {
-					return fmt.Errorf("can't create object %s: %w", e.Name, err)
+				rObj := r.CreateObject(e.Name, objOpts)
+				if rObj.IsErr() {
+					return fmt.Errorf("can't create object %s: %w", e.Name, rObj.Error())
 				}
 
 				r.AddObjectInfo(e.Name, models.ObjectInfo(objOpts))

@@ -31,7 +31,6 @@ type NetworkConfig struct {
 }
 
 type EncryptionConfig struct {
-	On  bool   `toml:"On"`
 	Key string `toml:"Key"`
 }
 

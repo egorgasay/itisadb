@@ -12,7 +12,7 @@ type TransactionLogger interface {
 	Restore(r Restorer) error
 	WriteSet(key string, value string, opts models.SetOptions)
 	WriteDelete(key string)
-	WriteSetToObject(name string, key string, val string)
+	WriteSetToObject(name string, key string, val string, opts models.SetToObjectOptions)
 	WriteCreateObject(name string, info models.ObjectInfo)
 	WriteDeleteObject(name string)
 	WriteAttach(dst string, src string)
@@ -22,14 +22,14 @@ type TransactionLogger interface {
 }
 
 type Restorer interface {
-	Set(key, value string, opts models.SetOptions) error
-	Delete(key string) error
-	SetToObject(name, key, value string, opts models.SetToObjectOptions) error
-	DeleteObject(name string) error
-	CreateObject(name string, opts models.ObjectOptions) error
-	AttachToObject(dst, src string) error
+	Set(key, value string, opts models.SetOptions) gost.ResultN
+	Delete(key string) gost.ResultN
+	SetToObject(name, key, value string, opts models.SetToObjectOptions) gost.ResultN
+	DeleteObject(name string) gost.ResultN
+	CreateObject(name string, opts models.ObjectOptions) gost.ResultN
+	AttachToObject(dst, src string) gost.ResultN
 	NewUser(user models.User) (r gost.ResultN)
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
-	DeleteAttr(object, key string) error
+	DeleteAttr(object, key string) gost.ResultN
 }

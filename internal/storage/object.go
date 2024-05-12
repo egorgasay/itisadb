@@ -57,20 +57,20 @@ func (v *object) IsEmpty() bool {
 	return v.values == nil
 }
 
-func (v *object) Get(name string) (string, error) {
+func (v *object) Get(name string) (r gost.Option[string]) {
 	v.RLock()
 	defer v.RUnlock()
 
 	val, ok := v.values.Get(name)
 	if !ok {
-		return "", constants.ErrNotFound
+		return r.None()
 	}
 
 	switch some := val.Value(); some.IsSome() {
 	case true:
-		return some.Unwrap().value, nil
+		return r.Some(some.Unwrap().value)
 	default:
-		return "", constants.ErrSomethingExists
+		return r.None()
 	}
 }
 
@@ -104,11 +104,11 @@ func (v *object) setAttached(attachedTo []string) {
 	v.attachedTo = append(v.attachedTo, attachedTo...)
 }
 
-func (v *object) AttachObject(src *object) (err error) {
+func (v *object) AttachObject(src *object) (r gost.ResultN) {
 	v.RLock()
 	defer func() {
 		v.RUnlock()
-		if err == nil {
+		if r.IsOk() {
 			src.setAttached(v.attachedTo)
 		}
 	}()
@@ -116,16 +116,16 @@ func (v *object) AttachObject(src *object) (err error) {
 	if v.values == nil {
 		v.values = swiss.NewMap[string, Something](10)
 		v.values.Put(src.Name(), src)
-		return nil
+		return r.Ok()
 	}
 
 	if v.values.Has(src.Name()) {
-		return nil
+		return r.Ok()
 	}
 
 	v.values.Put(src.Name(), src)
 
-	return nil
+	return r.Ok()
 }
 
 func (v *object) Iter(f func(k string, v Something) bool) {
@@ -157,16 +157,16 @@ func (v *object) GetValue(key string) (Something, bool) {
 	return val, ok
 }
 
-func (v *object) Delete(key string) error {
+func (v *object) Delete(key string) (r gost.ResultN) {
 	v.Lock()
 	defer v.Unlock()
 
 	if !v.values.Has(key) {
-		return constants.ErrNotFound
+		return r.Err(constants.ErrNotFound)
 	}
 
 	v.values.Delete(key)
-	return nil
+	return r.Ok()
 }
 
 func (v *object) RecreateObject() {
@@ -197,7 +197,7 @@ func (v *object) Has(key string) bool {
 //	value
 //}
 
-func (v *object) MarshalJSON() ([]byte, error) {
+func (v *object) MarshalJSON() (r gost.Result[[]byte]) {
 	v.RLock()
 	defer v.RUnlock()
 
@@ -228,7 +228,12 @@ func (v *object) MarshalJSON() ([]byte, error) {
 		"values":      arr,
 	}
 
-	return json.MarshalIndent(data, "", "\t")
+	b, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		return r.Err(constants.ErrInternal.Extend(0, err.Error()))
+	}
+
+	return r.Ok(b)
 }
 
 func (v *object) setLevel(level models.Level) {

@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	ErrObjectNotFound   = gost.NewErrX(0, "object not found")
 	ErrServerNotFound   = gost.NewErrX(0, "server not found")
 	ErrWrongCredentials = errors.New("wrong credentials")
 
@@ -17,14 +16,16 @@ var (
 
 	ErrAlreadyExists = gost.NewErrX(0, "already exists")
 	ErrUnavailable   = errors.New("server is unavailable")
-	ErrNotFound      = gost.NewErrX(0, "not found")
 
-	ErrCircularAttachment = fmt.Errorf("circular attachment")
-	ErrInternal           = fmt.Errorf("internal error")
+	ErrNotFound      = gost.NewErrX(0, "not found")
+	ErrObjectNotFound   = ErrNotFound.Extend(0, "object not found")
+
+	ErrCircularAttachment = gost.NewErrX(0, "circular attachment")
+	ErrInternal           = gost.NewErrX(0, "internal error")
 	ErrInvalidName        = fmt.Errorf("invalid name")
 
-	ErrSomethingExists = errors.New("something with this name already exists")
-	ErrEmptyObjectName = errors.New("object name is empty")
+	ErrSomethingExists = ErrAlreadyExists.Extend(0, "something with this name already exists")
+	ErrEmptyObjectName = gost.NewErrX(0, "object name is empty")
 
 	/*
 	 JWT Errors

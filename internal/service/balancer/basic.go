@@ -56,12 +56,12 @@ func (c *Balancer) Get(ctx context.Context, claims gost.Option[models.UserClaims
 }
 
 func (c *Balancer) getObjectInfo(object string) (models.ObjectInfo, error) {
-	info, err := c.storage.GetObjectInfo(object)
-	if err != nil {
-		return models.ObjectInfo{}, fmt.Errorf("can't get object info: %w", err)
+	infoR := c.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return models.ObjectInfo{}, fmt.Errorf("can't get object info: %w", constants.ErrObjectNotFound)
 	}
 
-	return info, nil
+	return infoR.Unwrap(), nil
 }
 
 func (c *Balancer) get(ctx context.Context, claims gost.Option[models.UserClaims], key string, opts models.GetOptions) (models.Value, error) {

@@ -253,6 +253,7 @@ func (s *Servers) DeepSearch(ctx context.Context, claims gost.Option[models.User
 
 	for _, cl := range s.servers {
 		if cl.IsOffline() {
+			wg.Done()
 			continue
 		}
 

@@ -3,13 +3,14 @@ package servers
 import (
 	"context"
 
-	"github.com/egorgasay/gost"
 	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
 	"itisadb/internal/service/logic"
 	"itisadb/pkg"
+
+	"github.com/egorgasay/gost"
 )
 
 type LocalServer struct {
@@ -35,7 +36,7 @@ func (s *LocalServer) Reconnect(_ context.Context) (res gost.ResultN) {
 func (s *LocalServer) ResetTries() {}
 
 func (s *LocalServer) Number() int32 {
-	return constants.MainStorageNumber
+	return constants.LocalServerNumber
 }
 
 func (s *LocalServer) RAM() models.RAM {
@@ -91,4 +92,3 @@ func (s *LocalServer) ChangeLevel(ctx context.Context, claims gost.Option[models
 func (s *LocalServer) Address() string {
 	return ""
 }
-

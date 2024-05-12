@@ -17,6 +17,7 @@ type SetOptions struct {
 	ReadOnly bool
 	Unique   bool
 	Level    Level
+	Encrypt  bool
 }
 
 func (o SetOptions) ToSDK() itisadb.SetOptions {
@@ -130,6 +131,7 @@ func (o AttachToObjectOptions) ToSDK() itisadb.AttachToObjectOptions {
 type SetToObjectOptions struct {
 	Server   int32
 	ReadOnly bool
+	Encrypt  bool
 }
 
 func (o SetToObjectOptions) ToSDK() itisadb.SetToObjectOptions {

@@ -1,38 +1,44 @@
 body {
-  margin: 0;
-  background-color: #000;
-  color: #fff;
-  font-size: 14px;
-  font-family: "Helvetica Neue", sans-serif;
-}
-.container {
-  max-width: 80%;
-  max-height: 50vh;
-  margin: auto;
-  position:relative;
+    margin: 0;
+    background-color: #000;
+    color: #fff;
+    font-size: 14px;
+    font-family: "Helvetica Neue", sans-serif;
 }
 
+.container {
+    max-width: 80%;
+    max-height: 50vh;
+    margin: auto;
+    position: relative;
+}
 
 .textfield {
-  background: #000;
-  border: none;
-  color: #fff;
-  padding-left: 5px;
-  padding-bottom: 15px;
-  width: 700px;
-  font-size: 24px;
-  /*text-align: center;*/
+    background: #000;
+    border: none;
+    color: #fff;
+    padding-left: 5px;
+    padding-bottom: 15px;
+    width: 700px;
+    font-size: 24px;
+    /*text-align: center;*/
 }
 
 .textfield:focus {
-  border: none;
-  outline: none;
-  text-align: left;
+    border: none;
+    outline: none;
+    text-align: left;
 }
 
 .message {
-  padding-left: 5px;
-  text-align: left;
-  position:absolute;
-  margin-right: 15%;
- }
+    padding-left: 5px;
+    text-align: left;
+    position: absolute;
+    margin-right: 15%;
+}
+
+.hr {
+    margin-top: 2%;
+    margin-bottom: 2%;
+    background-color: #fff;
+}

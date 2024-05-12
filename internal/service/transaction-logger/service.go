@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"sync"
 
-	"go.uber.org/zap"
 	"itisadb/config"
+	"itisadb/internal/domains"
+
+	"go.uber.org/zap"
 )
 
 type EventType byte
@@ -46,9 +48,11 @@ type TransactionLogger struct {
 
 	logger *zap.Logger
 	cfg    config.TransactionLoggerConfig
+
+	security domains.SecurityService
 }
 
-func New(cfg config.TransactionLoggerConfig, logger *zap.Logger) (*TransactionLogger, error) {
+func New(cfg config.TransactionLoggerConfig, logger *zap.Logger, security domains.SecurityService) (*TransactionLogger, error) {
 	if cfg.BackupDirectory == "" {
 		cfg.BackupDirectory = DefaultPath
 	}
@@ -91,5 +95,6 @@ func New(cfg config.TransactionLoggerConfig, logger *zap.Logger) (*TransactionLo
 		currentName: int32(maxNumber),
 		cfg:         cfg,
 		logger:      logger,
+		security:    security,
 	}, nil
 }

@@ -29,8 +29,6 @@ BufferSize = "1s"
 
 # Encryption parameters.
 [Encryption]
-On = false
-
 # Key that is used to encrypt data.
 # Example: "jdvbe3j1hve11jhv2js1vdvuvs1yud"
 Key = "CHANGE ME"

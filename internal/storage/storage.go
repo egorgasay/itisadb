@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -62,96 +60,109 @@ func New() (*Storage, error) {
 	return st, nil
 }
 
-func (s *Storage) Set(key, val string, opts models.SetOptions) error {
+func (s *Storage) Set(key, val string, opts models.SetOptions) (r gost.ResultN) {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
 
 	s.ramStorage.Put(key, models.Value{ReadOnly: opts.ReadOnly, Level: opts.Level, Value: val})
 
-	return nil
+	return r.Ok()
 }
 
-func (s *Storage) Get(key string) (models.Value, error) {
+func (s *Storage) Get(key string) (r gost.Option[models.Value]) {
 	s.ramStorage.RLock()
 	defer s.ramStorage.RUnlock()
 
 	val, ok := s.ramStorage.Get(key)
 	if !ok {
-		return models.Value{}, constants.ErrNotFound
+		return r.None()
 	}
 
-	return val, nil
+	return r.Some(val)
 }
 
-func (s *Storage) GetFromObject(name, key string) (string, error) {
+func (s *Storage) GetFromObject(name, key string) (r gost.Option[string]) {
 	s.objects.RLock()
 	defer s.objects.RUnlock()
 
-	v, err := s.findObject(name)
-	if err != nil {
-		return "", err
+	v := s.findObject(name)
+	switch v.IsSome() {
+	case true:
+		return v.Unwrap().Get(key)
+	default:
+		return r.None()
 	}
-
-	return v.Get(key)
 }
 
-func (s *Storage) SetToObject(name, key, value string, opts models.SetToObjectOptions) error {
+func (s *Storage) SetToObject(name, key, value string, opts models.SetToObjectOptions) (r gost.ResultN) {
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
-	obj, err := s.findObject(name)
-	if err != nil {
-		return err
+	obj := s.findObject(name)
+	switch obj.IsSome() {
+	case false:
+		return r.Err(constants.ErrObjectNotFound)
 	}
 
-	if opts.ReadOnly && obj.Has(key) {
-		return constants.ErrAlreadyExists
+	object := obj.Unwrap()
+
+	if opts.ReadOnly && object.Has(key) {
+		return r.Err(constants.ErrAlreadyExists)
 	}
 
-	obj.Set(key, value)
-	return nil
+	object.Set(key, value)
+	return r.Ok()
 }
 
-func (s *Storage) AttachToObject(dst, src string) error {
+func (s *Storage) AttachToObject(dst, src string) (r gost.ResultN) {
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
-	object1, err := s.findObject(dst)
-	if err != nil {
-		return err
+	var obj1, obj2 *object
+
+	object1 := s.findObject(dst)
+	switch object1.IsSome() {
+	case true:
+		obj1 = object1.Unwrap()
+	default:
+		return r.Err(constants.ErrObjectNotFound)
 	}
 
-	object2, err := s.findObject(src)
-	if err != nil {
-		return err
+	object2 := s.findObject(src)
+	switch object2.IsSome() {
+	case true:
+		obj2 = object2.Unwrap()
+	default:
+		return r.Err(constants.ErrObjectNotFound)
 	}
 
-	if object1.IsAttached(object2.Name()) {
-		return constants.ErrCircularAttachment
+	if obj1.IsAttached(obj2.Name()) {
+		return r.Err(constants.ErrCircularAttachment)
 	}
 
-	err = object1.AttachObject(object2)
-	if err != nil {
-		return err
+	rAttach := obj1.AttachObject(obj2)
+	if rAttach.IsErr() {
+		return r.Err(rAttach.Error())
 	}
 
-	info, err := s.GetObjectInfo(dst)
-	if err != nil {
-		return err
+	infoR := s.GetObjectInfo(dst)
+	if infoR.IsNone() {
+		return r.Err(constants.ErrObjectNotFound)
 	}
 
+	info := infoR.Unwrap()
 	s.AddObjectInfo(fmt.Sprintf("%s.%s", dst, src), info)
 
-	return err
+	return r.Ok()
 }
 
-func (s *Storage) DeleteObject(name string) error {
+func (s *Storage) DeleteObject(name string) (r gost.ResultN) {
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
 	split := strings.Split(name, ".")
 	if name == "" || len(split) == 0 {
-		return constants.ErrEmptyObjectName
+		return r.Err(constants.ErrEmptyObjectName)
 	}
 	objName := split[len(split)-1]
 
@@ -160,37 +171,38 @@ func (s *Storage) DeleteObject(name string) error {
 		parent = strings.Join(split[:len(split)-1], ".")
 	} else {
 		if !s.objects.Has(name) {
-			return constants.ErrNotFound
+			return r.Err(constants.ErrObjectNotFound)
 		}
 		s.objects.Delete(name)
-		return nil
+		return r
 	}
 
-	par, err := s.findObject(parent)
-	if err != nil {
-		return err
+	par := s.findObject(parent)
+	switch par.IsSome() {
+	case true:
+		return par.Unwrap().Delete(objName)
+	default:
+		return r.Err(constants.ErrObjectNotFound)
 	}
-
-	return par.Delete(objName)
 }
 
 // CreateObject ..
-func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err error) {
+func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (r gost.ResultN) {
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
-	obj, err := s.findObject(name)
-	if err != nil && !errors.Is(err, constants.ErrNotFound) {
-		return err
-	} else if obj != nil {
-		obj.setLevel(opts.Level)
-		s.objects.Put(name, obj)
-		return
+	obj := s.findObject(name)
+	switch obj.IsSome() {
+	case true:
+		o := obj.Unwrap()
+		o.setLevel(opts.Level)
+		s.objects.Put(name, o)
+		return r
 	}
 
 	path := strings.Split(name, constants.ObjectSeparator)
 	if name == "" || len(path) == 0 {
-		return constants.ErrEmptyObjectName
+		return r.Err(constants.ErrEmptyObjectName)
 	}
 
 	var val *object
@@ -204,7 +216,7 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 		case true:
 			val = o.Unwrap()
 		default:
-			return constants.ErrSomethingExists
+			return r.Err(constants.ErrSomethingExists)
 		}
 	}
 
@@ -217,32 +229,35 @@ func (s *Storage) CreateObject(name string, opts models.ObjectOptions) (err erro
 				val.RecreateObject()
 			}
 		default:
-			return constants.ErrSomethingExists
+			return r.Err(constants.ErrSomethingExists)
 		}
 	}
 
-	return nil
+	return r
 }
 
 // TODO: JSONToObject
-func (s *Storage) ObjectToJSON(name string) (string, error) {
+func (s *Storage) ObjectToJSON(name string) (r gost.Result[string]) {
 	s.objects.RLock()
 	defer s.objects.RUnlock()
 
-	obj, err := s.findObject(name)
-	if err != nil {
-		return "", err
+	switch obj := s.findObject(name); obj.IsSome() {
+	case true:
+		rMarshal := obj.Unwrap().MarshalJSON()
+		if rMarshal.IsErr() {
+			return r.Err(rMarshal.Error())
+		}
+		return r.Ok(string(rMarshal.Unwrap()))
+	default:
+		return r.Err(constants.ErrObjectNotFound)
 	}
-
-	en, err := json.MarshalIndent(obj, "", "\t")
-	return string(en), err
 }
 
-func (s *Storage) findObject(name string) (*object, error) {
+func (s *Storage) findObject(name string) (r gost.Option[*object]) {
 	path := strings.Split(name, ".")
 
 	if len(path) == 0 {
-		return nil, constants.ErrObjectNotFound
+		return r.None()
 	}
 
 	var (
@@ -252,7 +267,7 @@ func (s *Storage) findObject(name string) (*object, error) {
 
 	val, ok = s.objects.Get(path[0])
 	if !ok {
-		return nil, constants.ErrObjectNotFound
+		return r.None()
 	}
 
 	path = path[1:]
@@ -262,10 +277,10 @@ func (s *Storage) findObject(name string) (*object, error) {
 		case true:
 			val, ok = o.Unwrap().GetValue(objectName)
 			if !ok {
-				return nil, constants.ErrObjectNotFound
+				return r.None()
 			}
 		default:
-			return nil, constants.ErrSomethingExists
+			return r.None()
 		}
 	}
 
@@ -273,22 +288,24 @@ func (s *Storage) findObject(name string) (*object, error) {
 
 	switch o := val.Object(); o.IsSome() {
 	case true:
-		return o.Unwrap(), nil
+		return r.Some(o.Unwrap())
 	default:
-		return nil, constants.ErrObjectNotFound
+		return r.None()
 	}
 }
 
 // Size returns the size of the object
-func (s *Storage) Size(name string) (uint64, error) {
+func (s *Storage) Size(name string) (r gost.Result[uint64]) {
 	s.objects.RLock()
 	defer s.objects.RUnlock()
 
-	object, err := s.findObject(name)
-	if err != nil {
-		return 0, err
+	object := s.findObject(name)
+	switch object.IsSome() {
+	case true:
+		return r.Ok(uint64(object.Unwrap().Size()))
+	default:
+		return r.Err(constants.ErrObjectNotFound)
 	}
-	return uint64(object.Size()), nil
 }
 
 func (s *Storage) IsObject(name string) bool {
@@ -306,33 +323,28 @@ func (s *Storage) DeleteIfExists(key string) {
 	s.ramStorage.Delete(key)
 }
 
-func (s *Storage) Delete(key string) error {
+func (s *Storage) Delete(key string) (r gost.ResultN) {
 	s.ramStorage.Lock()
 	defer s.ramStorage.Unlock()
 
 	if _, ok := s.ramStorage.Get(key); !ok {
-		return constants.ErrNotFound
+		return r.Err(constants.ErrNotFound)
 	}
 
 	s.ramStorage.Delete(key)
 
-	return nil
+	return r
 }
 
-func (s *Storage) DeleteAttr(name, key string) error {
+func (s *Storage) DeleteAttr(name, key string) (r gost.ResultN) {
 	s.objects.Lock()
 	defer s.objects.Unlock()
 
-	object, err := s.findObject(name)
-	if err != nil {
-		return err
-	}
-
-	switch o := object.Object(); o.IsSome() {
+	switch object := s.findObject(name); object.IsSome() {
 	case true:
-		return o.Unwrap().Delete(key)
+		return object.Unwrap().Delete(key)
 	default:
-		return constants.ErrNotFound
+		return r.Err(constants.ErrObjectNotFound)
 	}
 }
 
@@ -343,16 +355,16 @@ func (s *Storage) AddObjectInfo(name string, info models.ObjectInfo) {
 	s.objectsInfo.Put(name, info)
 }
 
-func (s *Storage) GetObjectInfo(name string) (models.ObjectInfo, error) {
+func (s *Storage) GetObjectInfo(name string) (r gost.Option[models.ObjectInfo]) {
 	s.objectsInfo.RLock()
 	defer s.objectsInfo.RUnlock()
 
 	val, ok := s.objectsInfo.Get(name)
 	if !ok {
-		return models.ObjectInfo{}, constants.ErrNotFound
+		return r.None()
 	}
 
-	return val, nil
+	return r.Some(val)
 }
 
 func (s *Storage) DeleteObjectInfo(name string) {
@@ -361,7 +373,6 @@ func (s *Storage) DeleteObjectInfo(name string) {
 
 	s.objectsInfo.Delete(name)
 }
-
 
 func (s *Storage) GetUsersFromChangeID(id uint64) gost.Result[[]models.User] {
 	s.users.RLock()

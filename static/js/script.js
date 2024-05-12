@@ -105,5 +105,5 @@ window.onload = function() {
 function setResponse(command, text) {
     var output = document.querySelector(".message");
 
-    output.innerHTML = "# " + command.value + "<br>" + text + "<br><br>" + output.innerHTML;
+    output.innerHTML = "# " + command.value + "<br>" + text + "<hr class='hr'>" + output.innerHTML;
 }

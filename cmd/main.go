@@ -69,10 +69,12 @@ func main() {
 		lg.Fatal("failed to inizialise storage", zap.String("error", err.Error()))
 	}
 
+	sec := security.NewSecurityService(cfg.Security, cfg.Encryption)
+
 	var tl domains.TransactionLogger
 
 	if cfg.TransactionLogger.On {
-		tl, err = transactionlogger.New(cfg.TransactionLogger, lg)
+		tl, err = transactionlogger.New(cfg.TransactionLogger, lg, sec)
 		if err != nil {
 			lg.Fatal("failed to inizialise transaction logger: %v", zap.Error(err))
 		}
@@ -98,7 +100,6 @@ func main() {
 
 	gen := generator.New(lg)
 	ses := session.New(appCFG, store, gen, lg)
-	sec := security.NewSecurityService(cfg.Security)
 
 	uc := logic.NewLogic(store, *cfg, tl, lg, sec)
 

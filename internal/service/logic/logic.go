@@ -2,15 +2,14 @@ package logic
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
-	"github.com/egorgasay/gost"
-	"go.uber.org/zap"
 	"itisadb/config"
 	"itisadb/internal/constants"
 	"itisadb/internal/domains"
 	"itisadb/internal/models"
+
+	"github.com/egorgasay/gost"
+	"go.uber.org/zap"
 )
 
 type Logic struct {
@@ -76,31 +75,35 @@ func NewLogic(
 }
 
 func (l *Logic) GetOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.GetOptions) (res gost.Result[models.Value]) {
-	v, err := l.storage.Get(key)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	v := l.storage.Get(key)
+	if v.IsNone() {
+		return res.Err(constants.ErrNotFound)
 	}
 
-	if !l.security.HasPermission(claims, v.Level) {
+	value := v.Unwrap()
+
+	if !l.security.HasPermission(claims, value.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	return res.Ok(v)
+	return res.Ok(value)
 }
 
 func (l *Logic) DelOne(_ context.Context, claims gost.Option[models.UserClaims], key string, _ models.DeleteOptions) (res gost.ResultN) {
-	v, err := l.storage.Get(key)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	v := l.storage.Get(key)
+	if v.IsNone() {
+		return res.Err(constants.ErrNotFound)
 	}
 
-	if !l.security.HasPermission(claims, v.Level) {
+	value := v.Unwrap()
+
+	if !l.security.HasPermission(claims, value.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if err := l.storage.Delete(key); err != nil {
-		l.logger.Warn("failed to delete", zap.Error(err))
-		return res.ErrNew(0, 0, err.Error())
+	if r := l.storage.Delete(key); r.IsErr() {
+		l.logger.Warn("failed to delete", zap.Error(r.Error()))
+		return res.Err(r.Error())
 	}
 
 	if l.cfg.TransactionLogger.On {
@@ -115,36 +118,37 @@ func (l *Logic) SetOne(_ context.Context, claims gost.Option[models.UserClaims],
 		return res.Err(constants.ErrForbidden)
 	}
 
-	v, err := l.storage.Get(key)
-	if err == nil {
-		if !l.security.HasPermission(claims, v.Level) {
+	r := l.storage.Get(key)
+	if r.IsSome() {
+		if !l.security.HasPermission(claims, r.Unwrap().Level) {
 			return res.Err(constants.ErrForbidden)
 		}
 
-		if opt.Unique || v.ReadOnly {
+		if opt.Unique || r.Unwrap().ReadOnly {
 			return res.Err(constants.ErrAlreadyExists)
 		}
 	}
 
-	err = l.storage.Set(key, val, opt)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error()) // TODO:
+	rSet := l.storage.Set(key, val, opt)
+	if rSet.IsErr() {
+		return res.Err(rSet.Error())
 	}
 
 	if l.cfg.TransactionLogger.On {
+		opt.Encrypt = opt.Level == constants.SecretLevel
 		l.tlogger.WriteSet(key, val, opt)
 	}
 
-	return res.Ok(constants.MainStorageNumber)
+	return res.Ok(constants.LocalServerNumber)
 }
 
 func (l *Logic) HasPermissionToObject(claims gost.Option[models.UserClaims], name string) (res gost.Result[bool]) {
-	info, err := l.storage.GetObjectInfo(name)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(name)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
 
-	return res.Ok(l.security.HasPermission(claims, info.Level))
+	return res.Ok(l.security.HasPermission(claims, infoR.Unwrap().Level))
 }
 
 func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaims], name string, opts models.ObjectOptions) (res gost.ResultN) {
@@ -152,12 +156,12 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if err := l.storage.CreateObject(name, opts); err != nil {
-		return res.ErrNewUnknown(fmt.Sprintf("can't create object: %w", err)) // TODO: ??
+	if r := l.storage.CreateObject(name, opts); r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	info := models.ObjectInfo{
-		Server: constants.MainStorageNumber,
+		Server: constants.LocalServerNumber,
 		Level:  opts.Level,
 	}
 
@@ -171,12 +175,8 @@ func (l *Logic) NewObject(_ context.Context, claims gost.Option[models.UserClaim
 }
 
 func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserClaims], object string, key string, value string, opts models.SetToObjectOptions) (res gost.ResultN) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		if !errors.Is(err, constants.ErrNotFound) {
-			return res.ErrNew(0, 0, err.Error()) // TODO: ??
-		}
-
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
 		if r := l.NewObject(ctx, claims, object, models.ObjectOptions{
 			Level: constants.DefaultLevel,
 		}); r.IsErr() {
@@ -184,89 +184,96 @@ func (l *Logic) SetToObject(ctx context.Context, claims gost.Option[models.UserC
 		}
 	}
 
+	info := infoR.Unwrap()
+
 	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	err = l.storage.SetToObject(object, key, value, opts)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	if r := l.storage.SetToObject(object, key, value, opts); r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	if l.cfg.TransactionLogger.On {
-		l.tlogger.WriteSetToObject(object, key, value)
+		opts.Encrypt = info.Level == constants.SecretLevel
+		l.tlogger.WriteSetToObject(object, key, value, opts)
 	}
 
 	return res.Ok()
 }
 
 func (l *Logic) GetFromObject(_ context.Context, claims gost.Option[models.UserClaims], object, key string, _ models.GetFromObjectOptions) (res gost.Result[string]) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
+
+	info := infoR.Unwrap()
 
 	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	v, err := l.storage.GetFromObject(object, key)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	r := l.storage.GetFromObject(object, key)
+	if r.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
 
-	return res.Ok(v)
+	return res.Ok(r.Unwrap())
 }
 
 func (l *Logic) ObjectToJSON(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.ObjectToJSONOptions) (res gost.Result[string]) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
+
+	info := infoR.Unwrap()
 
 	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	v, err := l.storage.ObjectToJSON(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	r := l.storage.ObjectToJSON(object)
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
-	return res.Ok(v)
+	return res.Ok(r.Unwrap())
 }
 
 func (l *Logic) ObjectSize(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.SizeOptions) (res gost.Result[uint64]) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
+
+	info := infoR.Unwrap()
 
 	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	v, err := l.storage.Size(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	r := l.storage.Size(object)
+	if r.IsErr() {
+		return res.Err(r.Error())
 	}
 
-	return res.Ok(v)
+	return res.Ok(r.Unwrap())
 }
 
 func (l *Logic) DeleteObject(_ context.Context, claims gost.Option[models.UserClaims], object string, _ models.DeleteObjectOptions) (res gost.ResultN) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
 
-	if !l.security.HasPermission(claims, info.Level) {
+	if !l.security.HasPermission(claims, infoR.Unwrap().Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	err = l.storage.DeleteObject(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	if r := l.storage.DeleteObject(object); r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	l.storage.DeleteObjectInfo(object)
@@ -279,26 +286,26 @@ func (l *Logic) DeleteObject(_ context.Context, claims gost.Option[models.UserCl
 }
 
 func (l *Logic) AttachToObject(_ context.Context, claims gost.Option[models.UserClaims], dst, src string, _ models.AttachToObjectOptions) (res gost.ResultN) {
-	infoDst, err := l.storage.GetObjectInfo(dst)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoDstR := l.storage.GetObjectInfo(dst)
+	if infoDstR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
 
-	infoSrc, err := l.storage.GetObjectInfo(src)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoSrcR := l.storage.GetObjectInfo(src)
+	if infoSrcR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
 
-	if !l.security.HasPermission(claims, infoDst.Level) {
+	if !l.security.HasPermission(claims, infoDstR.Unwrap().Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if !l.security.HasPermission(claims, infoSrc.Level) {
+	if !l.security.HasPermission(claims, infoSrcR.Unwrap().Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if err := l.storage.AttachToObject(dst, src); err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	if r := l.storage.AttachToObject(dst, src); r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	if l.cfg.TransactionLogger.On {
@@ -309,17 +316,19 @@ func (l *Logic) AttachToObject(_ context.Context, claims gost.Option[models.User
 }
 
 func (l *Logic) ObjectDeleteKey(_ context.Context, claims gost.Option[models.UserClaims], object, key string, _ models.DeleteAttrOptions) (res gost.ResultN) {
-	info, err := l.storage.GetObjectInfo(object)
-	if err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	infoR := l.storage.GetObjectInfo(object)
+	if infoR.IsNone() {
+		return res.Err(constants.ErrObjectNotFound)
 	}
+
+	info := infoR.Unwrap()
 
 	if !l.security.HasPermission(claims, info.Level) {
 		return res.Err(constants.ErrForbidden)
 	}
 
-	if err := l.storage.DeleteAttr(object, key); err != nil {
-		return res.ErrNew(0, 0, err.Error())
+	if r := l.storage.DeleteAttr(object, key); r.IsErr() {
+		return res.Err(r.Error())
 	}
 
 	if l.cfg.TransactionLogger.On {

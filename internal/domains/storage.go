@@ -13,10 +13,10 @@ type Storage interface {
 }
 
 type CommonStorage interface {
-	Set(key string, val string, opts models.SetOptions) error
-	Get(key string) (models.Value, error)
+	Set(key string, val string, opts models.SetOptions) gost.ResultN
+	Get(key string) (r gost.Option[models.Value])
 	DeleteIfExists(key string)
-	Delete(key string) error
+	Delete(key string) gost.ResultN
 }
 
 type ObjectsStorage interface {
@@ -24,19 +24,19 @@ type ObjectsStorage interface {
 	   Common operations with objects
 	*/
 
-	CreateObject(name string, opts models.ObjectOptions) (err error)
-	DeleteObject(name string) error
-	SetToObject(name string, key string, value string, opts models.SetToObjectOptions) error
-	GetFromObject(name string, key string) (string, error) // TODO: impl -> models.Value
+	CreateObject(name string, opts models.ObjectOptions) (r gost.ResultN)
+	DeleteObject(name string) (r gost.ResultN)
+	SetToObject(name string, key string, value string, opts models.SetToObjectOptions) gost.ResultN
+	GetFromObject(name string, key string) (r gost.Option[string]) // TODO: impl -> models.Value
 
 	/*
 	   PRO operations with objects
 	*/
 
-	ObjectToJSON(name string) (string, error)
-	Size(name string) (uint64, error)
+	ObjectToJSON(name string) (r gost.Result[string])
+	Size(name string) (r gost.Result[uint64])
 	IsObject(name string) bool
-	DeleteAttr(name string, key string) error
+	DeleteAttr(name string, key string) gost.ResultN
 
 	/*
 		ObjectInfo operations
@@ -44,13 +44,13 @@ type ObjectsStorage interface {
 
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
-	GetObjectInfo(name string) (models.ObjectInfo, error)
+	GetObjectInfo(name string) (r gost.Option[models.ObjectInfo])
 
 	/*
 	   Complicated and not fully implemented or tested
 	*/
 
-	AttachToObject(dst string, src string) error
+	AttachToObject(dst string, src string) gost.ResultN
 }
 
 type UserStorage interface {
