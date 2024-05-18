@@ -104,6 +104,7 @@ window.onload = function() {
 
 function setResponse(command, text) {
     var output = document.querySelector(".message");
+    output.innerHTML = output.innerHTML.replace(`style="opacity: 0; animation: fadeIn 0.5s ease-in-out forwards;"`, "");
 
-    output.innerHTML = "# " + command.value + "<br>" + text + "<hr class='hr'>" + output.innerHTML;
+    output.innerHTML = `<div style="opacity: 0; animation: fadeIn 0.5s ease-in-out forwards;"># ${command.value}<br>${text}<hr class='hr'></div>${output.innerHTML}`;
 }

@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/dolthub/swiss"
-	"github.com/egorgasay/gost"
 	"itisadb/internal/constants"
 	"itisadb/internal/models"
 	"itisadb/pkg"
+
+	"github.com/dolthub/swiss"
+	"github.com/egorgasay/gost"
 )
 
 type object struct {
@@ -197,7 +198,12 @@ func (v *object) Has(key string) bool {
 //	value
 //}
 
-func (v *object) MarshalJSON() (r gost.Result[[]byte]) {
+func (v *object) MarshalJSON() ([]byte, error) {
+	r := v.MarshalJSONR()
+	return r.UnwrapOr(nil), r.ErrorStd()
+}
+
+func (v *object) MarshalJSONR() (r gost.Result[[]byte]) {
 	v.RLock()
 	defer v.RUnlock()
 
@@ -214,7 +220,7 @@ func (v *object) MarshalJSON() (r gost.Result[[]byte]) {
 					"read_only": val.readOnly,
 				})
 			} else {
-				arr = append(arr, v)
+				arr = append(arr, v.Object().Unwrap())
 			}
 		}
 

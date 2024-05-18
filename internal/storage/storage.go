@@ -243,7 +243,7 @@ func (s *Storage) ObjectToJSON(name string) (r gost.Result[string]) {
 
 	switch obj := s.findObject(name); obj.IsSome() {
 	case true:
-		rMarshal := obj.Unwrap().MarshalJSON()
+		rMarshal := obj.Unwrap().MarshalJSONR()
 		if rMarshal.IsErr() {
 			return r.Err(rMarshal.Error())
 		}
