@@ -1,25 +1,36 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Itisadb</title>
-  <link rel="stylesheet" href="/static/css/auth.css">
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <title>Itisadb</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/common.css">
 </head>
-<body>
+
 <body class="container">
-  <div class="login-container">
-    <div class="login-content">
-      <h1 class="welcome-text">Log In</h1>
-      <form class="login-form" method="post" action="/auth">
-        <input type="text" placeholder="Username" name="login" class="input-field">
-        <input type="password" placeholder="Password"  name="password" class="input-field">
-        <button type="submit" class="login-button">Login</button>
-      </form>
+    <div class="login-container">
+        <div class="login-content">
+            <br>
+            <h1 class="logo-text">𓆩✧𓆪</h1>
+            <h1 class="welcome-text">ItisaDB</h1>
+            <h1 class="version-text">v0.11.2</h1>
+            <form class="login-form" method="post" action="/auth">
+                <input type="text" placeholder="Username" name="username" class="input-field">
+                <input type="password" placeholder="Password" name="password" class="input-field">
+                <button type="submit" class="login-button">Login</button>
+            </form>
+            <div class="login-container">
+                <form class="login-form" method="post" action="/auth">
+                    <input name="username" value="demo" type="hidden">
+                    <input name="password" value="demo" hidden="hidden">
+                    <a href="/doc" class="demo-button">Docs</a>
+                    <button type="submit" class="demo-button">Demo</button>
+                    <a href="https://github.com/egorgasay/itisadb" class="demo-button">GitHub</a>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </body>
-<!-- partial -->
-  
-</body>
+
 </html>

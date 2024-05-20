@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"github.com/egorgasay/gotils"
 	"strings"
 	"sync"
 )
@@ -33,6 +34,8 @@ func (s *Storage) GetHistory(cookie string) (string, error) {
 	if !ok {
 		return "", errors.New("empty history")
 	}
+
+	gotils.Reverse(val)
 
 	return strings.Join(val, "<br>"), nil
 }

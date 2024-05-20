@@ -1,0 +1,60 @@
+# Network settings.
+[Network]
+
+# Address of the gRPC server.
+# Example: ":8888"
+GRPC = ":8888"
+
+# Address of the REST server. If empty, no REST server is started.
+# Example: ":6071"
+FastHTTP = ""
+
+# Mechanism for balancing within servers.
+[Balancer]
+On = true
+
+# Balancing only mode.
+BalancingOnly = false
+
+# Mechanism for transaction logging.
+[TransactionLogger]
+On = true
+
+# Directory where transaction logs are stored.
+# Example: "transaction-logger"
+BackupDirectory = "transaction-logger"
+
+# Buffer size.
+BufferSize = "1s"
+
+# Encryption parameters.
+[Encryption]
+# Key that is used to encrypt data.
+# Example: "jdvbe3j1hve11jhv2js1vdvuvs1yud"
+Key = "CHANGE ME"
+
+# Web application settings.
+[WebApp]
+On = true
+
+# Host of the web application.
+# Example: "127.0.0.1:8080"
+Host = ":8074"
+
+# Allows you to enable or disable logs for a web application.
+Logs = false
+
+# Security settings.
+[Security]
+On = true
+
+# Mandatory authorization.
+# If false, authentication is not required for keys and objects that has Default level.
+MandatoryAuthorization = true
+
+# Mandatory encryption.
+# If false, encryption is not mandatory for keys and objects that has Secret level.
+MandatoryEncryption = true
+
+[Logging]
+Level = "debug"

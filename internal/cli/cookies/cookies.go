@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/docker/distribution/uuid"
-	"log"
 	"net/http"
 	"time"
 )
@@ -18,7 +17,6 @@ func SetSecret(secret []byte) {
 }
 
 func SetCookie(readyCookie ...string) *http.Cookie {
-	log.Println("Setting new cookie...")
 	fid := uuid.Generate()
 	cookie := new(http.Cookie)
 	cookie.Name = "session"
