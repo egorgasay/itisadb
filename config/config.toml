@@ -27,11 +27,13 @@ BackupDirectory = "transaction-logger"
 # Buffer size.
 BufferSize = "1s"
 
-# Encryption parameters.
+# Параметры шифрования.
 [Encryption]
-# Key that is used to encrypt data.
-# Example: "jdvbe3j1hve11jhv2js1vdvuvs1yud"
-Key = "CHANGE ME"
+# Key used for data encryption.
+# Must be an AES key, 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256.
+# Example: "PLEASE CHANGE ME" = 16 bytes -> AES-128.
+# DO NOT CHANGE THE NUMBER OF BYTES AFTER THE FIRST PRODUCTION RUN.
+Key = "PLEASE CHANGE ME"
 
 # Web application settings.
 [WebApp]
@@ -51,10 +53,6 @@ On = true
 # Mandatory authorization.
 # If false, authentication is not required for keys and objects that has Default level.
 MandatoryAuthorization = true
-
-# Mandatory encryption.
-# If false, encryption is not mandatory for keys and objects that has Secret level.
-MandatoryEncryption = true
 
 [Logging]
 Level = "debug"

@@ -143,6 +143,11 @@ func (t *TransactionLogger) handleEvents(r domains.Restorer, events <-chan Event
 				if rUser.IsErr() {
 					return fmt.Errorf("can't create user %s, v: %s: %w", e.Name, e.Value, rUser.Error())
 				}
+			case DeleteUser:
+				rDelUser := r.DeleteUser(e.Name)
+				if rDelUser.IsErr() {
+					return fmt.Errorf("can't delete user %s: %w", e.Name, rDelUser.Error())
+				}
 			case CreateObject:
 				split := strings.Split(e.Value, constants.MetadataSeparator)
 				if len(split) < 2 {
