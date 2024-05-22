@@ -163,7 +163,9 @@ func (s *Servers) AddServer(ctx context.Context, address string, force bool) (in
 		s.logger.Error("can't add server", zap.Int32("server", server), zap.Error(err))
 		if !force {
 			return 0, err
-		}
+		} 
+
+		stClient.tries.Add(constants.MaxServerTries)
 	}
 
 	var addresses = make([]string, 0, len(s.servers))

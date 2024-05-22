@@ -48,7 +48,6 @@ type BalancerConfig struct {
 
 type SecurityConfig struct {
 	MandatoryAuthorization bool `toml:"MandatoryAuthorization"`
-	MandatoryEncryption    bool `toml:"MandatoryEncryption"`
 }
 
 type LoggingConfig struct {
@@ -57,11 +56,6 @@ type LoggingConfig struct {
 
 var _configFlag = flag.String("config", "", "Specify the path to the config file")
 var _configServersFlag = flag.String("config-servers", "", "Specify the path to the config file")
-
-var _noSecurity = SecurityConfig{
-	MandatoryAuthorization: false,
-	MandatoryEncryption:    false,
-}
 
 const _defaultPathToConfig = "config/config.toml"
 const _defaultPathToServers = "config/config-servers.toml"

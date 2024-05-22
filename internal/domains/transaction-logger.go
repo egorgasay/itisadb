@@ -29,6 +29,7 @@ type Restorer interface {
 	CreateObject(name string, opts models.ObjectOptions) gost.ResultN
 	AttachToObject(dst, src string) gost.ResultN
 	NewUser(user models.User) (r gost.ResultN)
+	DeleteUser(login string) (r gost.Result[bool])
 	AddObjectInfo(name string, info models.ObjectInfo)
 	DeleteObjectInfo(name string)
 	DeleteAttr(object, key string) gost.ResultN
